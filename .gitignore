@@ -328,3 +328,10 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+
+
+/brandup-ui/coverage
+/brandup-ui/package-lock.json
+/brandup-ui/dist
+/brandup-ui/test/*.js
+/brandup-ui/src/*.js

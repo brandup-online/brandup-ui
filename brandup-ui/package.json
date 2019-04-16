@@ -1,0 +1,45 @@
+{
+  "name": "brandup-ui",
+  "description": "brandup-ui",
+  "author": {
+    "name": "Dmitry Kovyazin",
+    "email": "d.kovyazin@hotmail.com"
+  },
+  "homepage": "https://github.com/dkovyazin/brandup-web-ui",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dkovyazin/brandup-web-ui"
+  },
+  "main": "dist/brandup-ui.js",
+  "types": "dist/brandup-ui.d.ts",
+  "license": "Apache-2.0",
+  "version": "1.0.0",
+  "devDependencies": {
+    "@types/chai": "^4.0.4",
+    "@types/mocha": "^2.2.44",
+    "typescript": "^3.3.3333",
+    "ts-npm-lint": "0.1.0",
+    "karma": "^1.7.1",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-coverage": "^1.1.1",
+    "karma-firefox-launcher": "^1.0.1",
+    "karma-mocha": "^1.3.0",
+    "karma-sourcemap-loader": "^0.3.7",
+    "karma-typescript": "^3.0.8",
+    "karma-webpack": "^2.0.5",
+    "mocha": "^4.0.1",
+    "chai": "^4.1.2",
+    "istanbul-instrumenter-loader": "^3.0.0",
+    "source-map-loader": "^0.2.3",
+    "ts-loader": "^3.1.0",
+    "webpack": "^3.8.1"
+  },
+  "dependencies": {},
+  "scripts": {
+    "watch": "tsc --watch",
+    "build:dev": "tsc && ts-npm-lint --fix-typings",
+    "build:prod": "tsc --project tsconfig.prod.json && ts-npm-lint --fix-typings",
+    "test": "karma start karma.config.js --single-run"
+  }
+}
