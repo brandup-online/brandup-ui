@@ -1,6 +1,4 @@
-﻿import { expect, assert } from 'chai';
-
-import * as common from "../src/common";
+﻿import * as common from "../src/common";
 
 var div: HTMLDivElement;
 
@@ -21,15 +19,15 @@ describe('#Utility', () => {
         var str = "test";
 
         var result = common.Utility.isString(str);
-        
-        expect(result).eq(true);
+
+        assert.isFalse(true);
     });
 
     it('isString return false', () => {
         var str = 1;
 
         var result = common.Utility.isString(str);
-
-        expect(result).eq(false);
+        
+        assert.isFalse(result);
     });
 });

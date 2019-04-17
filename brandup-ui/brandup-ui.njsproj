@@ -26,10 +26,10 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
   <ItemGroup>
     <Content Include="package.json" />
-    <Content Include="tsconfig.prod.json" />
     <Content Include="tsconfig.json" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="build\" />
     <Folder Include="test\" />
     <Folder Include="src\" />
   </ItemGroup>
@@ -39,12 +39,19 @@
     <TypeScriptCompile Include="src\control.ts" />
     <TypeScriptCompile Include="src\dom.ts" />
     <TypeScriptCompile Include="src\element.ts" />
+    <TypeScriptCompile Include="src\index.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="test\common.ts">
       <SubType>Code</SubType>
       <TestFramework>Mocha</TestFramework>
     </TypeScriptCompile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="build\make-bundle.js">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="rollup.config.js" />
     <Compile Include="karma.config.js" />
     <Compile Include="webpack.test.js" />
   </ItemGroup>

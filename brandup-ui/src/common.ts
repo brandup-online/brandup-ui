@@ -175,40 +175,40 @@
 
         return target;
     }
-}
 
-export var createDelegate = (context: any, func: (...params: Array<any>) => void) => {
-    return (...params: Array<any>) => func.apply(context, params);
-};
-export var createDelegate2 = (context: any, func: (...params: Array<any>) => void, args?: Array<any>) => {
-    return (...params: Array<any>) => {
-        var args2 = new Array<any>();
-        if (args && args.length) {
-            for (var i = 0; i < args.length; i++) {
-                args2.push(args[i]);
+    static createDelegate(context: any, func: (...params: Array<any>) => void) {
+        return (...params: Array<any>) => func.apply(context, params);
+    }
+    static createDelegate2(context: any, func: (...params: Array<any>) => void, args?: Array<any>) {
+        return (...params: Array<any>) => {
+            var args2 = new Array<any>();
+            if (args && args.length) {
+                for (var i = 0; i < args.length; i++) {
+                    args2.push(args[i]);
+                }
             }
-        }
-        if (params.length) {
-            for (var i = 0; i < params.length; i++) {
-                args2.push(params[i]);
+            if (params.length) {
+                for (var i = 0; i < params.length; i++) {
+                    args2.push(params[i]);
+                }
             }
-        }
-        return func.apply(context, args2);
+            return func.apply(context, args2);
+        };
+    }
+    static createDelegate3(context: any, func: (...params: Array<any>) => void, args?: Array<any>) {
+        return (...params: Array<any>) => {
+            var args2 = new Array<any>();
+            if (params.length) {
+                for (var i = 0; i < params.length; i++) {
+                    args2.push(params[i]);
+                }
+            }
+            if (args && args.length) {
+                for (var i = 0; i < args.length; i++) {
+                    args2.push(args[i]);
+                }
+            }
+            return func.apply(context, args2);
+        };
     };
-};
-export var createDelegate3 = (context: any, func: (...params: Array<any>) => void, args?: Array<any>) => {
-    return (...params: Array<any>) => {
-        var args2 = new Array<any>();
-        if (params.length) {
-            for (var i = 0; i < params.length; i++) {
-                args2.push(params[i]);
-            }
-        }
-        if (args && args.length) {
-            for (var i = 0; i < args.length; i++) {
-                args2.push(args[i]);
-            }
-        }
-        return func.apply(context, args2);
-    };
-};
+}

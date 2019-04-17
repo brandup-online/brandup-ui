@@ -15,8 +15,7 @@
   "license": "Apache-2.0",
   "version": "1.0.0",
   "devDependencies": {
-    "@types/chai": "^4.0.4",
-    "@types/mocha": "^2.2.44",
+    "@types/mocha": "5.2.6",
     "typescript": "^3.3.3333",
     "ts-npm-lint": "0.1.0",
     "karma": "^1.7.1",
@@ -33,13 +32,16 @@
     "istanbul-instrumenter-loader": "^3.0.0",
     "source-map-loader": "^0.2.3",
     "ts-loader": "^3.1.0",
-    "webpack": "^3.8.1"
+    "webpack": "^3.8.1",
+    "rollup": "^0.62.0",
+    "rollup-plugin-typescript2": "^0.15.1",
+    "npm-run-all": "4.1.5"
   },
   "dependencies": {},
   "scripts": {
-    "watch": "tsc --watch",
-    "build:dev": "tsc && ts-npm-lint --fix-typings",
-    "build:prod": "tsc --project tsconfig.prod.json && ts-npm-lint --fix-typings",
+    "_tsc": "tsc && ts-npm-lint --fix-typings",
+    "_bundle": "node build/make-bundle",
+    "build": "run-s _tsc _bundle",
     "test": "karma start karma.config.js --single-run"
   }
 }

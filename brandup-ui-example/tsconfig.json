@@ -3,25 +3,18 @@
     "module": "amd",
     "moduleResolution": "node",
     "target": "es5",
+    "jsx": "react",
     "sourceMap": true,
     "strict": false,
     "lib": [ "es5", "es6", "dom", "es2015.promise", "dom.iterable", "es2015.iterable", "es2015.collection", "es2015", "es2015.core" ],
     "noImplicitAny": false,
-    "noEmitOnError": true,
-    "baseUrl": "./src",
-    "declaration": true,
-    "outFile": "./dist/brandup-ui.js"
+    "noEmitOnError": true
   },
   "exclude": [
     "node_modules",
-    "dist",
+    "wwwroot",
     ".idea",
-    ".vs",
-    ".vscode",
-    "**/*.spec.ts"
+    ".vscode"
   ],
-  "compileOnSave": false,
-  "typeAcquisition": {
-    "enable": true
-  }
+  "compileOnSave": true
 }

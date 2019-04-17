@@ -9,8 +9,8 @@ export abstract class UIElement {
     private __commandHandlers: { [key: string]: ICommandHandler; } = {};
     private __exts: { [key: string]: UIElement; };
     private __isExt: boolean;
-
-    abstract get typeName(): string;
+    
+    abstract typeName: string;
     get element(): HTMLElement {
         return this.__element;
     }
@@ -92,8 +92,8 @@ export abstract class UIElement {
             throw new Error("Команда уже существует.");
 
         this.__commandHandlers[name] = <ICommandHandler>{
-            execute: common.createDelegate(this, execute),
-            canExecute: canExecute ? common.createDelegate(this, canExecute) : null
+            execute: common.Utility.createDelegate(this, execute),
+            canExecute: canExecute ? common.Utility.createDelegate(this, canExecute) : null
         };
 
         this.__createEvent(name, {});

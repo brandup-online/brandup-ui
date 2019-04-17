@@ -16,7 +16,7 @@ export interface RequestOptions {
 export interface QueueOptions {
     onPreRequest?: (ajaxOptions: RequestOptions) => void;
 }
-export class Queue {
+export class AjaxQueue {
     private _options: QueueOptions;
     private _q: Array<{ options: RequestOptions, xhr?: XMLHttpRequest }>;
     private __cur!: { options: RequestOptions, xhr?: XMLHttpRequest } | null;
@@ -33,7 +33,7 @@ export class Queue {
             throw new Error();
 
         var successFunc = options.success;
-        var s = common.createDelegate2(this, this.__success, [successFunc]);
+        var s = common.Utility.createDelegate2(this, this.__success, [successFunc]);
         options.success = s;
 
         this._q.push({ options: options });
@@ -59,7 +59,7 @@ export class Queue {
                 }
                 catch { }
             }
-            this.__cur.xhr = request(this.__cur.options);
+            this.__cur.xhr = ajaxRequest(this.__cur.options);
         }
         else
             this.__cur = null;
@@ -91,7 +91,7 @@ var urlEncode = (data: string, rfc3986: boolean = true) => {
     return data;
 };
 
-export var request = (options: RequestOptions) => {
+export var ajaxRequest = (options: RequestOptions) => {
     if (!options)
         throw new Error();
 
@@ -229,6 +229,3 @@ export var request = (options: RequestOptions) => {
 
     return xhr;
 };
-export var queue = (options?: QueueOptions) => {
-    return new Queue(options);
-}
