@@ -16,7 +16,8 @@
     "node_modules",
     "dist",
     ".vs",
-    ".vscode"
+    ".vscode",
+    "test"
   ],
   "compileOnSave": true,
   "typeAcquisition": {
