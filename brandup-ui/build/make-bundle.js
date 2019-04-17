@@ -38,7 +38,9 @@ async function build() {
         format: "es",
         sourcemap: false
     });
-    
+
+    fs.mkdir(distNpmPath, () => { });
+
     await writeFile(path.join(distNpmPath, `${packageName}.js`), code);
     await writeFile(path.join(distNpmPath, `${packageName}.d.ts`), await makeDefinitionsCode());
 }
