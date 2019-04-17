@@ -9,7 +9,8 @@
     "noImplicitAny": false,
     "noEmitOnError": true,
     "baseUrl": "./src",
-    "declaration": true
+    "declaration": true,
+    "types": [ "node" ]
   },
   "exclude": [
     "node_modules",
