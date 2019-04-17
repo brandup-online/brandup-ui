@@ -12,6 +12,7 @@
   },
   "main": "dist/brandup-ui.js",
   "types": "dist/brandup-ui.d.ts",
+  "files": [ "dist" ],
   "license": "Apache-2.0",
   "version": "1.0.0",
   "devDependencies": {
