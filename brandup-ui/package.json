@@ -1,6 +1,7 @@
 {
   "name": "brandup-ui",
   "description": "brandup-ui",
+  "keywords": [ "brandup", "javascript", "typescript", "dom", "ui" ],
   "author": {
     "name": "Dmitry Kovyazin",
     "email": "it@brandup.online"
@@ -10,11 +11,12 @@
     "type": "git",
     "url": "https://github.com/dkovyazin/brandup-ui"
   },
+  "bugs": {
+    "url": "https://github.com/dkovyazin/brandup-ui/issues",
+    "email": "it@brandup.online"
+  },
   "main": "dist/brandup-ui.js",
   "types": "dist/brandup-ui.d.ts",
-  "files": [
-    "dist"
-  ],
   "license": "Apache-2.0",
   "version": "1.0.0",
   "devDependencies": {
@@ -40,7 +42,6 @@
     "rollup-plugin-typescript2": "^0.15.1",
     "npm-run-all": "^4.1.5"
   },
-  "dependencies": {},
   "scripts": {
     "_tsc": "tsc && ts-npm-lint --fix-typings",
     "_bundle": "node build/make-bundle",

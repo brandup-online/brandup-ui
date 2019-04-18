@@ -26,6 +26,7 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
   <ItemGroup>
     <Content Include="package.json" />
+    <Content Include="README.md" />
     <Content Include="tsconfig.json" />
   </ItemGroup>
   <ItemGroup>
