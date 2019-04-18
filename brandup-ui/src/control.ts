@@ -1,4 +1,4 @@
-﻿import * as common from "./common";
+﻿import { Utility } from "./common";
 import { UIElement } from "./element";
 
 export abstract class UIControl<TOptions> extends UIElement {
@@ -35,7 +35,7 @@ export abstract class UIControl<TOptions> extends UIElement {
     }
     protected _applyOptions<TOptions>(options: TOptions) {
         if (options)
-            common.Utility.extend(this.options, options);
+            Utility.extend(this.options, options);
     }
 
     // Render
@@ -45,13 +45,12 @@ export abstract class UIControl<TOptions> extends UIElement {
     protected _getHtmlTemplate(): string {
         return null;
     }
-    protected abstract _onRender();
     render(container: HTMLElement | string, position: InsertPosition = "afterbegin"): this {
         if (container) {
             if (!this.__fragment)
                 throw new Error();
 
-            if (common.Utility.isString(container)) {
+            if (Utility.isString(container)) {
                 container = document.getElementById((<string>container).substr(1));
                 if (!container)
                     throw new Error();
@@ -79,4 +78,5 @@ export abstract class UIControl<TOptions> extends UIElement {
     }
 
     protected _onInitialize() { }
+    protected abstract _onRender();
 }

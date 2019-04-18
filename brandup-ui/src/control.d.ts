@@ -8,8 +8,8 @@ export declare abstract class UIControl<TOptions> extends UIElement {
     protected _applyOptions<TOptions>(options: TOptions): void;
     protected _getTagName(): string;
     protected _getHtmlTemplate(): string;
-    protected abstract _onRender(): any;
     render(container: HTMLElement | string, position?: InsertPosition): this;
     destroy(): void;
     protected _onInitialize(): void;
+    protected abstract _onRender(): any;
 }
