@@ -1,17 +1,12 @@
-export declare const elemAttributeName = "brandup-ui-element";
-export declare const elemPropertyName = "brandupUiElement";
+export declare const ElemAttributeName = "brandup-ui-element";
+export declare const ElemPropertyName = "brandupUiElement";
 export declare abstract class UIElement {
     private __element;
     private __events;
     private __commandHandlers;
-    private __exts;
-    private __isExt;
     abstract typeName: string;
     readonly element: HTMLElement;
     protected setElement(elem: HTMLElement): void;
-    protected extElement(name: string, ownerElem: UIElement): void;
-    private __addExtElem;
-    getExt(name: string): UIElement;
     protected __createEvent(eventName: string, eventOptions?: IEventOptions): void;
     protected __raiseEvent(eventName: string, eventArgs?: any): boolean;
     addEventListener(eventName: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;

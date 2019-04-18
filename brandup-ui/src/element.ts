@@ -1,56 +1,32 @@
 ﻿import * as common from "./common"
 
-export const elemAttributeName = "brandup-ui-element";
-export const elemPropertyName = "brandupUiElement";
+export const ElemAttributeName = "brandup-ui-element";
+export const ElemPropertyName = "brandupUiElement";
 
 export abstract class UIElement {
     private __element: HTMLElement;
     private __events: { [key: string]: IEventOptions; } = {};
     private __commandHandlers: { [key: string]: ICommandHandler; } = {};
-    private __exts: { [key: string]: UIElement; };
-    private __isExt: boolean;
     
     abstract typeName: string;
     get element(): HTMLElement {
         return this.__element;
     }
     protected setElement(elem: HTMLElement) {
-        if (this.__element)
-            throw new Error();
-        if (elem[elemPropertyName])
-            throw new Error("UIElement already defined");
+        if (!elem)
+            throw "Not set value elem.";
+        
+        if (this.__element || elem[ElemPropertyName])
+            throw "UIElement already defined";
 
         this.__element = elem;
 
-        this.__element[elemPropertyName] = this;
-        this.__element.setAttribute(elemAttributeName, this.typeName);
+        this.__element[ElemPropertyName] = this;
+        this.__element.setAttribute(ElemAttributeName, this.typeName);
 
-        elem.addEventListener("DOMNodeRemoved", () => this.destroy());
+        //elem.addEventListener("DOMNodeRemoved", () => this.destroy());
     }
-    protected extElement(name: string, ownerElem: UIElement) {
-        if (this.__element)
-            throw new Error();
-        if (ownerElem.__isExt)
-            throw new Error();
-
-        this.__element = ownerElem.element;
-        this.__isExt = true;
-        ownerElem.__addExtElem(name, this);
-    }
-
-    private __addExtElem(name: string, elem: UIElement) {
-        if (!this.__exts)
-            this.__exts = {};
-
-        this.__exts[name] = elem;
-    }
-    getExt(name: string): UIElement {
-        if (!this.__exts)
-            return null;
-        var elem = this.__exts[name];
-        return elem ? elem : null;
-    }
-
+    
     // HTMLElement Events
     protected __createEvent(eventName: string, eventOptions?: IEventOptions) {
         this.__events[eventName] = eventOptions ? eventOptions : null;
@@ -99,17 +75,8 @@ export abstract class UIElement {
         this.__createEvent(name, {});
     }
     execCommand(name: string, elem: HTMLElement): CommandsExecResult {
-        if (!this.__commandHandlers.hasOwnProperty(name)) {
-            if (this.__exts) {
-                for (let key in this.__exts) {
-                    var r = this.__exts[key].execCommand(name, elem);
-                    if (r !== CommandsExecResult.NotFound)
-                        return r;
-                }
-            }
-
+        if (!this.__commandHandlers.hasOwnProperty(name))
             return CommandsExecResult.NotFound;
-        }
 
         if (!this._onCanExecCommands())
             return CommandsExecResult.NotAllow;
@@ -131,17 +98,8 @@ export abstract class UIElement {
 
     destroy() {
         if (this.__element) {
-            if (this.__exts) {
-                for (var key in this.__exts) {
-                    this.__exts[key].destroy();
-                }
-                this.__exts = null;
-            }
-
-            if (!this.__isExt) {
-                this.__element.removeAttribute(elemAttributeName);
-                delete this.__element[elemPropertyName];
-            }
+            this.__element.removeAttribute(ElemAttributeName);
+            delete this.__element[ElemPropertyName];
 
             this.__element = null;
         }
