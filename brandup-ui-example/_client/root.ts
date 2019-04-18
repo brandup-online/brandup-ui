@@ -1,5 +1,5 @@
 ﻿import "./styles.less";
-import { UIElement, UIControl } from "brandup-ui";
+import { UIElement, UIControl, DOM, ajaxRequest, AjaxQueue, AJAXMethod, Utility } from "brandup-ui";
 
 export class Elem extends UIControl<any> {
     get typeName(): string { return "Elem2"; }

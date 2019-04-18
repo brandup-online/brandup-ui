@@ -1,4 +1,4 @@
-declare class DOM {
+export declare class DOM {
     static getElementByClass(parentElement: Element, className: string): HTMLElement;
     static getElementByName(name: string): HTMLElement;
     static getElementByTagName(parentElement: Element, tagName: string): HTMLElement;
@@ -17,4 +17,3 @@ declare class DOM {
     static removeClass(container: Element, selectors: string, className: string): void;
     static empty(element: Element): void;
 }
-export default DOM;

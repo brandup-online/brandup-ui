@@ -1,7 +1,7 @@
 ﻿import * as common from "./common"
 
 export type AJAXMethod = "GET" | "POST" | "PUT" | "DELETE";
-export interface RequestOptions {
+export interface AjaxRequestOptions {
     url?: string;
     urlParams?: { [key: string]: string; };
     method?: AJAXMethod;
@@ -13,22 +13,22 @@ export interface RequestOptions {
     disableCache?: boolean;
 }
 
-export interface QueueOptions {
-    onPreRequest?: (ajaxOptions: RequestOptions) => void;
+export interface AjaxQueueOptions {
+    onPreRequest?: (ajaxOptions: AjaxRequestOptions) => void;
 }
 export class AjaxQueue {
-    private _options: QueueOptions;
-    private _q: Array<{ options: RequestOptions, xhr?: XMLHttpRequest }>;
-    private __cur!: { options: RequestOptions, xhr?: XMLHttpRequest } | null;
+    private _options: AjaxQueueOptions;
+    private _q: Array<{ options: AjaxRequestOptions, xhr?: XMLHttpRequest }>;
+    private __cur!: { options: AjaxRequestOptions, xhr?: XMLHttpRequest } | null;
 
-    constructor(options?: QueueOptions) {
+    constructor(options?: AjaxQueueOptions) {
         this._q = [];
         this.__cur = null;
 
         this._options = options ? options : {};
     }
 
-    request(options: RequestOptions) {
+    request(options: AjaxRequestOptions) {
         if (!options)
             throw new Error();
 
@@ -91,7 +91,7 @@ var urlEncode = (data: string, rfc3986: boolean = true) => {
     return data;
 };
 
-export var ajaxRequest = (options: RequestOptions) => {
+export var ajaxRequest = (options: AjaxRequestOptions) => {
     if (!options)
         throw new Error();
 

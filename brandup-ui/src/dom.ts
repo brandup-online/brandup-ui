@@ -1,6 +1,6 @@
 ﻿import * as common from "./common"
 
-class DOM {
+export class DOM {
     static getElementByClass(parentElement: Element, className: string): HTMLElement {
         var elements = parentElement.getElementsByClassName(className);
         if (elements.length == 0)
@@ -154,5 +154,3 @@ class DOM {
         }
     }
 }
-
-export default DOM;
