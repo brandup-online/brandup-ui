@@ -3,12 +3,12 @@
   "description": "brandup-ui",
   "author": {
     "name": "Dmitry Kovyazin",
-    "email": "d.kovyazin@hotmail.com"
+    "email": "it@brandup.online"
   },
-  "homepage": "https://github.com/dkovyazin/brandup-web-ui",
+  "homepage": "https://github.com/dkovyazin/brandup-web",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dkovyazin/brandup-web-ui"
+    "url": "https://github.com/dkovyazin/brandup-web"
   },
   "main": "dist/brandup-ui.js",
   "types": "dist/brandup-ui.d.ts",
