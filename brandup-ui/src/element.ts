@@ -125,7 +125,7 @@ var commandClickHandler = (e: MouseEvent) => {
     var controlElem: HTMLElement = commandElem;
     while (true) {
         while (controlElem) {
-            if (controlElem.hasAttribute("bbpm")) {
+            if (controlElem.hasAttribute(ElemAttributeName)) {
                 break;
             }
             controlElem = controlElem.parentElement;
@@ -134,7 +134,7 @@ var commandClickHandler = (e: MouseEvent) => {
         if (!controlElem)
             break;
 
-        var uiElem: UIElement = controlElem ? controlElem["bbpmElem"] : this;
+        var uiElem: UIElement = controlElem ? controlElem[ElemPropertyName] : this;
 
         var commandName = commandElem.getAttribute("data-command");
         var res = uiElem.execCommand(commandName, commandElem);
