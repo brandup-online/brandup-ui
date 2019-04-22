@@ -115,10 +115,13 @@ export var ajaxRequest = (options: AjaxRequestOptions) => {
 
         let i = 0;
         for (let key in urlParams) {
+            let val = urlParams[key];
+            if (val === null)
+                continue;
+
             url += (i === 0 ? "" : "&") + key;
 
-            let val = urlParams[key];
-            if (val)
+            if (val !== "")
                 url += "=" + encodeURIComponent(val);
 
             i++;
@@ -212,7 +215,7 @@ export var ajaxRequest = (options: AjaxRequestOptions) => {
 
                     if (x.response) {
                         var ct = x.getResponseHeader("Content-Type");
-                        if (ct && ct.indexOf("application/json", 0) === 0)
+                        if (ct && (ct.indexOf("application/json", 0) === 0 || ct.indexOf("application/problem+json", 0) === 0))
                             responseData = JSON.parse(x.responseText);
                         else if (ct && ct.indexOf("application/xml", 0) === 0)
                             responseData = x.responseXML;
