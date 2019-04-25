@@ -108,23 +108,28 @@ export var ajaxRequest = (options: AjaxRequestOptions) => {
     }
 
     if (urlParams) {
-        if (url.indexOf("?") == -1)
-            url += "?";
-        else
-            url += "&";
-
+        let urlQueryStr = "";
         let i = 0;
         for (let key in urlParams) {
             let val = urlParams[key];
             if (val === null)
                 continue;
 
-            url += (i === 0 ? "" : "&") + key;
+            urlQueryStr += (i === 0 ? "" : "&") + key;
 
             if (val !== "")
-                url += "=" + encodeURIComponent(val);
+                urlQueryStr += "=" + encodeURIComponent(val);
 
             i++;
+        }
+
+        if (urlQueryStr) {
+            if (url.indexOf("?") == -1)
+                url += "?";
+            else
+                url += "&";
+
+            url += urlQueryStr;
         }
     }
 
