@@ -146,6 +146,7 @@ var commandClickHandler = (e: MouseEvent) => {
     }
 
     e.preventDefault();
+    e.stopPropagation();
     e.returnValue = false;
 
     return false;
