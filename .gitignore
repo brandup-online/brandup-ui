@@ -338,3 +338,7 @@ ASALocalRun/
 /brandup-ui-example/wwwroot/dist
 /brandup-ui-example/package-lock.json
 /brandup-ui/.rpt2_cache
+/brandup-ui/src/**/*.d.ts
+/brandup-ui/src/**/*.js.map
+/brandup-ui-example/_client/**/*.js
+/brandup-ui-example/_client/**/*.js.map
