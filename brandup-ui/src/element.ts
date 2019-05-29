@@ -9,9 +9,7 @@ export abstract class UIElement {
     private __commandHandlers: { [key: string]: ICommandHandler; } = {};
     
     abstract typeName: string;
-    get element(): HTMLElement {
-        return this.__element;
-    }
+    get element(): HTMLElement { return this.__element; }
     protected setElement(elem: HTMLElement) {
         if (!elem)
             throw "Not set value elem.";
@@ -24,68 +22,69 @@ export abstract class UIElement {
         this.__element[ElemPropertyName] = this;
         this.__element.setAttribute(ElemAttributeName, this.typeName);
 
-        //elem.addEventListener("DOMNodeRemoved", () => this.destroy());
+        this.defineEvent("command", { cancelable: false, bubbles: true });
     }
     
     // HTMLElement Events
-    protected __createEvent(eventName: string, eventOptions?: IEventOptions) {
+    protected defineEvent(eventName: string, eventOptions?: IEventOptions) {
         this.__events[eventName] = eventOptions ? eventOptions : null;
     }
-    protected __raiseEvent(eventName: string, eventArgs?: any): boolean {
-        //if (!this.options.enable)
-        //    return false;
-
+    protected raiseEvent<T>(eventName: string, eventArgs?: T): boolean {
         if (!this.__events.hasOwnProperty(eventName))
-            throw new Error();
+            throw `Not found event "${eventName}".`;
 
         var eventOptions = this.__events[eventName];
 
-        var eventInit: CustomEventInit<IEventArgs> = {};
+        var eventInit: CustomEventInit<T> = {};
         if (eventOptions) {
             if (eventOptions.bubbles)
                 eventInit.bubbles = eventOptions.bubbles;
             if (eventOptions.cancelable)
                 eventInit.cancelable = eventOptions.cancelable;
-            //if (eventOptions.scoped)
-            //    eventInit.scoped = eventOptions.scoped;
+            if (eventOptions.composed)
+                eventInit.composed = eventOptions.composed;
         }
         eventInit.detail = eventArgs ? eventArgs : null;
 
-        var event = new CustomEvent<IEventArgs>(eventName, eventInit);
+        var event = new CustomEvent<T>(eventName, eventInit);
 
+        return this.dispatchEvent(event);
+    }
+    addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) {
+        this.__element.addEventListener(type, listener, options);
+    }
+    removeEventListener(type: string, listener?: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions) {
+        this.__element.removeEventListener(type, listener, options);
+    }
+    dispatchEvent(event: Event): boolean {
         return this.__element.dispatchEvent(event);
-    }
-    addEventListener(eventName: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean) {
-        this.__element.addEventListener(eventName, listener, useCapture);
-    }
-    removeEventListener(eventName: string, listener?: EventListenerOrEventListenerObject, useCapture?: boolean) {
-        this.__element.removeEventListener(eventName, listener, useCapture);
     }
 
     // Commands
     registerCommand(name: string, execute: (commandElem: HTMLElement) => void, canExecute: (commandElem: HTMLElement) => boolean = null) {
-        if (this.__commandHandlers.hasOwnProperty(name))
-            throw new Error("Команда уже существует.");
+        var key = name.toLowerCase();
+        if (this.__commandHandlers.hasOwnProperty(key))
+            throw `Command "${name}" already registered.`;
 
-        this.__commandHandlers[name] = <ICommandHandler>{
+        this.__commandHandlers[key] = {
+            name: name,
             execute: common.Utility.createDelegate(this, execute),
             canExecute: canExecute ? common.Utility.createDelegate(this, canExecute) : null
         };
-
-        this.__createEvent(name, {});
     }
     execCommand(name: string, elem: HTMLElement): CommandsExecResult {
-        if (!this.__commandHandlers.hasOwnProperty(name))
+        var key = name.toLowerCase();
+        if (!this.__commandHandlers.hasOwnProperty(key))
             return CommandsExecResult.NotFound;
 
         if (!this._onCanExecCommands())
             return CommandsExecResult.NotAllow;
 
-        var handler = this.__commandHandlers[name];
+        var handler = this.__commandHandlers[key];
         if (handler.canExecute && !handler.canExecute(elem))
             return CommandsExecResult.NotAllow;
 
-        this.__raiseEvent(name);
+        this.raiseEvent<any>("command", handler.name);
 
         handler.execute(elem);
 
@@ -147,7 +146,7 @@ var commandClickHandler = (e: MouseEvent) => {
 
     e.preventDefault();
     e.stopPropagation();
-    e.returnValue = false;
+    e.stopImmediatePropagation();
 
     return false;
 }
@@ -155,11 +154,9 @@ var commandClickHandler = (e: MouseEvent) => {
 document.body.addEventListener("click", commandClickHandler, false);
 
 export interface IEventOptions {
-    scoped?: boolean;
     bubbles?: boolean;
     cancelable?: boolean;
-}
-export interface IEventArgs {
+    composed?: boolean;
 }
 
 export enum CommandsExecResult {
@@ -168,6 +165,7 @@ export enum CommandsExecResult {
     Success = 2
 }
 interface ICommandHandler {
+    name: string;
     execute: (elem: HTMLElement) => void;
     canExecute: (elem: HTMLElement) => boolean;
 }
