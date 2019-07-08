@@ -102,6 +102,9 @@ export class DOM {
                             value(e, elem);
                         });
                     }
+                    else if (typeof value === "object") {
+                        elem.setAttribute(key, value !== null ? JSON.stringify(value) : "");
+                    }
                     else {
                         elem.setAttribute(key, value !== null ? value : "");
                     }
