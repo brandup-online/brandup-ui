@@ -7,13 +7,13 @@ export abstract class UIElement {
     private __element: HTMLElement;
     private __events: { [key: string]: IEventOptions; } = {};
     private __commandHandlers: { [key: string]: ICommandHandler; } = {};
-    
+
     abstract typeName: string;
     get element(): HTMLElement { return this.__element; }
     protected setElement(elem: HTMLElement) {
         if (!elem)
             throw "Not set value elem.";
-        
+
         if (this.__element || elem[ElemPropertyName])
             throw "UIElement already defined";
 
@@ -24,7 +24,7 @@ export abstract class UIElement {
 
         this.defineEvent("command", { cancelable: false, bubbles: true });
     }
-    
+
     // HTMLElement Events
     protected defineEvent(eventName: string, eventOptions?: IEventOptions) {
         this.__events[eventName] = eventOptions ? eventOptions : null;

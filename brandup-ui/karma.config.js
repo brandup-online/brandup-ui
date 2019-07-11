@@ -57,6 +57,6 @@ module.exports = function (config) {
             require("karma-typescript")
         ]
     };
-    
+
     config.set(configuration);
 };

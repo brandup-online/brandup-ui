@@ -212,7 +212,7 @@ export var ajaxRequest = (options: AjaxRequestOptions) => {
 
     xhr.onreadystatechange = (e: Event) => {
         var x = <XMLHttpRequest>e.target;
-        
+
         switch (x.readyState) {
             case XMLHttpRequest.DONE: {
                 if (options.success) {

@@ -27,7 +27,7 @@ describe('#Utility', () => {
         var str = 1;
 
         var result = common.Utility.isString(str);
-        
+
         assert.isFalse(result);
     });
 });
