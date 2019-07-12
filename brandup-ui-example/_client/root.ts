@@ -8,4 +8,4 @@ export class Elem extends UIControl<any> {
     }
 }
 
-var elem = new Elem(null, document.body)
+var elem = new Elem(null, document.body);
