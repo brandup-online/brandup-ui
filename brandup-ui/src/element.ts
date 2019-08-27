@@ -151,7 +151,15 @@ var commandClickHandler = (e: MouseEvent) => {
     return false;
 }
 
-document.body.addEventListener("click", commandClickHandler, false);
+var addClientHandler = () => document.body.addEventListener("click", commandClickHandler, false);
+if (document.body)
+    addClientHandler();
+else {
+    document.addEventListener("readystatechange", () => {
+        if (document.readyState === "complete")
+            addClientHandler();
+    });
+}
 
 export interface IEventOptions {
     bubbles?: boolean;
