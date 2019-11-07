@@ -61,7 +61,7 @@ export abstract class UIElement {
     }
 
     // Commands
-    registerCommand(name: string, execute: (commandElem: HTMLElement) => void, canExecute: (commandElem: HTMLElement) => boolean = null) {
+    registerCommand(name: string, execute: (commandElem: HTMLElement, context: CommandExecutionContext) => void, canExecute: (commandElem: HTMLElement, context: CommandExecutionContext) => boolean = null) {
         var key = name.toLowerCase();
         if (this.__commandHandlers.hasOwnProperty(key))
             throw `Command "${name}" already registered.`;
@@ -72,23 +72,27 @@ export abstract class UIElement {
             canExecute: canExecute ? common.Utility.createDelegate(this, canExecute) : null
         };
     }
-    execCommand(name: string, elem: HTMLElement): CommandsExecResult {
+    execCommand(name: string, elem: HTMLElement): { result: CommandsExecResult, context?: CommandExecutionContext } {
         var key = name.toLowerCase();
         if (!this.__commandHandlers.hasOwnProperty(key))
-            return CommandsExecResult.NotFound;
+            return { result: CommandsExecResult.NotFound };
 
         if (!this._onCanExecCommands())
-            return CommandsExecResult.NotAllow;
+            return { result: CommandsExecResult.NotAllow };
+
+        var context: CommandExecutionContext = {
+            transparent: false
+        };
 
         var handler = this.__commandHandlers[key];
-        if (handler.canExecute && !handler.canExecute(elem))
-            return CommandsExecResult.NotAllow;
+        if (handler.canExecute && !handler.canExecute(elem, context))
+            return { result: CommandsExecResult.NotAllow, context: context };
 
         this.raiseEvent<any>("command", handler.name);
 
-        handler.execute(elem);
+        handler.execute(elem, context);
 
-        return CommandsExecResult.Success;
+        return { result: CommandsExecResult.Success, context: context };
     }
 
     protected _onCanExecCommands(): boolean {
@@ -137,7 +141,12 @@ var commandClickHandler = (e: MouseEvent) => {
 
         var commandName = commandElem.getAttribute("data-command");
         var res = uiElem.execCommand(commandName, commandElem);
-        if (res == CommandsExecResult.NotFound) {
+        if (res.result == CommandsExecResult.Success) {
+            if (res.context.transparent)
+                return;
+        }
+
+        if (res.result == CommandsExecResult.NotFound) {
             controlElem = controlElem.parentElement;
             continue;
         }
@@ -174,6 +183,10 @@ export enum CommandsExecResult {
 }
 interface ICommandHandler {
     name: string;
-    execute: (elem: HTMLElement) => void;
-    canExecute: (elem: HTMLElement) => boolean;
+    execute: (elem: HTMLElement, context: CommandExecutionContext) => void;
+    canExecute: (elem: HTMLElement, context: CommandExecutionContext) => boolean;
+}
+
+export interface CommandExecutionContext {
+    transparent?: boolean;
 }
