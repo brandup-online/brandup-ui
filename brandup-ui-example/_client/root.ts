@@ -12,5 +12,9 @@ export class Elem extends UIControl<any> {
     }
 }
 
-var elem = new Elem(null, document.body);
-elem.render(null);
+document.addEventListener("readystatechange", () => {
+    if (document.readyState === "complete") {
+        var elem = new Elem(null, document.body);
+        elem.render(null);
+    }
+});
