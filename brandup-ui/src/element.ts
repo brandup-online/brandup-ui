@@ -172,7 +172,7 @@ window.addEventListener("click", commandClickHandler, false);
         return evt;
     }
 
-    CustomEvent.prototype = Event.prototype;
+    CustomEvent.prototype = window["Event"].prototype;
 
     window["CustomEvent"] = CustomEvent;
 })();
