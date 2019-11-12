@@ -165,16 +165,16 @@ window.addEventListener("click", commandClickHandler, false);
 (function () {
     if (typeof window["CustomEvent"] === "function") return false; //If not IE
 
-    let CustomEvent = function(event, params) {
+    let customEvent = function(event, params) {
         params = params || { bubbles: false, cancelable: false, detail: undefined };
         var evt = document.createEvent('CustomEvent');
         evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
-        return evt;
+        return <any>evt;
     }
 
-    CustomEvent.prototype = window["Event"].prototype;
+    customEvent.prototype = window["Event"].prototype;
 
-    window["CustomEvent"] = CustomEvent;
+    (<any>window)["CustomEvent"] = customEvent;
 })();
 
 export interface IEventOptions {
