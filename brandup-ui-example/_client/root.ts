@@ -9,6 +9,7 @@ export class Elem extends UIControl<any> {
         this.registerCommand("command1-cant", (elem: HTMLElement) => { elem.innerHTML = "ok"; }, () => { return false; });
         this.registerCommand("command2", (elem: HTMLElement, context: CommandExecutionContext) => { context.transparent = true; elem.innerHTML = "ok"; });
         this.registerCommand("command2-cant", (elem: HTMLElement) => { elem.innerHTML = "ok"; }, () => { return false; });
+        this.registerCommand("command-svg", (elem: HTMLElement) => { elem.innerHTML = "ok"; });
     }
 }
 

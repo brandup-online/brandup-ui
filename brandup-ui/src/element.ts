@@ -109,7 +109,7 @@ export abstract class UIElement {
     }
 }
 
-var commandClickHandler = (e: MouseEvent) => {
+const commandClickHandler = (e: MouseEvent) => {
     if (e.returnValue === false)
         return;
 
@@ -120,7 +120,10 @@ var commandClickHandler = (e: MouseEvent) => {
         if (commandElem === e.currentTarget)
             return;
 
-        commandElem = commandElem.parentElement;
+        if (typeof commandElem.parentElement === "undefined")
+            commandElem = <HTMLElement>commandElem.parentNode;
+        else
+            commandElem = commandElem.parentElement;
         if (!commandElem)
             return;
     }
@@ -131,7 +134,11 @@ var commandClickHandler = (e: MouseEvent) => {
             if (controlElem.hasAttribute(ElemAttributeName)) {
                 break;
             }
-            controlElem = controlElem.parentElement;
+
+            if (typeof controlElem.parentElement === "undefined")
+                commandElem = <HTMLElement>controlElem.parentNode;
+            else
+                controlElem = controlElem.parentElement;
         }
 
         if (!controlElem)
