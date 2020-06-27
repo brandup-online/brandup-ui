@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.WebEncoders;
 using System.Globalization;
 using System.Text.Encodings.Web;
@@ -24,13 +24,7 @@ namespace brandup_ui_example
         {
             #region Web
 
-            services
-                .AddMvc()
-                .SetCompatibilityVersion(CompatibilityVersion.Latest)
-                .AddRazorPagesOptions(options =>
-                {
-                    options.AllowAreas = false;
-                });
+            services.AddRazorPages();
 
             services.Configure<WebEncoderOptions>(options =>
             {
@@ -56,15 +50,17 @@ namespace brandup_ui_example
             #endregion
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+#pragma warning disable CS0618 // Type or member is obsolete
                 app.UseWebpackDevMiddleware(new Microsoft.AspNetCore.SpaServices.Webpack.WebpackDevMiddlewareOptions
                 {
                     HotModuleReplacement = true
                 });
+#pragma warning restore CS0618 // Type or member is obsolete
             }
             else
             {
@@ -74,7 +70,12 @@ namespace brandup_ui_example
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            app.UseMvc();
+            app.UseRouting();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapRazorPages();
+            });
         }
     }
 }
