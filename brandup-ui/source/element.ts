@@ -1,4 +1,4 @@
-﻿import Utility from "./utility";
+﻿import { Utility } from "./utility";
 
 export const ElemAttributeName = "brandup-ui-element";
 export const ElemPropertyName = "brandupUiElement";

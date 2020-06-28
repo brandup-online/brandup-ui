@@ -1,4 +1,4 @@
-﻿class Utility {
+﻿export class Utility {
     static arrayToObject(array: Array<{ Key: string; Value: any }>): any {
         if (array) {
             const result = {};
@@ -212,5 +212,3 @@
         };
     };
 }
-
-export default Utility;

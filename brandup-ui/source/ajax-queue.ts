@@ -1,5 +1,5 @@
 import { AjaxRequestOptions, ajaxRequest } from "./ajax";
-import Utility from "./utility";
+import { Utility } from "./utility";
 
 export interface AjaxQueueOptions {
     onPreRequest?: (ajaxOptions: AjaxRequestOptions) => void;
