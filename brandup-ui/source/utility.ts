@@ -1,8 +1,8 @@
-﻿export class Utility {
+﻿class Utility {
     static arrayToObject(array: Array<{ Key: string; Value: any }>): any {
         if (array) {
-            var result = {};
-            for (var i = 0; i < array.length; i++) {
+            const result = {};
+            for (let i = 0; i < array.length; i++) {
                 result[array[i].Key] = array[i].Value;
             }
             return result;
@@ -12,8 +12,8 @@
 
     static objectToArray(obj: any): Array<{ Key: string; Value: any }> | null {
         if (obj) {
-            var result = new Array<{ Key: string; Value: any }>();
-            for (var key in obj) {
+            const result = new Array<{ Key: string; Value: any }>();
+            for (const key in obj) {
                 if (obj.hasOwnProperty(key)) {
                     result.push({ Key: key, Value: obj[key] });
                 }
@@ -24,12 +24,12 @@
     }
 
     static getWordEnd(count: number, word: string, one?: string, two?: string, five?: string): string {
-        var tt = count % 100;
+        const tt = count % 100;
         if (tt >= 5 && tt <= 20) {
             return word + (Utility.isString(five) ? five : "");
         }
 
-        var t = count % 10;
+        const t = count % 10;
 
         return (t === 1 ?
             (word + (Utility.isString(one) ? one : "")) :
@@ -66,8 +66,8 @@
             return false;
         }
 
-        var key;
-        for (key in obj) { }
+        let key;
+        for (key in obj) { continue; }
 
         return key === undefined || obj.hasOwnProperty.call(obj, key);
     }
@@ -76,8 +76,8 @@
         if (!Utility.isArray(items))
             throw "Param items is not array.";
 
-        var str = "";
-        for (var i = 0; i < items.length; i++)
+        let str = "";
+        for (let i = 0; i < items.length; i++)
             str += (i > 0 ? separator : "") + items[i];
 
         return str;
@@ -92,14 +92,14 @@
             return false;
         }
 
-        var props: Array<string> = (property.indexOf(".") >= 0 ? property.split(".") : [property]);
+        const props: Array<string> = (property.indexOf(".") >= 0 ? property.split(".") : [property]);
 
-        var t = obj;
-        for (var i = 0; i < props.length; i++) {
+        let t = obj;
+        for (let i = 0; i < props.length; i++) {
             if (!t) {
                 return false;
             }
-            var pName = props[i];
+            const pName = props[i];
             if (!t.hasOwnProperty(pName)) {
                 return false;
             }
@@ -115,11 +115,11 @@
             return null;
         }
 
-        var props: Array<string> = (property.indexOf(".") >= 0 ? property.split(".") : [property]);
+        const props: Array<string> = (property.indexOf(".") >= 0 ? property.split(".") : [property]);
 
-        var t = obj;
-        for (var i = 0; i < props.length; i++) {
-            var pName = props[i];
+        let t = obj;
+        for (let i = 0; i < props.length; i++) {
+            const pName = props[i];
             if (!t.hasOwnProperty(pName)) {
                 return null;
             }
@@ -131,7 +131,7 @@
     }
 
     static extend(...params: any[]): any {
-        var options, name, src, copy, copyIsArray, clone,
+        let options, name, src, copy, copyIsArray, clone,
             target = params[0] || {},
             i = 1,
             length = params.length,
@@ -181,14 +181,14 @@
     }
     static createDelegate2(context: any, func: (...params: Array<any>) => void, args?: Array<any>) {
         return (...params: Array<any>) => {
-            var args2 = new Array<any>();
+            const args2 = new Array<any>();
             if (args && args.length) {
-                for (var i = 0; i < args.length; i++) {
+                for (let i = 0; i < args.length; i++) {
                     args2.push(args[i]);
                 }
             }
             if (params.length) {
-                for (var i = 0; i < params.length; i++) {
+                for (let i = 0; i < params.length; i++) {
                     args2.push(params[i]);
                 }
             }
@@ -197,14 +197,14 @@
     }
     static createDelegate3(context: any, func: (...params: Array<any>) => void, args?: Array<any>) {
         return (...params: Array<any>) => {
-            var args2 = new Array<any>();
+            const args2 = new Array<any>();
             if (params.length) {
-                for (var i = 0; i < params.length; i++) {
+                for (let i = 0; i < params.length; i++) {
                     args2.push(params[i]);
                 }
             }
             if (args && args.length) {
-                for (var i = 0; i < args.length; i++) {
+                for (let i = 0; i < args.length; i++) {
                     args2.push(args[i]);
                 }
             }
@@ -212,3 +212,5 @@
         };
     };
 }
+
+export default Utility;

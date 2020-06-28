@@ -1,7 +1,7 @@
-﻿import "./styles.less";
-import { UIElement, UIControl, DOM, ajaxRequest, AjaxQueue, AJAXMethod, Utility, CommandsExecResult, CommandExecutionContext } from "brandup-ui";
+﻿import { UIControl, CommandExecutionContext } from "brandup-ui";
+import "./styles.less";
 
-export class Elem extends UIControl<any> {
+export class Elem extends UIControl<object> {
     get typeName(): string { return "Elem2"; }
 
     protected _onRender() {
@@ -15,7 +15,7 @@ export class Elem extends UIControl<any> {
 
 document.addEventListener("readystatechange", () => {
     if (document.readyState === "complete") {
-        var elem = new Elem(null, document.body);
+        const elem = new Elem(null, document.body);
         elem.render(null);
     }
 });

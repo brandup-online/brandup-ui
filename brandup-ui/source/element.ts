@@ -1,12 +1,18 @@
-﻿import * as common from "./common"
+﻿import Utility from "./utility";
 
 export const ElemAttributeName = "brandup-ui-element";
 export const ElemPropertyName = "brandupUiElement";
 
+export enum CommandsExecResult {
+    NotFound = 0,
+    NotAllow = 1,
+    Success = 2
+}
+
 export abstract class UIElement {
     private __element: HTMLElement;
-    private __events: { [key: string]: IEventOptions; } = {};
-    private __commandHandlers: { [key: string]: ICommandHandler; } = {};
+    private __events: { [key: string]: IEventOptions } = {};
+    private __commandHandlers: { [key: string]: ICommandHandler } = {};
 
     abstract typeName: string;
     get element(): HTMLElement { return this.__element; }
@@ -33,9 +39,9 @@ export abstract class UIElement {
         if (!this.__events.hasOwnProperty(eventName))
             throw `Not found event "${eventName}".`;
 
-        var eventOptions = this.__events[eventName];
+        const eventOptions = this.__events[eventName];
 
-        var eventInit: CustomEventInit<T> = {};
+        const eventInit: CustomEventInit<T> = {};
         if (eventOptions) {
             if (eventOptions.bubbles)
                 eventInit.bubbles = eventOptions.bubbles;
@@ -46,7 +52,7 @@ export abstract class UIElement {
         }
         eventInit.detail = eventArgs ? eventArgs : null;
 
-        var event = new CustomEvent<T>(eventName, eventInit);
+        const event = new CustomEvent<T>(eventName, eventInit);
 
         return this.dispatchEvent(event);
     }
@@ -62,29 +68,29 @@ export abstract class UIElement {
 
     // Commands
     registerCommand(name: string, execute: (commandElem: HTMLElement, context: CommandExecutionContext) => void, canExecute: (commandElem: HTMLElement, context: CommandExecutionContext) => boolean = null) {
-        var key = name.toLowerCase();
+        const key = name.toLowerCase();
         if (this.__commandHandlers.hasOwnProperty(key))
             throw `Command "${name}" already registered.`;
 
         this.__commandHandlers[key] = {
             name: name,
-            execute: common.Utility.createDelegate(this, execute),
-            canExecute: canExecute ? common.Utility.createDelegate(this, canExecute) : null
+            execute: Utility.createDelegate(this, execute),
+            canExecute: canExecute ? Utility.createDelegate(this, canExecute) : null
         };
     }
-    execCommand(name: string, elem: HTMLElement): { result: CommandsExecResult, context?: CommandExecutionContext } {
-        var key = name.toLowerCase();
+    execCommand(name: string, elem: HTMLElement): { result: CommandsExecResult; context?: CommandExecutionContext } {
+        const key = name.toLowerCase();
         if (!this.__commandHandlers.hasOwnProperty(key))
             return { result: CommandsExecResult.NotFound };
 
         if (!this._onCanExecCommands())
             return { result: CommandsExecResult.NotAllow };
 
-        var context: CommandExecutionContext = {
+        const context: CommandExecutionContext = {
             transparent: false
         };
 
-        var handler = this.__commandHandlers[key];
+        const handler = this.__commandHandlers[key];
         if (handler.canExecute && !handler.canExecute(elem, context))
             return { result: CommandsExecResult.NotAllow, context: context };
 
@@ -113,7 +119,7 @@ const commandClickHandler = (e: MouseEvent) => {
     if (e.returnValue === false)
         return;
 
-    var commandElem = <HTMLElement>e.target;
+    let commandElem = e.target as HTMLElement;
     while (true) {
         if (commandElem.hasAttribute("data-command"))
             break;
@@ -121,14 +127,14 @@ const commandClickHandler = (e: MouseEvent) => {
             return;
 
         if (typeof commandElem.parentElement === "undefined")
-            commandElem = <HTMLElement>commandElem.parentNode;
+            commandElem = commandElem.parentNode as HTMLElement;
         else
             commandElem = commandElem.parentElement;
         if (!commandElem)
             return;
     }
 
-    var controlElem: HTMLElement = commandElem;
+    let controlElem: HTMLElement = commandElem;
     while (true) {
         while (controlElem) {
             if (controlElem.hasAttribute(ElemAttributeName)) {
@@ -136,7 +142,7 @@ const commandClickHandler = (e: MouseEvent) => {
             }
 
             if (typeof controlElem.parentElement === "undefined")
-                commandElem = <HTMLElement>controlElem.parentNode;
+                commandElem = controlElem.parentNode as HTMLElement;
             else
                 controlElem = controlElem.parentElement;
         }
@@ -144,19 +150,20 @@ const commandClickHandler = (e: MouseEvent) => {
         if (!controlElem)
             break;
 
-        var uiElem: UIElement = controlElem ? controlElem[ElemPropertyName] : this;
+        const uiElem: UIElement = controlElem ? controlElem[ElemPropertyName] : this;
 
-        var commandName = commandElem.getAttribute("data-command");
-        var res = uiElem.execCommand(commandName, commandElem);
-        if (res.result == CommandsExecResult.Success) {
+        const commandName = commandElem.getAttribute("data-command");
+        const res = uiElem.execCommand(commandName, commandElem);
+        if (res.result === CommandsExecResult.Success) {
             if (res.context.transparent)
                 return;
         }
 
-        if (res.result == CommandsExecResult.NotFound) {
+        if (res.result === CommandsExecResult.NotFound) {
             controlElem = controlElem.parentElement;
             continue;
         }
+
         break;
     }
 
@@ -172,16 +179,16 @@ window.addEventListener("click", commandClickHandler, false);
 (function () {
     if (typeof window["CustomEvent"] === "function") return false; //If not IE
 
-    let customEvent = function(event, params) {
+    const customEvent = function (event, params) {
         params = params || { bubbles: false, cancelable: false, detail: undefined };
-        var evt = document.createEvent('CustomEvent');
+        const evt = document.createEvent('CustomEvent');
         evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
-        return <any>evt;
-    }
+        return evt;
+    };
 
     customEvent.prototype = window["Event"].prototype;
 
-    (<any>window)["CustomEvent"] = customEvent;
+    (window as object)["CustomEvent"] = customEvent;
 })();
 
 export interface IEventOptions {
@@ -190,11 +197,6 @@ export interface IEventOptions {
     composed?: boolean;
 }
 
-export enum CommandsExecResult {
-    NotFound = 0,
-    NotAllow = 1,
-    Success = 2
-}
 interface ICommandHandler {
     name: string;
     execute: (elem: HTMLElement, context: CommandExecutionContext) => void;

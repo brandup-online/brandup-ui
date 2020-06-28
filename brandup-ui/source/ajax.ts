@@ -1,6 +1,4 @@
-﻿import * as common from "./common"
-
-export type AJAXMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+﻿export type AJAXMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 export interface AjaxRequestOptions {
     url?: string;
     urlParams?: { [key: string]: string; };
@@ -13,72 +11,7 @@ export interface AjaxRequestOptions {
     disableCache?: boolean;
 }
 
-export interface AjaxQueueOptions {
-    onPreRequest?: (ajaxOptions: AjaxRequestOptions) => void;
-}
-export class AjaxQueue {
-    private _options: AjaxQueueOptions;
-    private _q: Array<{ options: AjaxRequestOptions, xhr?: XMLHttpRequest }>;
-    private __cur!: { options: AjaxRequestOptions, xhr?: XMLHttpRequest } | null;
-
-    constructor(options?: AjaxQueueOptions) {
-        this._q = [];
-        this.__cur = null;
-
-        this._options = options ? options : {};
-    }
-
-    request(options: AjaxRequestOptions) {
-        if (!options)
-            throw new Error();
-
-        var successFunc = options.success;
-        var s = common.Utility.createDelegate2(this, this.__success, [successFunc]);
-        options.success = s;
-
-        this._q.push({ options: options });
-        if (this.__cur === null)
-            this.__execute();
-    }
-    destroy() {
-        if (this.__cur) {
-            this.__cur.xhr.abort();
-            this.__cur = null;
-        }
-    }
-    private __execute() {
-        if (this._q === null)
-            throw new Error("Queue is destroed.");
-        if (this.__cur !== null)
-            throw new Error("Queue is executing.");
-        this.__cur = this._q.shift();
-        if (this.__cur) {
-            if (this._options.onPreRequest) {
-                try {
-                    this._options.onPreRequest(this.__cur.options);
-                }
-                catch { }
-            }
-            this.__cur.xhr = ajaxRequest(this.__cur.options);
-        }
-        else
-            this.__cur = null;
-    }
-    private __success(originSuccess: (data: any, status: number, xhr: XMLHttpRequest) => void, data: any, status: number, xhr: XMLHttpRequest) {
-        if (this._q === null)
-            return;
-        if (originSuccess) {
-            try {
-                originSuccess(data, status, xhr);
-            }
-            catch { }
-        }
-        this.__cur = null;
-        this.__execute();
-    }
-}
-
-var urlEncode = (data: string, rfc3986: boolean = true) => {
+const urlEncode = (data: string, rfc3986 = true) => {
     data = encodeURIComponent(data);
     data = data.replace(/%20/g, '+');
 
@@ -91,17 +24,17 @@ var urlEncode = (data: string, rfc3986: boolean = true) => {
     return data;
 };
 
-export var ajaxRequest = (options: AjaxRequestOptions) => {
+export const ajaxRequest = (options: AjaxRequestOptions) => {
     if (!options)
         throw new Error();
 
-    var xhr = new XMLHttpRequest();
+    const xhr = new XMLHttpRequest();
     xhr.withCredentials = true;
     if (options.timeout === 0 || options.timeout)
         xhr.timeout = options.timeout;
 
-    var url = options.url ? options.url : location.href;
-    var urlParams = options.urlParams;
+    let url = options.url ? options.url : location.href;
+    let urlParams = options.urlParams;
     if (options.disableCache) {
         if (!urlParams) urlParams = {};
         urlParams["_"] = new Date().getTime().toString();
@@ -110,8 +43,8 @@ export var ajaxRequest = (options: AjaxRequestOptions) => {
     if (urlParams) {
         let urlQueryStr = "";
         let i = 0;
-        for (let key in urlParams) {
-            let val = urlParams[key];
+        for (const key in urlParams) {
+            const val = urlParams[key];
             if (val === null)
                 continue;
 
@@ -124,7 +57,7 @@ export var ajaxRequest = (options: AjaxRequestOptions) => {
         }
 
         if (urlQueryStr) {
-            if (url.indexOf("?") == -1)
+            if (url.indexOf("?") === -1)
                 url += "?";
             else
                 url += "&";
@@ -133,16 +66,16 @@ export var ajaxRequest = (options: AjaxRequestOptions) => {
         }
     }
 
-    var method = options.method ? options.method : "GET";
+    const method = options.method ? options.method : "GET";
     xhr.open(method, url, true);
     xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
 
-    var data: any = options.data;
+    let data: any = options.data;
 
     if (!options.type && data) {
         if (data instanceof File)
             options.type = "NONE";
-        else if (data instanceof FormData) { }
+        //else if (data instanceof FormData) { }
             //options.type = "FORMDATA";
         else if (data instanceof Object)
             options.type = "JSON";
@@ -151,8 +84,8 @@ export var ajaxRequest = (options: AjaxRequestOptions) => {
     }
 
     if (options.type) {
-        var type: string;
-        var accept: string;
+        let type: string;
+        let accept: string;
 
         switch (options.type) {
             case "XML":
@@ -170,7 +103,7 @@ export var ajaxRequest = (options: AjaxRequestOptions) => {
                 type = "application/x-www-form-urlencoded";
 
                 if (data instanceof FormData) {
-                    let url = [];
+                    const url = [];
 
                     data.forEach((value: FormDataEntryValue, key: string) => {
                         if (!key)
@@ -197,8 +130,8 @@ export var ajaxRequest = (options: AjaxRequestOptions) => {
     }
 
     if (options.headers) {
-        for (let key in options.headers) {
-            var value = options.headers[key];
+        for (const key in options.headers) {
+            const value = options.headers[key];
             if (!value)
                 continue;
             xhr.setRequestHeader(key, value);
@@ -211,15 +144,15 @@ export var ajaxRequest = (options: AjaxRequestOptions) => {
         xhr.send(data);
 
     xhr.onreadystatechange = (e: Event) => {
-        var x = <XMLHttpRequest>e.target;
+        const x = e.target as XMLHttpRequest;
 
         switch (x.readyState) {
             case XMLHttpRequest.DONE: {
                 if (options.success) {
-                    var responseData: any = null;
+                    let responseData: any = null;
 
                     if (x.response) {
-                        var ct = x.getResponseHeader("Content-Type");
+                        const ct = x.getResponseHeader("Content-Type");
                         if (ct && (ct.indexOf("application/json", 0) === 0 || ct.indexOf("application/problem+json", 0) === 0))
                             responseData = JSON.parse(x.responseText);
                         else if (ct && ct.indexOf("application/xml", 0) === 0)

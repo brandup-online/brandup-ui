@@ -1,8 +1,8 @@
-﻿import { Utility } from "./common";
+﻿import Utility from "./utility";
 import { UIElement } from "./element";
 
 export abstract class UIControl<TOptions> extends UIElement {
-    readonly options: TOptions = <TOptions>{};
+    readonly options: TOptions = {} as TOptions;
     private __fragment: DocumentFragment;
 
     readonly isInject: boolean = false;
@@ -10,7 +10,7 @@ export abstract class UIControl<TOptions> extends UIElement {
     constructor(options?: TOptions, element?: HTMLElement) {
         super();
 
-        var tagName = this._getTagName();
+        const tagName = this._getTagName();
         if (!tagName)
             throw new Error();
 
@@ -31,8 +31,7 @@ export abstract class UIControl<TOptions> extends UIElement {
     }
 
     // Options
-    protected _onApplyDefaultOptions() {
-    }
+    protected _onApplyDefaultOptions() { return; }
     protected _applyOptions<TOptions>(options: TOptions) {
         if (options)
             Utility.extend(this.options, options);
@@ -51,18 +50,18 @@ export abstract class UIControl<TOptions> extends UIElement {
                 throw new Error();
 
             if (Utility.isString(container)) {
-                container = document.getElementById((<string>container).substr(1));
+                container = document.getElementById((container as string).substr(1));
                 if (!container)
                     throw new Error();
             }
         }
 
-        var htmlTemplate = this._getHtmlTemplate();
+        const htmlTemplate = this._getHtmlTemplate();
         if (htmlTemplate)
             this.element.insertAdjacentHTML(position, htmlTemplate);
 
         if (this.__fragment) {
-            (<HTMLElement>container).appendChild(this.__fragment);
+            (container as HTMLElement).appendChild(this.__fragment);
             delete this.__fragment;
         }
 
@@ -77,6 +76,6 @@ export abstract class UIControl<TOptions> extends UIElement {
         super.destroy();
     }
 
-    protected _onInitialize() { }
+    protected _onInitialize() { return; }
     protected abstract _onRender();
 }

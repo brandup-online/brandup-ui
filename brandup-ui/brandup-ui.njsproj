@@ -27,19 +27,22 @@
   <ItemGroup>
     <Content Include="package.json" />
     <Content Include="README.md" />
+    <Content Include="source\ajax-queue.ts">
+      <SubType>Code</SubType>
+    </Content>
     <Content Include="tsconfig.json" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="build\" />
-    <Folder Include="src\" />
+    <Folder Include="source\" />
   </ItemGroup>
   <ItemGroup>
-    <TypeScriptCompile Include="src\ajax.ts" />
-    <TypeScriptCompile Include="src\common.ts" />
-    <TypeScriptCompile Include="src\control.ts" />
-    <TypeScriptCompile Include="src\dom.ts" />
-    <TypeScriptCompile Include="src\element.ts" />
-    <TypeScriptCompile Include="src\index.ts">
+    <TypeScriptCompile Include="source\ajax.ts" />
+    <TypeScriptCompile Include="source\utility.ts" />
+    <TypeScriptCompile Include="source\control.ts" />
+    <TypeScriptCompile Include="source\dom.ts" />
+    <TypeScriptCompile Include="source\element.ts" />
+    <TypeScriptCompile Include="source\index.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
   </ItemGroup>

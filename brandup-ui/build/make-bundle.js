@@ -3,7 +3,7 @@ var dtsBundle = require('dts-bundle');
 const pkg = require("../package.json");
 
 const packageName = pkg.name;
-const compiledPath = path.join(__dirname, "..", "src");
+const compiledPath = path.join(__dirname, "..", "source");
 const distNpmPath = path.join(__dirname, "..", "dist");
 
 async function build() {

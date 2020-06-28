@@ -334,11 +334,11 @@ ASALocalRun/
 /brandup-ui/package-lock.json
 /brandup-ui/dist
 /brandup-ui/test/*.js
-/brandup-ui/src/*.js
+/brandup-ui/source/*.js
 /brandup-ui-example/wwwroot/dist
 /brandup-ui-example/package-lock.json
 /brandup-ui/.rpt2_cache
-/brandup-ui/src/**/*.d.ts
-/brandup-ui/src/**/*.js.map
+/brandup-ui/source/**/*.d.ts
+/brandup-ui/source/**/*.js.map
 /brandup-ui-example/_client/**/*.js
 /brandup-ui-example/_client/**/*.js.map
