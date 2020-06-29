@@ -1,4 +1,4 @@
-﻿export type AJAXMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+export type AJAXMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 export interface AjaxRequestOptions {
     url?: string;

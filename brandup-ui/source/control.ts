@@ -1,4 +1,4 @@
-﻿import { Utility } from "./utility";
+import { Utility } from "./utility";
 import { UIElement } from "./element";
 
 export abstract class UIControl<TOptions> extends UIElement {

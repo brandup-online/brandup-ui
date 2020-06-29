@@ -1,4 +1,4 @@
-﻿import { Utility } from "./utility";
+import { Utility } from "./utility";
 
 export class DOM {
     static getElementByClass(parentElement: Element, className: string): HTMLElement {
