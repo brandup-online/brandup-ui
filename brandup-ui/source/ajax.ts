@@ -76,8 +76,8 @@ export const ajaxRequest = (options: AjaxRequestOptions) => {
     if (!options.type && data) {
         if (data instanceof File)
             options.type = "NONE";
-        //else if (data instanceof FormData)
-        //    options.type = "FORMDATA";
+        else if (data instanceof FormData)
+            options.type = null;//"FORMDATA";
         else if (data instanceof Object)
             options.type = "JSON";
         else if (typeof data === "string")
