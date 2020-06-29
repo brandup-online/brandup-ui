@@ -1,17 +1,18 @@
 ﻿export type AJAXMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+
 export interface AjaxRequestOptions {
     url?: string;
-    urlParams?: { [key: string]: string; };
+    urlParams?: { [key: string]: string };
     method?: AJAXMethod;
     timeout?: number;
-    headers?: { [key: string]: string; };
+    headers?: { [key: string]: string };
     type?: "NONE" | "JSON" | "XML" | "FORM" | "FORMDATA" | "TEXT";
-    data?: string | FormData | Object | File;
+    data?: string | FormData | object | File;
     success?: (data: any, status: number, xhr: XMLHttpRequest) => void;
     disableCache?: boolean;
 }
 
-const urlEncode = (data: string, rfc3986 = true) => {
+export const urlEncode = (data: string, rfc3986 = true) => {
     data = encodeURIComponent(data);
     data = data.replace(/%20/g, '+');
 
@@ -75,8 +76,8 @@ export const ajaxRequest = (options: AjaxRequestOptions) => {
     if (!options.type && data) {
         if (data instanceof File)
             options.type = "NONE";
-        else if (data instanceof FormData)
-            options.type = "FORMDATA";
+        //else if (data instanceof FormData)
+        //    options.type = "FORMDATA";
         else if (data instanceof Object)
             options.type = "JSON";
         else if (typeof data === "string")
