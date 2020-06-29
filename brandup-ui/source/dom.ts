@@ -79,7 +79,7 @@ export class DOM {
         }
         return elem;
     }
-    static tag(tagName: string, attributes?: { [key: string]: string | object | ((e: Event, elem: Element) => void) }, children?: ((elem: Element) => void) | Element | string | Array<Element | string | ((parent: Element) => Element)>): HTMLElement {
+    static tag(tagName: string, attributes?: { [key: string]: string | number | boolean | object | ((e: Event, elem: Element) => void) }, children?: ((elem: Element) => void) | Element | string | Array<Element | string | ((parent: Element) => Element)>): HTMLElement {
         const elem = document.createElement(tagName);
 
         if (attributes) {

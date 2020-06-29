@@ -1,4 +1,4 @@
-﻿import { UIControl, CommandExecutionContext } from "brandup-ui";
+﻿import { UIControl, CommandExecutionContext, DOM } from "brandup-ui";
 import "./styles.less";
 
 export class Elem extends UIControl<object> {
@@ -10,6 +10,8 @@ export class Elem extends UIControl<object> {
         this.registerCommand("command2", (elem: HTMLElement, context: CommandExecutionContext) => { context.transparent = true; elem.innerHTML = "ok"; });
         this.registerCommand("command2-cant", (elem: HTMLElement) => { elem.innerHTML = "ok"; }, () => { return false; });
         this.registerCommand("command-svg", (elem: HTMLElement) => { elem.innerHTML = "ok"; });
+
+        DOM.tag("div", { test: 0, test2: true, test3: "test" });
     }
 }
 
