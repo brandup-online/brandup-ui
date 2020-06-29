@@ -3,16 +3,18 @@ import { Utility } from "./utility";
 export const ElemAttributeName = "brandup-ui-element";
 export const ElemPropertyName = "brandupUiElement";
 
-export enum CommandsExecResult {
-    NotFound = 0,
+export type commandExecuteDelegate = (elem: HTMLElement, context: CommandExecutionContext) => void;
+export type commandCanExecuteDelegate = (elem: HTMLElement, context: CommandExecutionContext) => boolean;
+
+export enum CommandsExecStatus {
     NotAllow = 1,
     Success = 2
 }
 
 export abstract class UIElement {
     private __element: HTMLElement;
-    private __events: { [key: string]: IEventOptions } = {};
-    private __commandHandlers: { [key: string]: ICommandHandler } = {};
+    private __events: { [key: string]: EventOptions } = {};
+    private __commandHandlers: { [key: string]: CommandHandler } = {};
 
     abstract typeName: string;
     get element(): HTMLElement { return this.__element; }
@@ -32,11 +34,11 @@ export abstract class UIElement {
     }
 
     // HTMLElement Events
-    protected defineEvent(eventName: string, eventOptions?: IEventOptions) {
+    protected defineEvent(eventName: string, eventOptions?: EventOptions) {
         this.__events[eventName] = eventOptions ? eventOptions : null;
     }
     protected raiseEvent<T>(eventName: string, eventArgs?: T): boolean {
-        if (!this.__events.hasOwnProperty(eventName))
+        if (!(eventName in this.__events))
             throw `Not found event "${eventName}".`;
 
         const eventOptions = this.__events[eventName];
@@ -67,9 +69,9 @@ export abstract class UIElement {
     }
 
     // Commands
-    registerCommand(name: string, execute: (commandElem: HTMLElement, context: CommandExecutionContext) => void, canExecute: (commandElem: HTMLElement, context: CommandExecutionContext) => boolean = null) {
+    registerCommand(name: string, execute: commandExecuteDelegate, canExecute: commandCanExecuteDelegate = null) {
         const key = name.toLowerCase();
-        if (this.__commandHandlers.hasOwnProperty(key))
+        if (key in this.__commandHandlers)
             throw `Command "${name}" already registered.`;
 
         this.__commandHandlers[key] = {
@@ -78,13 +80,16 @@ export abstract class UIElement {
             canExecute: canExecute ? Utility.createDelegate(this, canExecute) : null
         };
     }
-    execCommand(name: string, elem: HTMLElement): { result: CommandsExecResult; context?: CommandExecutionContext } {
+    hasCommand(name: string) {
+        return name.toLowerCase() in this.__commandHandlers;
+    }
+    execCommand(name: string, elem: HTMLElement): { result: CommandsExecStatus; context?: CommandExecutionContext } {
         const key = name.toLowerCase();
-        if (!this.__commandHandlers.hasOwnProperty(key))
-            return { result: CommandsExecResult.NotFound };
+        if (!(key in this.__commandHandlers))
+            throw `Command "${name}" is not registered.`;
 
         if (!this._onCanExecCommands())
-            return { result: CommandsExecResult.NotAllow };
+            return { result: CommandsExecStatus.NotAllow };
 
         const context: CommandExecutionContext = {
             transparent: false
@@ -92,13 +97,13 @@ export abstract class UIElement {
 
         const handler = this.__commandHandlers[key];
         if (handler.canExecute && !handler.canExecute(elem, context))
-            return { result: CommandsExecResult.NotAllow, context: context };
+            return { result: CommandsExecStatus.NotAllow, context: context };
 
-        this.raiseEvent<any>("command", handler.name);
+        this.raiseEvent<string>("command", handler.name);
 
         handler.execute(elem, context);
 
-        return { result: CommandsExecResult.Success, context: context };
+        return { result: CommandsExecStatus.Success, context: context };
     }
 
     protected _onCanExecCommands(): boolean {
@@ -115,14 +120,33 @@ export abstract class UIElement {
     }
 }
 
+const fundUiElementByCommand = (elem: HTMLElement, commandName: string): UIElement => {
+    while (elem) {
+        if (elem.hasAttribute(ElemAttributeName)) {
+            const uiElem: UIElement = elem[ElemPropertyName];
+            if (!uiElem.hasCommand(commandName))
+                continue;
+            return uiElem;
+        }
+
+        if (typeof elem.parentElement === "undefined")
+            elem = elem.parentNode as HTMLElement;
+        else
+            elem = elem.parentElement;
+    }
+
+    return null;
+};
+
 const commandClickHandler = (e: MouseEvent) => {
     if (e.returnValue === false)
         return;
 
     let commandElem = e.target as HTMLElement;
-    while (true) {
+    while (commandElem) {
         if (commandElem.hasAttribute("data-command"))
             break;
+
         if (commandElem === e.currentTarget)
             return;
 
@@ -130,42 +154,17 @@ const commandClickHandler = (e: MouseEvent) => {
             commandElem = commandElem.parentNode as HTMLElement;
         else
             commandElem = commandElem.parentElement;
-        if (!commandElem)
-            return;
     }
 
-    let controlElem: HTMLElement = commandElem;
-    while (true) {
-        while (controlElem) {
-            if (controlElem.hasAttribute(ElemAttributeName)) {
-                break;
-            }
+    if (!commandElem)
+        return;
 
-            if (typeof controlElem.parentElement === "undefined")
-                commandElem = controlElem.parentNode as HTMLElement;
-            else
-                controlElem = controlElem.parentElement;
-        }
+    const commandName = commandElem.getAttribute("data-command");
 
-        if (!controlElem)
-            break;
-
-        const uiElem: UIElement = controlElem ? controlElem[ElemPropertyName] : this;
-
-        const commandName = commandElem.getAttribute("data-command");
-        const res = uiElem.execCommand(commandName, commandElem);
-        if (res.result === CommandsExecResult.Success) {
-            if (res.context.transparent)
-                return;
-        }
-
-        if (res.result === CommandsExecResult.NotFound) {
-            controlElem = controlElem.parentElement;
-            continue;
-        }
-
-        break;
-    }
+    const uiElem = fundUiElementByCommand(commandElem, commandName);
+    const commandResult = uiElem.execCommand(commandName, commandElem);
+    if (commandResult.context.transparent)
+        return;
 
     e.preventDefault();
     e.stopPropagation();
@@ -191,16 +190,16 @@ window.addEventListener("click", commandClickHandler, false);
     (window as object)["CustomEvent"] = customEvent;
 })();
 
-export interface IEventOptions {
+export interface EventOptions {
     bubbles?: boolean;
     cancelable?: boolean;
     composed?: boolean;
 }
 
-interface ICommandHandler {
+interface CommandHandler {
     name: string;
-    execute: (elem: HTMLElement, context: CommandExecutionContext) => void;
-    canExecute: (elem: HTMLElement, context: CommandExecutionContext) => boolean;
+    execute: commandExecuteDelegate;
+    canExecute: commandCanExecuteDelegate;
 }
 
 export interface CommandExecutionContext {

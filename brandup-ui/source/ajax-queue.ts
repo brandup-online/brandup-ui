@@ -1,66 +1,98 @@
-import { AjaxRequestOptions, ajaxRequest } from "./ajax";
+import { AjaxRequest, ajaxRequest, ajaxDelegate, AjaxResponse } from "./ajax";
 import { Utility } from "./utility";
 
 export interface AjaxQueueOptions {
-    onPreRequest?: (ajaxOptions: AjaxRequestOptions) => void;
+    preRequest?: (request: AjaxRequest) => void | boolean;
+    postRequest?: (response: AjaxResponse) => void | boolean;
 }
+
 export class AjaxQueue {
     private _options: AjaxQueueOptions;
-    private _q: Array<{ options: AjaxRequestOptions, xhr?: XMLHttpRequest }>;
-    private __cur!: { options: AjaxRequestOptions, xhr?: XMLHttpRequest } | null;
+    private _requests: Array<{ options: AjaxRequest; xhr?: XMLHttpRequest }>;
+    private _curent!: { options: AjaxRequest; xhr?: XMLHttpRequest };
 
     constructor(options?: AjaxQueueOptions) {
-        this._q = [];
-        this.__cur = null;
-
+        this._requests = [];
+        this._curent = null;
         this._options = options ? options : {};
     }
 
-    request(options: AjaxRequestOptions) {
-        if (!options)
-            throw new Error();
+    get length(): number { return this._requests.length; }
+    get isFree(): boolean { return !this._requests.length && !this._curent; }
+    get isEmpty(): boolean { return !this._requests.length; }
 
-        const successFunc = options.success;
+    push(options: AjaxRequest) {
+        if (!options)
+            throw "Ajax request options is required.";
+
+        if (!this._requests)
+            return;
+
+        const successFunc = options.success ? options.success : () => { return; };
         options.success = Utility.createDelegate2(this, this.__success, [successFunc]);
 
-        this._q.push({ options: options });
-        if (this.__cur === null)
+        this._requests.push({ options: options });
+
+        if (this._curent === null)
             this.__execute();
     }
-    destroy() {
-        if (this.__cur) {
-            this.__cur.xhr.abort();
-            this.__cur = null;
+    reset(abortCurrentRequest = false) {
+        this._requests = [];
+
+        if (abortCurrentRequest && this._curent) {
+            this._curent.xhr.abort();
+            this._curent = null;
         }
     }
+    destroy() {
+        this._requests = null;
+
+        if (this._curent) {
+            this._curent.xhr.abort();
+            this._curent = null;
+        }
+    }
+
     private __execute() {
-        if (this._q === null)
-            throw new Error("Queue is destroed.");
-        if (this.__cur !== null)
-            throw new Error("Queue is executing.");
-        this.__cur = this._q.shift();
-        if (this.__cur) {
-            if (this._options.onPreRequest) {
-                try {
-                    this._options.onPreRequest(this.__cur.options);
+        if (this._requests === null)
+            throw "Ajax queue is destroed.";
+        if (this._curent !== null)
+            throw "Ajax queue currently is executing.";
+
+        this._curent = this._requests.shift();
+        if (this._curent) {
+            if (this._options.preRequest) {
+                if (this._options.preRequest(this._curent.options) === false) {
+                    this.__next();
+                    return;
                 }
-                catch { }
             }
-            this.__cur.xhr = ajaxRequest(this.__cur.options);
+
+            this._curent.xhr = ajaxRequest(this._curent.options);
         }
         else
-            this.__cur = null;
+            this._curent = null;
     }
-    private __success(originSuccess: (data: any, status: number, xhr: XMLHttpRequest) => void, data: any, status: number, xhr: XMLHttpRequest) {
-        if (this._q === null)
+    private __success(originSuccess: ajaxDelegate, response: AjaxResponse) {
+        if (this._requests === null)
             return;
-        if (originSuccess) {
-            try {
-                originSuccess(data, status, xhr);
+
+        if (this._options.postRequest) {
+            if (this._options.postRequest(response) === false) {
+                this.__next();
+                return;
             }
-            catch { }
         }
-        this.__cur = null;
+
+        try {
+            originSuccess(response);
+        }
+        finally {
+            this.__next();
+        }
+    }
+    private __next() {
+        this._curent = null;
         this.__execute();
     }
 }

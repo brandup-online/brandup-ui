@@ -1,6 +1,7 @@
 export type AJAXMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+export type ajaxDelegate = (response: AjaxResponse) => void;
 
-export interface AjaxRequestOptions {
+export interface AjaxRequest {
     url?: string;
     urlParams?: { [key: string]: string };
     method?: AJAXMethod;
@@ -8,8 +9,15 @@ export interface AjaxRequestOptions {
     headers?: { [key: string]: string };
     type?: "NONE" | "JSON" | "XML" | "FORM" | "FORMDATA" | "TEXT";
     data?: string | FormData | object | File;
-    success?: (data: any, status: number, xhr: XMLHttpRequest) => void;
+    success?: ajaxDelegate;
     disableCache?: boolean;
+    state: any;
+}
+export interface AjaxResponse {
+    data: any;
+    status: number;
+    xhr: XMLHttpRequest;
+    state: any;
 }
 
 export const urlEncode = (data: string, rfc3986 = true) => {
@@ -25,7 +33,7 @@ export const urlEncode = (data: string, rfc3986 = true) => {
     return data;
 };
 
-export const ajaxRequest = (options: AjaxRequestOptions) => {
+export const ajaxRequest = (options: AjaxRequest) => {
     if (!options)
         throw new Error();
 
@@ -162,7 +170,12 @@ export const ajaxRequest = (options: AjaxRequestOptions) => {
                             responseData = x.responseText;
                     }
 
-                    options.success(responseData, x.status, x);
+                    options.success({
+                        data: responseData,
+                        status: x.status,
+                        xhr: x,
+                        state: options.state
+                    });
                 }
                 break;
             }
