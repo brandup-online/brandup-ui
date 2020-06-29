@@ -11,7 +11,7 @@ export interface AjaxRequest<TState = any> {
     data?: string | FormData | object | File;
     success?: ajaxDelegate;
     disableCache?: boolean;
-    state: TState;
+    state?: TState;
 }
 export interface AjaxResponse<TData = any, TState = any> {
     data: TData;
