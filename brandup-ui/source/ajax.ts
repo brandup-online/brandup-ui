@@ -1,7 +1,7 @@
 export type AJAXMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 export type ajaxDelegate = (response: AjaxResponse) => void;
 
-export interface AjaxRequest {
+export interface AjaxRequest<TState = any> {
     url?: string;
     urlParams?: { [key: string]: string };
     method?: AJAXMethod;
@@ -11,13 +11,13 @@ export interface AjaxRequest {
     data?: string | FormData | object | File;
     success?: ajaxDelegate;
     disableCache?: boolean;
-    state: any;
+    state: TState;
 }
-export interface AjaxResponse {
-    data: any;
+export interface AjaxResponse<TData = any, TState = any> {
+    data: TData;
     status: number;
     xhr: XMLHttpRequest;
-    state: any;
+    state: TState;
 }
 
 export const urlEncode = (data: string, rfc3986 = true) => {
