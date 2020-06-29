@@ -1,5 +1,6 @@
 export type AJAXMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 export type ajaxDelegate = (response: AjaxResponse) => void;
+export type abortDelegate = (request: AjaxRequest, xhr: XMLHttpRequest) => void;
 
 export interface AjaxRequest<TState = any> {
     url?: string;
@@ -10,6 +11,7 @@ export interface AjaxRequest<TState = any> {
     type?: "NONE" | "JSON" | "XML" | "FORM" | "FORMDATA" | "TEXT";
     data?: string | FormData | object | File;
     success?: ajaxDelegate;
+    abort?: abortDelegate;
     disableCache?: boolean;
     state?: TState;
 }
@@ -181,6 +183,11 @@ export const ajaxRequest = (options: AjaxRequest) => {
             }
         }
     };
+
+    xhr.onabort = (e: ProgressEvent<XMLHttpRequest>) => {
+        if (options.abort)
+            options.abort(options, e.target);
+    }
 
     return xhr;
 };
