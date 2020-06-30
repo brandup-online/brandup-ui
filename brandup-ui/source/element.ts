@@ -124,9 +124,8 @@ const fundUiElementByCommand = (elem: HTMLElement, commandName: string): UIEleme
     while (elem) {
         if (elem.hasAttribute(ElemAttributeName)) {
             const uiElem: UIElement = elem[ElemPropertyName];
-            if (!uiElem.hasCommand(commandName))
-                continue;
-            return uiElem;
+            if (uiElem.hasCommand(commandName))
+                return uiElem;
         }
 
         if (typeof elem.parentElement === "undefined")
