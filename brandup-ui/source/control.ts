@@ -1,7 +1,7 @@
 import { Utility } from "./utility";
 import { UIElement } from "./element";
 
-export abstract class UIControl<TOptions = any> extends UIElement {
+export abstract class UIControl<TOptions = {}> extends UIElement {
     readonly options: TOptions = {} as TOptions;
     private __fragment: DocumentFragment;
 
