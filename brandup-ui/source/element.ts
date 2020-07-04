@@ -32,7 +32,7 @@ export abstract class UIElement {
 
         this.defineEvent("command", { cancelable: false, bubbles: true });
 
-        this._onRender(elem);
+        this._onRenderElement(elem);
     }
 
     // HTMLElement Events
@@ -112,7 +112,7 @@ export abstract class UIElement {
         return { result: CommandsExecStatus.Success, context: context };
     }
 
-    protected _onRender(_elem: HTMLElement) {
+    protected _onRenderElement(_elem: HTMLElement) {
         return;
     }
     protected _onCanExecCommand(_name: string, _elem: HTMLElement): boolean {
