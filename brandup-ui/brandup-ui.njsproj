@@ -39,7 +39,6 @@
   <ItemGroup>
     <TypeScriptCompile Include="source\ajax.ts" />
     <TypeScriptCompile Include="source\utility.ts" />
-    <TypeScriptCompile Include="source\control.ts" />
     <TypeScriptCompile Include="source\dom.ts" />
     <TypeScriptCompile Include="source\element.ts" />
     <TypeScriptCompile Include="source\index.ts">

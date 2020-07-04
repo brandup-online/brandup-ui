@@ -31,13 +31,15 @@ export abstract class UIElement {
         this.__element.setAttribute(ElemAttributeName, this.typeName);
 
         this.defineEvent("command", { cancelable: false, bubbles: true });
+
+        this._onRender(elem);
     }
 
     // HTMLElement Events
     protected defineEvent(eventName: string, eventOptions?: EventOptions) {
         this.__events[eventName] = eventOptions ? eventOptions : null;
     }
-    protected raiseEvent<T>(eventName: string, eventArgs?: T): boolean {
+    protected raiseEvent<T = {}>(eventName: string, eventArgs?: T): boolean {
         if (!(eventName in this.__events))
             throw `Not found event "${eventName}".`;
 
@@ -88,7 +90,7 @@ export abstract class UIElement {
         if (!(key in this.__commandHandlers))
             throw `Command "${name}" is not registered.`;
 
-        if (!this._onCanExecCommands())
+        if (!this._onCanExecCommand(name, elem))
             return { result: CommandsExecStatus.NotAllow };
 
         const context: CommandExecutionContext = {
@@ -99,14 +101,21 @@ export abstract class UIElement {
         if (handler.canExecute && !handler.canExecute(elem, context))
             return { result: CommandsExecStatus.NotAllow, context: context };
 
-        this.raiseEvent<string>("command", handler.name);
+        this.raiseEvent<CommandEventArgs>("command", {
+            name: handler.name,
+            uiElem: this,
+            elem: this.__element
+        });
 
         handler.execute(elem, context);
 
         return { result: CommandsExecStatus.Success, context: context };
     }
 
-    protected _onCanExecCommands(): boolean {
+    protected _onRender(_elem: HTMLElement) {
+        return;
+    }
+    protected _onCanExecCommand(_name: string, _elem: HTMLElement): boolean {
         return true;
     }
 
@@ -136,7 +145,6 @@ const fundUiElementByCommand = (elem: HTMLElement, commandName: string): UIEleme
 
     return null;
 };
-
 const commandClickHandler = (e: MouseEvent) => {
     if (e.returnValue === false)
         return;
@@ -199,6 +207,12 @@ interface CommandHandler {
     name: string;
     execute: commandExecuteDelegate;
     canExecute: commandCanExecuteDelegate;
+}
+
+export interface CommandEventArgs {
+    name: string;
+    uiElem: UIElement;
+    elem: HTMLElement;
 }
 
 export interface CommandExecutionContext {
