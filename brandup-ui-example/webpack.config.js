@@ -4,6 +4,7 @@ const path = require('path');
 const webpack = require('webpack');
 const CheckerPlugin = require('awesome-typescript-loader').CheckerPlugin;
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const bundleOutputDir = './wwwroot/dist';
 
 module.exports = (env) => {
@@ -22,7 +23,11 @@ module.exports = (env) => {
         },
         module: {
             rules: [
-                { test: /\.tsx?$/, include: /_client/, use: 'awesome-typescript-loader?silent=true' },
+                {
+                    test: /\.tsx?$/,
+                    include: /_client/,
+                    use: 'awesome-typescript-loader?silent=true'
+                },
                 {
                     test: /\.(le|c)ss$/,
                     use: [
@@ -51,7 +56,23 @@ module.exports = (env) => {
             ]
         },
         optimization: {
-            minimize: !isDevBuild,
+            minimize: true,
+            minimizer: [new UglifyJsPlugin({
+                cache: true,
+                parallel: true,
+                uglifyOptions: {
+                    mangle: {
+                        toplevel: true,
+                        keep_fnames: false
+                    },
+                    keep_fnames: false,
+                    keep_classnames: false,
+                    ie8: false,
+                    output: {
+                        beautify: isDevBuild
+                    }
+                }
+            })],
             namedModules: true
         },
         plugins: [

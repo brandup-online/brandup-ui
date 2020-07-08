@@ -10,7 +10,8 @@ async function build() {
     dtsBundle.bundle({
         name: packageName,
         main: path.join(compiledPath, 'index.d.ts'),
-        out: path.join(distNpmPath, 'index.d.ts')
+        out: path.join(distNpmPath, 'index.d.ts'),
+        outputAsModuleFolder: false
     });
 }
 

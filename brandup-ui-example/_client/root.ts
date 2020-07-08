@@ -1,4 +1,4 @@
-﻿import { CommandExecutionContext, DOM, UIElement } from "brandup-ui";
+﻿import { UIElement, CommandExecutionContext} from "brandup-ui";
 import "./styles.less";
 
 export class AppElem extends UIElement {
@@ -10,7 +10,7 @@ export class AppElem extends UIElement {
         this.setElement(document.body);
     }
 
-    protected _onRender() {
+    protected _onRenderElement() {
         this.registerCommand("command1", (elem: HTMLElement) => { elem.innerHTML = "ok"; });
         this.registerCommand("command1-cant", (elem: HTMLElement) => { elem.innerHTML = "ok"; }, () => { return false; });
         this.registerCommand("command2", (elem: HTMLElement, context: CommandExecutionContext) => { context.transparent = true; elem.innerHTML = "ok"; });

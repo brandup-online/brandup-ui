@@ -1,7 +1,8 @@
 import { Utility } from "./utility";
 
-export const ElemAttributeName = "brandup-ui-element";
+export const ElemAttributeName = "data-ui-element";
 export const ElemPropertyName = "brandupUiElement";
+export const CommandAttributeName = "data-command";
 
 export type commandExecuteDelegate = (elem: HTMLElement, context: CommandExecutionContext) => void;
 export type commandCanExecuteDelegate = (elem: HTMLElement, context: CommandExecutionContext) => boolean;
@@ -85,21 +86,22 @@ export abstract class UIElement {
     hasCommand(name: string) {
         return name.toLowerCase() in this.__commandHandlers;
     }
-    execCommand(name: string, elem: HTMLElement): { result: CommandsExecStatus; context?: CommandExecutionContext } {
+    execCommand(name: string, elem: HTMLElement): CommandExecutionResult {
         const key = name.toLowerCase();
         if (!(key in this.__commandHandlers))
             throw `Command "${name}" is not registered.`;
 
-        if (!this._onCanExecCommand(name, elem))
-            return { result: CommandsExecStatus.NotAllow };
-
         const context: CommandExecutionContext = {
+            uiElem: this,
             transparent: false
         };
 
+        if (!this._onCanExecCommand(name, elem))
+            return { result: CommandsExecStatus.NotAllow, context };
+
         const handler = this.__commandHandlers[key];
         if (handler.canExecute && !handler.canExecute(elem, context))
-            return { result: CommandsExecStatus.NotAllow, context: context };
+            return { result: CommandsExecStatus.NotAllow, context };
 
         this.raiseEvent<CommandEventArgs>("command", {
             name: handler.name,
@@ -151,7 +153,7 @@ const commandClickHandler = (e: MouseEvent) => {
 
     let commandElem = e.target as HTMLElement;
     while (commandElem) {
-        if (commandElem.hasAttribute("data-command"))
+        if (commandElem.hasAttribute(CommandAttributeName))
             break;
 
         if (commandElem === e.currentTarget)
@@ -166,12 +168,17 @@ const commandClickHandler = (e: MouseEvent) => {
     if (!commandElem)
         return;
 
-    const commandName = commandElem.getAttribute("data-command");
+    const commandName = commandElem.getAttribute(CommandAttributeName);
 
     const uiElem = fundUiElementByCommand(commandElem, commandName);
-    const commandResult = uiElem.execCommand(commandName, commandElem);
-    if (commandResult.context.transparent)
-        return;
+    if (uiElem === null) {
+        console.warn(`Not find handler for command "${commandName}".`);
+    }
+    else {
+        const commandResult = uiElem.execCommand(commandName, commandElem);
+        if (commandResult.context.transparent)
+            return;
+    }
 
     e.preventDefault();
     e.stopPropagation();
@@ -183,18 +190,19 @@ const commandClickHandler = (e: MouseEvent) => {
 window.addEventListener("click", commandClickHandler, false);
 
 (function () {
-    if (typeof window["CustomEvent"] === "function") return false; //If not IE
+    const name = "CustomEvent";
+    if (typeof window[name] === "function") return false; //If not IE
 
     const customEvent = function (event, params) {
         params = params || { bubbles: false, cancelable: false, detail: undefined };
-        const evt = document.createEvent('CustomEvent');
+        const evt = document.createEvent(name);
         evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
         return evt;
     };
 
     customEvent.prototype = window["Event"].prototype;
 
-    (window as object)["CustomEvent"] = customEvent;
+    (window as object)[name] = customEvent;
 })();
 
 export interface EventOptions {
@@ -216,5 +224,11 @@ export interface CommandEventArgs {
 }
 
 export interface CommandExecutionContext {
+    uiElem: UIElement;
     transparent?: boolean;
+}
+
+export interface CommandExecutionResult {
+    result: CommandsExecStatus;
+    context: CommandExecutionContext;
 }
