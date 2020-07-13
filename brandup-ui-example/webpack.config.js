@@ -8,7 +8,10 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const bundleOutputDir = './wwwroot/dist';
 
 module.exports = (env) => {
-    const isDevBuild = !(env && env.prod);
+    const isDevBuild = process.env.NODE_ENV !== "production";
+
+    console.log(`NODE_ENV: "${process.env.NODE_ENV}"`);
+    console.log(`isDevBuild: ${isDevBuild}`);
 
     return [{
         entry: {
@@ -73,7 +76,14 @@ module.exports = (env) => {
                     }
                 }
             })],
-            namedModules: true
+            namedModules: false,
+            moduleIds: isDevBuild ? 'natural' : 'size',
+            chunkIds: isDevBuild ? 'natural' : 'total-size',
+            removeAvailableModules: true,
+            removeEmptyChunks: true,
+            occurrenceOrder: true,
+            providedExports: false,
+            usedExports: false
         },
         plugins: [
             new CheckerPlugin(),
