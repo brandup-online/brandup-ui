@@ -16,6 +16,20 @@ export class AppElem extends UIElement {
         this.registerCommand("command2", (elem: HTMLElement, context: CommandExecutionContext) => { context.transparent = true; elem.innerHTML = "ok"; });
         this.registerCommand("command2-cant", (elem: HTMLElement) => { elem.innerHTML = "ok"; }, () => { return false; });
         this.registerCommand("command-svg", (elem: HTMLElement) => { elem.innerHTML = "ok"; });
+
+        this.registerAsyncCommand("command1-async", (context) => {
+            context.timeout = 1000;
+
+            context.target.innerHTML = "Loading...";
+            const t = window.setTimeout(() => {
+                context.target.innerHTML = "Ok";
+                context.complate();
+            }, 2000);
+
+            context.timeoutCallback = () => {
+                clearTimeout(t);
+            };
+        });
     }
 }
 
