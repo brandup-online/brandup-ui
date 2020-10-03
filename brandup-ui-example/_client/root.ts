@@ -18,7 +18,7 @@ export class AppElem extends UIElement {
         this.registerCommand("command-svg", (elem: HTMLElement) => { elem.innerHTML = "ok"; });
 
         this.registerAsyncCommand("command1-async", (context) => {
-            context.timeout = 1000;
+            context.timeout = 3000;
 
             context.target.innerHTML = "Loading...";
             const t = window.setTimeout(() => {
@@ -42,11 +42,16 @@ export class AppElem extends UIElement {
                 dataset: { test: "test" },
                 styles: { display: "block" },
                 events: { "click": () => alert(elem.dataset["test"]) },
-                id: "test"
+                id: "test",
+                command: "test1000"
             }, "test");
 
             context.target.insertAdjacentElement("afterend", elem);
             context.complate();
+        });
+
+        this.registerCommand("test1000", () => {
+            this.destroy();
         });
     }
 }

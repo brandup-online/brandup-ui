@@ -116,6 +116,10 @@ export class DOM {
                                 throw "Invalid element class value.";
                             break;
                         }
+                        case "command": {
+                            elem.dataset["command"] = value as string;
+                            break;
+                        }
                         case "dataset": {
                             for (const dataName in value as object) {
                                 elem.dataset[dataName] = value[dataName];
@@ -192,11 +196,16 @@ export class DOM {
 
 export interface ElementOptions {
     id?: string,
-    dataset?: { [name: string]: string | undefined };
+    dataset?: ElementData;
     styles?: ElementStyles;
     class?: string | Array<string>;
     events?: { [name: string]: () => void };
+    command?: string;
     [name: string]: string | number | boolean | object;
+}
+
+export interface ElementData {
+    [name: string]: string | undefined;
 }
 
 export interface ElementStyles {

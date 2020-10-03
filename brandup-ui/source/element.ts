@@ -1,8 +1,8 @@
 import { Utility } from "./utility";
 
-export const ElemAttributeName = "data-ui-element";
+export const ElemAttributeName = "uiElement";
 export const ElemPropertyName = "brandupUiElement";
-export const CommandAttributeName = "data-command";
+export const CommandAttributeName = "command";
 export const CommandExecutingCssClassName = "executing";
 
 export type CommandExecuteDelegate = (elem: HTMLElement, context: CommandExecutionContext) => void;
@@ -31,7 +31,7 @@ export abstract class UIElement {
         this.__element = elem;
 
         this.__element[ElemPropertyName] = this;
-        this.__element.setAttribute(ElemAttributeName, this.typeName);
+        this.__element.dataset[ElemAttributeName] = this.typeName;
 
         this.defineEvent("command", { cancelable: false, bubbles: true });
 
@@ -187,7 +187,8 @@ export abstract class UIElement {
 
     destroy() {
         if (this.__element) {
-            this.__element.removeAttribute(ElemAttributeName);
+            //this.__element.removeAttribute(ElemAttributeName);
+            delete this.__element.dataset[ElemAttributeName];
             delete this.__element[ElemPropertyName];
 
             this.__element = null;
@@ -197,7 +198,7 @@ export abstract class UIElement {
 
 const fundUiElementByCommand = (elem: HTMLElement, commandName: string): UIElement => {
     while (elem) {
-        if (elem.hasAttribute(ElemAttributeName)) {
+        if (elem.dataset[ElemAttributeName]) {
             const uiElem: UIElement = elem[ElemPropertyName];
             if (uiElem.hasCommand(commandName))
                 return uiElem;
@@ -217,7 +218,7 @@ const commandClickHandler = (e: MouseEvent) => {
 
     let commandElem = e.target as HTMLElement;
     while (commandElem) {
-        if (commandElem.hasAttribute(CommandAttributeName))
+        if (commandElem.dataset[CommandAttributeName])
             break;
 
         if (commandElem === e.currentTarget)
@@ -232,7 +233,7 @@ const commandClickHandler = (e: MouseEvent) => {
     if (!commandElem)
         return;
 
-    const commandName = commandElem.getAttribute(CommandAttributeName);
+    const commandName = commandElem.dataset[CommandAttributeName];
 
     const uiElem = fundUiElementByCommand(commandElem, commandName);
     if (uiElem === null) {
