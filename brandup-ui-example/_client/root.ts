@@ -1,4 +1,4 @@
-﻿import { UIElement, CommandExecutionContext} from "brandup-ui";
+﻿import { UIElement, CommandExecutionContext, DOM} from "brandup-ui";
 import "./styles.less";
 
 export class AppElem extends UIElement {
@@ -29,6 +29,24 @@ export class AppElem extends UIElement {
             context.timeoutCallback = () => {
                 clearTimeout(t);
             };
+        });
+
+        this.registerAsyncCommand("command-dom1", (context) => {
+            context.target.insertAdjacentElement("afterend", DOM.tag("div", "test", "test"));
+            context.complate();
+        });
+
+        this.registerAsyncCommand("command-dom2", (context) => {
+            const elem = DOM.tag("div", {
+                class: ["test1", "test2"],
+                dataset: { test: "test" },
+                styles: { display: "block" },
+                events: { "click": () => alert(elem.dataset["test"]) },
+                id: "test"
+            }, "test");
+
+            context.target.insertAdjacentElement("afterend", elem);
+            context.complate();
         });
     }
 }
