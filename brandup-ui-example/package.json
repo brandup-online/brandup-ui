@@ -12,7 +12,7 @@
     "less-loader": "^4.1.0",
     "mini-css-extract-plugin": "^0.4.5",
     "style-loader": "^0.23.1",
-    "typescript": "^3.9.6",
+    "typescript": "^3.9.9",
     "uglifyjs-webpack-plugin": "^2.2.0",
     "url-loader": "^1.1.2",
     "webpack": "^4.43.0",

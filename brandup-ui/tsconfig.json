@@ -5,15 +5,19 @@
     "target": "es5",
     "sourceMap": false,
     "strict": false,
-    "lib": [ "ES2020", "DOM" ],
+    "lib": [ "DOM" ],
+    "types": [ "node" ],
+    "esModuleInterop": true,
     "noImplicitAny": false,
     "noEmitOnError": true,
-    "baseUrl": "source",
+    "baseUrl": "./source",
     "outDir": "./dist",
     "declaration": true,
     "declarationDir": "./source",
-    "declarationMap": false
+    "declarationMap": false,
+    "removeComments": false
   },
+  "include": [ "source" ],
   "exclude": [
     "node_modules",
     "dist",

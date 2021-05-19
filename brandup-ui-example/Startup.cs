@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Localization;
@@ -6,8 +8,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.WebEncoders;
-using System.Globalization;
-using System.Text.Encodings.Web;
 
 namespace brandup_ui_example
 {
@@ -55,12 +55,6 @@ namespace brandup_ui_example
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-#pragma warning disable CS0618 // Type or member is obsolete
-                app.UseWebpackDevMiddleware(new Microsoft.AspNetCore.SpaServices.Webpack.WebpackDevMiddlewareOptions
-                {
-                    HotModuleReplacement = true
-                });
-#pragma warning restore CS0618 // Type or member is obsolete
             }
             else
             {
