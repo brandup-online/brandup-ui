@@ -4,7 +4,7 @@
 
 ## UIElement
 
-Wrapper with HTMLElemnt.
+Класс обёртка для HTMLElemnt.
 
 ```
 abstract class UIElement {
@@ -13,17 +13,26 @@ abstract class UIElement {
 
     protected setElement(elem: HTMLElement): void;
 
-    protected __createEvent(eventName: string, eventOptions?: IEventOptions): void;
-    protected __raiseEvent(eventName: string, eventArgs?: any): boolean;
+    protected defineEvent(eventName: string, eventOptions?: IEventOptions): void;
+    protected raiseEvent(eventName: string, eventArgs?: any): boolean;
 
-    addEventListener(eventName: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
-    removeEventListener(eventName: string, listener?: EventListenerOrEventListenerObject, useCapture?: boolean): void;
+    addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+    removeEventListener(type: string, listener?: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    dispatchEvent(event: Event): boolean;
+
+    registerCommand(name: string, execute: CommandExecuteDelegate, canExecute: CommandCanExecuteDelegate = null): void;
+    registerAsyncCommand(name: string, delegate: CommandAsyncDelegate): void;
+    hasCommand(name: string): boolean;
+    execCommand(name: string, elem: HTMLElement): CommandExecutionResult;
     
-    registerCommand(name: string, execute: (commandElem: HTMLElement) => void, canExecute?: (commandElem: HTMLElement) => boolean): void;
-    execCommand(name: string, elem: HTMLElement): CommandsExecResult;
-    
-    protected _onCanExecCommands(): boolean;
+    protected _onRenderElement(_elem: HTMLElement);
+    protected _onCanExecCommand(_name: string, _elem: HTMLElement): boolean;
 
     destroy(): void;
 }
 ```
+
+Возможности:
+- Обработка комманд из интерфейса.
+- Обработка событий элемента.
+
