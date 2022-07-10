@@ -15,7 +15,7 @@ module.exports = (env) => {
 
     return [{
         entry: {
-            app: path.resolve(__dirname, '_client', 'root.ts')
+            app: path.resolve(__dirname, '_client', 'index.ts')
         },
         resolve: { extensions: ['.js', '.jsx', '.ts', '.tsx'] },
         output: {

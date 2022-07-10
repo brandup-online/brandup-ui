@@ -1,4 +1,6 @@
 export type AJAXMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+export type AJAXReqestType = "NONE" | "JSON" | "XML" | "FORM" | "FORMDATA" | "TEXT";
+
 export type ajaxDelegate = (response: AjaxResponse) => void;
 export type abortDelegate = (request: AjaxRequest, xhr: XMLHttpRequest) => void;
 
@@ -8,7 +10,7 @@ export interface AjaxRequest<TState = any> {
     method?: AJAXMethod;
     timeout?: number;
     headers?: { [key: string]: string };
-    type?: "NONE" | "JSON" | "XML" | "FORM" | "FORMDATA" | "TEXT";
+    type?: AJAXReqestType;
     data?: string | FormData | object | File;
     success?: ajaxDelegate;
     abort?: abortDelegate;

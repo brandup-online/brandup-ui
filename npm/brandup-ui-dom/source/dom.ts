@@ -1,7 +1,5 @@
-import { Utility } from "./utility";
-
 export class DOM {
-    static getById(id: string): HTMLElement {
+    static getElementById(id: string): HTMLElement {
         return document.getElementById(id);
     }
     static getElementByClass(parentElement: Element, className: string): HTMLElement {
@@ -66,22 +64,18 @@ export class DOM {
         }
         return null;
     }
-
-    static create(tagName: string, classes?: Array<string> | string, attributes?: { [key: string]: string }): HTMLElement {
-        const elem = document.createElement(tagName);
-        if (classes) {
-            if (Utility.isArray(classes) && (classes as Array<string>).length)
-                (classes as Array<string>).forEach((className: string) => { elem.classList.add(className); });
-            else
-                elem.className = classes as string;
-        }
-        if (attributes) {
-            for (const key in attributes) {
-                elem.setAttribute(key, attributes[key]);
+    static nextElement(currentElement: Element): HTMLElement {
+        let n = currentElement.nextSibling;
+        while (n) {
+            if (n.nodeType === 1) {
+                return n as HTMLElement;
             }
+
+            n = n.nextSibling;
         }
-        return elem;
+        return null;
     }
+
     static tag(tagName: string, options?: ElementOptions | string, children?: ((elem: Element) => void) | Element | string | Array<Element | string | ((parent: Element) => Element)>): HTMLElement {
         const elem = document.createElement(tagName);
 
@@ -181,12 +175,19 @@ export class DOM {
         return elem;
     }
 
+    static addClass(container: Element, selectors: string, className: string) {
+        const nodes = container.querySelectorAll(selectors);
+        for (let i = 0; i < nodes.length; i++) {
+            nodes.item(i).classList.add(className);
+        }
+    }
     static removeClass(container: Element, selectors: string, className: string) {
         const nodes = container.querySelectorAll(selectors);
         for (let i = 0; i < nodes.length; i++) {
             nodes.item(i).classList.remove(className);
         }
     }
+
     static empty(element: Element) {
         while (element.hasChildNodes()) {
             element.removeChild(element.firstChild);
@@ -199,9 +200,9 @@ export interface ElementOptions {
     dataset?: ElementData;
     styles?: ElementStyles;
     class?: string | Array<string>;
-    events?: { [name: string]: () => void };
+    events?: { [name: string]: EventListenerOrEventListenerObject };
     command?: string;
-    [name: string]: string | number | boolean | object;
+    [name: string]: string | number | boolean | object; // attributes
 }
 
 export interface ElementData {

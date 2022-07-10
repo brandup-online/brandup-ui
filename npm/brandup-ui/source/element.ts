@@ -1,17 +1,18 @@
-import { Utility } from "./utility";
-
 export const ElemAttributeName = "uiElement";
 export const ElemPropertyName = "brandupUiElement";
 export const CommandAttributeName = "command";
 export const CommandExecutingCssClassName = "executing";
 
-export type CommandExecuteDelegate = (elem: HTMLElement, context: CommandExecutionContext) => void;
-export type CommandCanExecuteDelegate = (elem: HTMLElement, context: CommandExecutionContext) => boolean;
-export type CommandAsyncDelegate = (context: CommandContext) => void;
+export type CommandDelegate = (elem: HTMLElement, context: CommandContext) => void;
+export type CommandCanExecuteDelegate = (elem: HTMLElement, context: CommandContext) => boolean;
+export type CommandAsyncDelegate = (context: CommandAsyncContext) => void;
 
-export enum CommandsExecStatus {
-    NotAllow = 1,
-    Success = 2
+interface CommandHandler {
+    name: string;
+    execute?: CommandDelegate;
+    canExecute?: CommandCanExecuteDelegate;
+    delegate?: CommandAsyncDelegate;
+    isExecuting: boolean;
 }
 
 export abstract class UIElement {
@@ -74,22 +75,23 @@ export abstract class UIElement {
     }
 
     // Commands
-    registerCommand(name: string, execute: CommandExecuteDelegate, canExecute: CommandCanExecuteDelegate = null) {
+    registerCommand(name: string, execute: CommandDelegate, canExecute: CommandCanExecuteDelegate = null) {
         name = this.verifyCommandName(name);
 
         this.__commandHandlers[name] = {
             name: name,
-            execute: Utility.createDelegate(this, execute),
-            canExecute: canExecute ? Utility.createDelegate(this, canExecute) : null,
+            execute,
+            canExecute,
             isExecuting: false
         };
     }
-    registerAsyncCommand(name: string, delegate: CommandAsyncDelegate) {
+    registerAsyncCommand(name: string, delegate: CommandAsyncDelegate, canExecute: CommandCanExecuteDelegate = null) {
         name = this.verifyCommandName(name);
 
         this.__commandHandlers[name] = {
             name: name,
             delegate,
+            canExecute,
             isExecuting: false
         };
     }
@@ -107,7 +109,8 @@ export abstract class UIElement {
         if (!(key in this.__commandHandlers))
             throw `Command "${name}" is not registered.`;
 
-        const context: CommandExecutionContext = {
+        const context: CommandContext = {
+            target: elem,
             uiElem: this,
             transparent: false
         };
@@ -115,7 +118,7 @@ export abstract class UIElement {
         const handler = this.__commandHandlers[key];
 
         if (handler.isExecuting)
-            return { result: CommandsExecStatus.NotAllow, context };
+            return { result: CommandsExecStatus.AlreadyExecuting, context };
         handler.isExecuting = true;
 
         if (!this._onCanExecCommand(name, elem)) {
@@ -135,13 +138,21 @@ export abstract class UIElement {
         });
 
         if (handler.execute) {
-            handler.execute(elem, context);
-            handler.isExecuting = false;
+            // Если команда синхронная.
+
+            try {
+                handler.execute(elem, context);
+            }
+            finally {
+                handler.isExecuting = false;
+            }
         }
         else {
+            // Если команда асинхронная.
+
             elem.classList.add(CommandExecutingCssClassName);
 
-            const asyncContext: CommandContext = {
+            const asyncContext: CommandAsyncContext = {
                 target: elem,
                 uiElem: this,
                 transparent: context.transparent,
@@ -194,6 +205,42 @@ export abstract class UIElement {
             this.__element = null;
         }
     }
+}
+
+export interface EventOptions {
+    bubbles?: boolean;
+    cancelable?: boolean;
+    composed?: boolean;
+}
+
+export interface CommandEventArgs {
+    name: string;
+    uiElem: UIElement;
+    elem: HTMLElement;
+}
+
+export interface CommandContext {
+    /** Елемент, который принял команду. */
+    target: HTMLElement;
+    uiElem: UIElement;
+    transparent?: boolean;
+}
+
+export interface CommandExecutionResult {
+    result: CommandsExecStatus;
+    context: CommandContext;
+}
+
+export interface CommandAsyncContext extends CommandContext {
+    complate: () => void;
+    timeout: number;
+    timeoutCallback: () => void;
+}
+
+export enum CommandsExecStatus {
+    NotAllow = 1,
+    AlreadyExecuting = 2,
+    Success = 3
 }
 
 const fundUiElementByCommand = (elem: HTMLElement, commandName: string): UIElement => {
@@ -269,42 +316,3 @@ window.addEventListener("click", commandClickHandler, false);
 
     (window as object)[name] = customEvent;
 })();
-
-export interface EventOptions {
-    bubbles?: boolean;
-    cancelable?: boolean;
-    composed?: boolean;
-}
-
-interface CommandHandler {
-    name: string;
-    execute?: CommandExecuteDelegate;
-    canExecute?: CommandCanExecuteDelegate;
-    delegate?: CommandAsyncDelegate;
-    isExecuting: boolean;
-}
-
-export interface CommandEventArgs {
-    name: string;
-    uiElem: UIElement;
-    elem: HTMLElement;
-}
-
-export interface CommandExecutionContext {
-    uiElem: UIElement;
-    transparent?: boolean;
-}
-
-export interface CommandExecutionResult {
-    result: CommandsExecStatus;
-    context: CommandExecutionContext;
-}
-
-export interface CommandContext {
-    target: HTMLElement;
-    uiElem: UIElement;
-    transparent?: boolean;
-    complate: () => void;
-    timeout: number;
-    timeoutCallback: () => void;
-}

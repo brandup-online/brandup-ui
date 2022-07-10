@@ -1,4 +1,6 @@
-﻿import { UIElement, CommandExecutionContext, DOM} from "brandup-ui";
+﻿import { UIElement, CommandContext } from "brandup-ui";
+import { DOM } from "brandup-ui-dom";
+import { ajaxRequest } from "brandup-ui-ajax";
 import "./styles.less";
 
 export class AppElem extends UIElement {
@@ -13,7 +15,7 @@ export class AppElem extends UIElement {
     protected _onRenderElement() {
         this.registerCommand("command1", (elem: HTMLElement) => { elem.innerHTML = "ok"; });
         this.registerCommand("command1-cant", (elem: HTMLElement) => { elem.innerHTML = "ok"; }, () => { return false; });
-        this.registerCommand("command2", (elem: HTMLElement, context: CommandExecutionContext) => { context.transparent = true; elem.innerHTML = "ok"; });
+        this.registerCommand("command2", (elem: HTMLElement, context: CommandContext) => { context.transparent = true; elem.innerHTML = "ok"; });
         this.registerCommand("command2-cant", (elem: HTMLElement) => { elem.innerHTML = "ok"; }, () => { return false; });
         this.registerCommand("command-svg", (elem: HTMLElement) => { elem.innerHTML = "ok"; });
 

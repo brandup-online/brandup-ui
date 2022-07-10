@@ -1,0 +1,34 @@
+{
+  "name": "brandup-ui-helpers",
+  "description": "JavaScript helpers",
+  "keywords": [
+    "brandup",
+    "javascript",
+    "typescript",
+    "dom",
+    "ui"
+  ],
+  "author": {
+    "name": "Dmitry Kovyazin",
+    "email": "it@brandup.online"
+  },
+  "homepage": "https://github.com/dkovyazin/brandup-ui/npm/brandup-ui-helpers",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dkovyazin/brandup-ui.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dkovyazin/brandup-ui/issues",
+    "email": "it@brandup.online"
+  },
+  "license": "Apache-2.0",
+  "version": "1.0.0",
+  "main": "./source/index.ts",
+  "types": "./source/index.ts",
+  "devDependencies": {
+    "typescript": "^4.7.4"
+  },
+  "scripts": {
+    "build": "tsc"
+  }
+}

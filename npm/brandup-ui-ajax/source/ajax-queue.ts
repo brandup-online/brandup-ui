@@ -1,5 +1,4 @@
 import { AjaxRequest, ajaxRequest, ajaxDelegate, AjaxResponse } from "./ajax";
-import { Utility } from "./utility";
 
 export interface AjaxQueueOptions {
     preRequest?: (request: AjaxRequest) => void | boolean;
@@ -29,7 +28,7 @@ export class AjaxQueue {
             return;
 
         const successFunc = options.success ? options.success : () => { return; };
-        options.success = Utility.createDelegate2(this, this.__success, [successFunc]);
+        options.success = (response) => { this.__success(successFunc, response); };
 
         this._requests.push({ options: options });
 

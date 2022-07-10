@@ -1,0 +1,33 @@
+{
+  "name": "brandup-ui-dom",
+  "description": "Basic DOM framework.",
+  "keywords": [
+    "brandup",
+    "typescript",
+    "ui",
+    "dom"
+  ],
+  "author": {
+    "name": "Dmitry Kovyazin",
+    "email": "it@brandup.online"
+  },
+  "homepage": "https://github.com/dkovyazin/brandup-ui/npm/brandup-ui-dom",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dkovyazin/brandup-ui.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dkovyazin/brandup-ui/issues",
+    "email": "it@brandup.online"
+  },
+  "license": "Apache-2.0",
+  "version": "1.0.0",
+  "main": "./source/index.ts",
+  "types": "./source/index.ts",
+  "devDependencies": {
+    "typescript": "^4.7.4"
+  },
+  "scripts": {
+    "build": "tsc"
+  }
+}

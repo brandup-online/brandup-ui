@@ -2,11 +2,15 @@
   "version": "1.0.0",
   "name": "asp.net",
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "brandup-ui": "../npm/brandup-ui",
+    "brandup-ui-dom": "../npm/brandup-ui-dom",
+    "brandup-ui-ajax": "../npm/brandup-ui-ajax",
+    "brandup-ui-helpers": "../npm/brandup-ui-helpers"
+  },
   "devDependencies": {
     "aspnet-webpack": "^3.0.0",
     "awesome-typescript-loader": "^5.2.1",
-    "brandup-ui": "../brandup-ui",
     "css-loader": "^1.0.1",
     "less": "^3.11.3",
     "less-loader": "^4.1.0",
@@ -24,7 +28,6 @@
   "scripts": {
     "build": "webpack -p --progress --config webpack.config.js",
     "dev-build": "webpack --progress -d --config webpack.config.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "watch": "webpack --progress -d --config webpack.config.js --watch"
   }
 }
