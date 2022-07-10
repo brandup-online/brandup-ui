@@ -138,7 +138,7 @@ export abstract class UIElement {
         });
 
         if (handler.execute) {
-            // Если команда синхронная.
+            // Р•СЃР»Рё РєРѕРјР°РЅРґР° СЃРёРЅС…СЂРѕРЅРЅР°СЏ.
 
             try {
                 handler.execute(elem, context);
@@ -148,7 +148,7 @@ export abstract class UIElement {
             }
         }
         else {
-            // Если команда асинхронная.
+            // Р•СЃР»Рё РєРѕРјР°РЅРґР° Р°СЃРёРЅС…СЂРѕРЅРЅР°СЏ.
 
             elem.classList.add(CommandExecutingCssClassName);
 
@@ -220,7 +220,7 @@ export interface CommandEventArgs {
 }
 
 export interface CommandContext {
-    /** Елемент, который принял команду. */
+    /** Р•Р»РµРјРµРЅС‚, РєРѕС‚РѕСЂС‹Р№ РїСЂРёРЅСЏР» РєРѕРјР°РЅРґСѓ. */
     target: HTMLElement;
     uiElem: UIElement;
     transparent?: boolean;
