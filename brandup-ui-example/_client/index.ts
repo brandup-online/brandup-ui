@@ -1,6 +1,5 @@
 ﻿import { UIElement, CommandContext } from "brandup-ui";
 import { DOM } from "brandup-ui-dom";
-import { ajaxRequest } from "brandup-ui-ajax";
 import "./styles.less";
 
 export class AppElem extends UIElement {
@@ -54,6 +53,18 @@ export class AppElem extends UIElement {
 
         this.registerCommand("test1000", () => {
             this.destroy();
+        });
+
+        this.registerAsyncCommand("command-dom3", (context) => {
+            import('./modules/test')
+                .then((m) => {
+                    m.Test(context.target);
+                    context.complate();
+                })
+                .catch(() => {
+                    context.target.innerText = "error";
+                    context.complate();
+                });
         });
     }
 }

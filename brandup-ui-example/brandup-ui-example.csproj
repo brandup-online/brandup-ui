@@ -5,9 +5,16 @@
     <RootNamespace>brandup_ui_example</RootNamespace>
     <TypeScriptToolsVersion>Latest</TypeScriptToolsVersion>
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove="_client\modules\test.ts" />
+  </ItemGroup>
 
   <ItemGroup>
     <Folder Include="wwwroot\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TypeScriptCompile Include="_client\modules\test.ts" />
   </ItemGroup>
 
   <Target Name="DebugRunWebpack" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('wwwroot\dist') ">
