@@ -1,8 +1,23 @@
 export type AJAXMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
-export type AJAXReqestType = "NONE" | "JSON" | "XML" | "FORM" | "FORMDATA" | "TEXT";
+export type AJAXReqestType = "NONE" | "JSON" | "XML" | "FORM" | "FORMDATA" | "TEXT" | "BLOB";
 
 export type ajaxDelegate = (response: AjaxResponse) => void;
 export type abortDelegate = (request: AjaxRequest, xhr: XMLHttpRequest) => void;
+
+const FORM_URL = "application/x-www-form-urlencoded";
+const FORM_DATA = "multipart/form-data";
+
+const encodeForm = (data: FormData) => {
+    const url = [];
+
+    data.forEach((value: FormDataEntryValue, key: string) => {
+        if (!key)
+            return;
+        url.push(urlEncode(key) + '=' + urlEncode(value.toString()));
+    });
+
+    return url.join('&');
+};
 
 export interface AjaxRequest<TState = any> {
     url?: string;
@@ -11,7 +26,7 @@ export interface AjaxRequest<TState = any> {
     timeout?: number;
     headers?: { [key: string]: string };
     type?: AJAXReqestType;
-    data?: string | FormData | object | File;
+    data?: string | FormData | object | File | HTMLFormElement;
     success?: ajaxDelegate;
     abort?: abortDelegate;
     disableCache?: boolean;
@@ -86,10 +101,12 @@ export const ajaxRequest = (options: AjaxRequest) => {
     let data: any = options.data;
 
     if (!options.type && data) {
-        if (data instanceof File)
-            options.type = "NONE";
+        if (data instanceof Blob)
+            options.type = "BLOB";
         else if (data instanceof FormData)
-            options.type = null;//"FORMDATA";
+            options.type = null;
+        else if (data instanceof HTMLFormElement) 
+            options.type = "FORM";
         else if (data instanceof Object)
             options.type = "JSON";
         else if (typeof data === "string")
@@ -113,26 +130,26 @@ export const ajaxRequest = (options: AjaxRequest) => {
 
                 break;
             case "FORM":
-                type = "application/x-www-form-urlencoded";
-
-                if (data instanceof FormData) {
-                    const url = [];
-
-                    data.forEach((value: FormDataEntryValue, key: string) => {
-                        if (!key)
-                            return;
-                        url.push(urlEncode(key) + '=' + urlEncode(value.toString()));
-                    });
-
-                    data = url.join('&');
+                if (data instanceof HTMLFormElement) {
+                    const form = <HTMLFormElement>data;
+                    type = form.enctype ?? FORM_URL;
+                    data = new FormData(form);
                 }
+                else if (data instanceof FormData)
+                    type = FORM_URL;
+
+                if (type == FORM_URL)
+                    data = encodeForm(data);
+                else if (type == FORM_DATA)
+                    type = null; // не ставим, так как он будет подставлен автоматически
 
                 break;
             case "FORMDATA":
-                type = "multipart/form-data";
                 break;
             case "TEXT":
                 type = "text/plain";
+                break;
+            case "BLOB":
                 break;
         }
 

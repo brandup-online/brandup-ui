@@ -1,4 +1,5 @@
 ﻿import { UIElement, CommandContext } from "brandup-ui";
+import { ajaxRequest } from "brandup-ui-ajax";
 import { DOM } from "brandup-ui-dom";
 import "./styles.less";
 
@@ -65,6 +66,52 @@ export class AppElem extends UIElement {
                     context.target.innerText = "error";
                     context.complate();
                 });
+        });
+
+        this.registerCommand("upload-file", () => {
+            const input = <HTMLInputElement>DOM.tag("input", { type: "file" });
+            input.click();
+
+            input.addEventListener("change", () => {
+                if (!input.files.length)
+                    return;
+
+                ajaxRequest({
+                    url: "",
+                    urlParams: { handler: "UploadFile" },
+                    method: "POST",
+                    data: input.files.item(0),
+                    success: (response) => {
+                        if (response.status == 200) {
+                            alert(JSON.stringify(response.data));
+                        }
+                        else
+                            alert(response.state);
+                    }
+                });
+            });
+        });
+
+        this.registerCommand("upload-form", () => {
+            const input = <HTMLInputElement>DOM.tag("input", { type: "file", name: "file" });
+            const form = <HTMLFormElement>DOM.tag("form", { enctype: "multipart/form-data" }, input);
+            input.click();
+
+            input.addEventListener("change", () => {
+                ajaxRequest({
+                    url: "",
+                    urlParams: { handler: "UploadForm" },
+                    method: "POST",
+                    data: form,
+                    success: (response) => {
+                        if (response.status == 200) {
+                            alert(JSON.stringify(response.data));
+                        }
+                        else
+                            alert(response.state);
+                    }
+                });
+            });
         });
     }
 }
