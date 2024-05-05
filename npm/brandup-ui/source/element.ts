@@ -20,13 +20,17 @@ export abstract class UIElement {
     private __events: { [key: string]: EventOptions } = {};
     private __commandHandlers: { [key: string]: CommandHandler } = {};
 
+    static hasElement(elem: HTMLElement) {
+        return !!elem.dataset[ElemAttributeName];
+    }
+
     abstract typeName: string;
     get element(): HTMLElement { return this.__element; }
     protected setElement(elem: HTMLElement) {
         if (!elem)
             throw "Not set value elem.";
 
-        if (this.__element || elem[ElemPropertyName])
+        if (this.__element || UIElement.hasElement(elem))
             throw "UIElement already defined";
 
         this.__element = elem;
@@ -260,9 +264,6 @@ const fundUiElementByCommand = (elem: HTMLElement, commandName: string): UIEleme
     return null;
 };
 const commandClickHandler = (e: MouseEvent) => {
-    if (e.returnValue === false)
-        return;
-
     let commandElem = e.target as HTMLElement;
     while (commandElem) {
         if (commandElem.dataset[CommandAttributeName])
@@ -295,24 +296,6 @@ const commandClickHandler = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
-
-    return false;
 }
 
 window.addEventListener("click", commandClickHandler, false);
-
-(function () {
-    const name = "CustomEvent";
-    if (typeof window[name] === "function") return false; //If not IE
-
-    const customEvent = function (event, params) {
-        params = params || { bubbles: false, cancelable: false, detail: undefined };
-        const evt = document.createEvent(name);
-        evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
-        return evt;
-    };
-
-    customEvent.prototype = window["Event"].prototype;
-
-    (window as object)[name] = customEvent;
-})();
