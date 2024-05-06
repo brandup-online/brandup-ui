@@ -1,0 +1,36 @@
+{
+  "name": "brandup-ui-app",
+  "description": "Basic infrastructure framework for web applications.",
+  "keywords": [
+    "brandup",
+    "typescript",
+    "ui",
+    "app"
+  ],
+  "author": {
+    "name": "Dmitry Kovyazin",
+    "email": "it@brandup.online"
+  },
+  "homepage": "https://github.com/brandup-online/brandup-ui-app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brandup-online/brandup-ui-app.git"
+  },
+  "bugs": {
+    "url": "https://github.com/brandup-online/brandup-ui-app/issues",
+    "email": "it@brandup.online"
+  },
+  "main": "./source/index.js",
+  "types": "./source/index.ts",
+  "license": "Apache-2.0",
+  "version": "1.0.0",
+  "dependencies": {
+    "brandup-ui": "^2.0.9"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.4"
+  },
+  "scripts": {
+    "build": "tsc"
+  }
+}
