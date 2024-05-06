@@ -6,7 +6,8 @@
         "brandup-ui": "./npm/brandup-ui",
         "brandup-ui-ajax": "./npm/brandup-ui-ajax",
         "brandup-ui-dom": "./npm/brandup-ui-dom",
-        "brandup-ui-helpers": "./npm/brandup-ui-helpers"
+        "brandup-ui-helpers": "./npm/brandup-ui-helpers",
+        "brandup-ui-app": "./npm/brandup-ui-app"
     },
     "scripts": {
         "update-version": "node ./scripts/updateversion.js",
