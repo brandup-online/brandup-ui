@@ -4,12 +4,19 @@
   "private": true,
   "dependencies": {
     "brandup-ui": "../npm/brandup-ui",
-    "brandup-ui-dom": "../npm/brandup-ui-dom",
     "brandup-ui-ajax": "../npm/brandup-ui-ajax",
-    "brandup-ui-helpers": "../npm/brandup-ui-helpers"
+    "brandup-ui-dom": "../npm/brandup-ui-dom",
+    "brandup-ui-helpers": "../npm/brandup-ui-helpers",
+    "brandup-ui-app": "../npm/brandup-ui-app",
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
   },
   "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.12.8",
+    "cross-env": "^7.0.3",
     "css-loader": "^6.10.0",
+    "html-webpack-plugin": "^5.6.0",
     "less": "^4.2.0",
     "less-loader": "^12.2.0",
     "less-plugin-clean-css": "1.5.1",
@@ -25,8 +32,10 @@
     "webpack-cli": "^5.1.4"
   },
   "scripts": {
-    "build": "webpack -p --progress --config webpack.config.js",
-    "dev-build": "webpack --progress -d --config webpack.config.js",
-    "watch": "webpack --progress -d --config webpack.config.js --watch"
+    "build": "cross-env NODE_ENV=production webpack --config webpack.config.js",
+    "dev-build": "cross-env NODE_ENV=development webpack --config webpack.config.js",
+    "watch": "cross-env NODE_ENV=development webpack --config webpack.config.js --watch",
+    "start": "npm run build && tsc ./backend/server.ts && node ./backend/server.js --port=8316",
+    "start-dev": "tsc ./backend/server.ts && node ./backend/server.js --port=8316"
   }
 }

@@ -6,11 +6,12 @@
     "sourceMap": false,
     "strict": false,
     "lib": [ "ES2020", "DOM" ],
-    "baseUrl": "./_client",
+    "baseUrl": "./src",
     "noImplicitAny": false,
     "noEmitOnError": true,
     "declarationMap": false
   },
+  "type": "module",
   "exclude": [
     "node_modules",
     "wwwroot",

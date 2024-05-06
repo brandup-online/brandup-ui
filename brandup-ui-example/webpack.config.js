@@ -4,7 +4,9 @@ const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CleanCSSPlugin = require("less-plugin-clean-css");
 const TerserPlugin = require("terser-webpack-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 const bundleOutputDir = './wwwroot/dist';
+const frontDir = path.resolve(__dirname, "frontend");
 
 const lessLoaderOptions = { webpackImporter: true, lessOptions: { math: 'always', plugins: [new CleanCSSPlugin({ advanced: true })] } };
 var splitChunks = {
@@ -27,6 +29,8 @@ var splitChunks = {
     }
 };
 
+const isDevBuild = process.env.NODE_ENV === "development";
+
 module.exports = (env) => {
     const isDevBuild = process.env.NODE_ENV !== "production";
 
@@ -34,8 +38,9 @@ module.exports = (env) => {
     console.log(`isDevBuild: ${isDevBuild}`);
 
     return [{
+        mode: isDevBuild ? "development" : "production",
         entry: {
-            app: path.resolve(__dirname, '_client', 'index.ts')
+            app: path.resolve(__dirname, 'frontend', 'index.ts')
         },
         resolve: { extensions: ['.js', '.jsx', '.ts', '.tsx', '.less'] },
         output: {
@@ -44,7 +49,7 @@ module.exports = (env) => {
             chunkFilename: isDevBuild ? '[name].js' : '[name].[contenthash].js',
             iife: true,
             clean: true,
-            publicPath: 'dist/'
+            publicPath: './'
         },
         module: {
             rules: [
@@ -106,7 +111,12 @@ module.exports = (env) => {
                 filename: '[name].css',
                 chunkFilename: isDevBuild ? '[id].css' : '[id].[contenthash].css',
                 ignoreOrder: true
-            })
+            }),
+            new HtmlWebpackPlugin({
+                filename: "index.html",
+                template: path.join(frontDir, "layout.html"),
+                publicPath:"./"
+            }),
         ]
     }];
 };
