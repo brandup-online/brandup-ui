@@ -25,7 +25,7 @@
   "license": "Apache-2.0",
   "version": "1.0.0",
   "dependencies": {
-    "brandup-ui": "^2.0.9"
+    "brandup-ui": "file:../brandup-ui"
   },
   "devDependencies": {
     "typescript": "^5.4.4"

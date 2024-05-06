@@ -1,6 +1,6 @@
 ﻿import { ApplicationBuilder } from "brandup-ui-app";
 import { PagesMiddleware } from "./middlewares/pages";
-import "./styles.less";
+import "./styles/styles.less";
 import { RealtimeMiddleware } from "./middlewares/realtime";
 
 const builder = new ApplicationBuilder();
