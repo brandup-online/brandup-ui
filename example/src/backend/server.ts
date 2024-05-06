@@ -24,7 +24,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 
-const distDir = path.join(__dirname, "../wwwroot/dist");
+const distDir = path.join(__dirname, "../../wwwroot/dist");
 app.use(express.static(distDir));
 
 app.get("*", (req, res) => {
