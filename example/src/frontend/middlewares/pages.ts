@@ -15,6 +15,7 @@ export class PagesMiddleware extends Middleware {
 
         this._pages = {
             '/': { type: () => import("../pages/index"), title: "Main page" },
+            '/about': { type: () => import("../pages/about"), title: "About page" }
         };
 
         window.addEventListener("popstate", (e: PopStateEvent) => {
