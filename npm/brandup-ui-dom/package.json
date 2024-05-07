@@ -29,5 +29,8 @@
   },
   "scripts": {
     "build": "tsc"
+  },
+  "dependencies": {
+    "brandup-ui-dom": "file:"
   }
 }

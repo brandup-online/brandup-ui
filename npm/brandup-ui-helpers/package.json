@@ -30,5 +30,8 @@
   },
   "scripts": {
     "build": "tsc"
+  },
+  "dependencies": {
+    "brandup-ui-helpers": "file:"
   }
 }
