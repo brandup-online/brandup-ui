@@ -331,7 +331,7 @@ ASALocalRun/
 
 
 /npm/*/coverage
-/npm/*/package-lock.json
+**/package-lock.json
 /npm/*/dist
 /npm/*/source/*.js
 /npm/*/.rpt2_cache
