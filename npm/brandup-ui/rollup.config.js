@@ -1,9 +1,11 @@
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
-import typescript from "@rollup/plugin-typescript";
+import typescript from "rollup-plugin-typescript2";
 import dts from "rollup-plugin-dts";
 import terser from "@rollup/plugin-terser";
 import peerDepsExternal from "rollup-plugin-peer-deps-external";
+import image from '@rollup/plugin-image';
+import less from 'rollup-plugin-less';
 
 const packageJson = require("./package.json");
 
@@ -28,12 +30,13 @@ export default [
       commonjs(), // поддержка CommonJS
       typescript({ tsconfig: "./tsconfig.json" }), // поддержка typescript
       terser(), // минификация сборки
+      image(),
+      less(),
     ],
-    external: ["react", "react-dom", "styled-components"],
   },
   {
     input: "source/index.ts",
     output: [{ file: packageJson.types, format: "es" }],
-    plugins: [dts.default()],
+    plugins: [dts.default(),less()],
   },
 ];
