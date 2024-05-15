@@ -1,8 +1,8 @@
 'use strict';
 
-const fs = require( 'fs' );
-const upath = require( 'upath' );
-const { getPackageJson, setPackageJson } = require( './utils' );
+const fs = require('fs');
+const upath = require('upath');
+const { getPackageJson, setPackageJson } = require('./utils');
 
 const buildVersion = process.argv[2];
 if (!buildVersion)
