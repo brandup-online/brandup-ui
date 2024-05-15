@@ -63,6 +63,11 @@ stages:
                       command: custom
                       customCommand: "run npm:pack --pack-destination $(Build.ArtifactStagingDirectory)"
 
+                - task: npmAuthenticate@0
+                  inputs:
+                    workingFile: '$(Build.ArtifactStagingDirectory).npmrc'
+                    customEndpoint: 'npm brandup'
+
                 - publish: $(build.artifactstagingdirectory)
                   displayName: publish artifact
                   condition: succeededOrFailed()
