@@ -93,50 +93,50 @@ stages:
             displayName: "download packages"
             artifact: npm
 
-          - task: ExtractFiles@1
-            displayName: "unzip packages"
-            inputs:
-              archiveFilePatterns: "$(Pipeline.Workspace)/npm/*.tgz"
-              destinationFolder: "npmout"
-              cleanDestinationFolder: true
-              overwriteExistingFiles: true
+          #          - task: ExtractFiles@1
+          #            displayName: "unzip packages"
+          #            inputs:
+          #              archiveFilePatterns: "$(Pipeline.Workspace)/npm/*.tgz"
+          #              destinationFolder: "npmout"
+          #              cleanDestinationFolder: true
+          #              overwriteExistingFiles: true
 
           - task: Npm@1
             displayName: "publish brandup-ui"
             inputs:
               command: "custom"
-              workingDir: "npmout/brandup-ui-$(Build.BuildNumber)/package"
-              customCommand: "publish"
+              workingDir: "$(Pipeline.Workspace)/npm"
+              customCommand: "publish brandup-ui-$(Build.BuildNumber).tgz"
               customEndpoint: "npm brandup"
 
           - task: Npm@1
             displayName: "publish brandup-ui-ajax"
             inputs:
               command: "custom"
-              workingDir: "npmout/brandup-ui-ajax-$(Build.BuildNumber)/package"
-              customCommand: "publish"
+              workingDir: "$(Pipeline.Workspace)/npm"
+              customCommand: "publish brandup-ui-ajax-$(Build.BuildNumber).tgz"
               customEndpoint: "npm brandup"
 
           - task: Npm@1
             displayName: "publish brandup-ui-dom"
             inputs:
               command: "custom"
-              workingDir: "npmout/brandup-ui-dom-$(Build.BuildNumber)/package"
-              customCommand: "publish"
+              workingDir: "$(Pipeline.Workspace)/npm"
+              customCommand: "publish brandup-ui-dom-$(Build.BuildNumber).tgz"
               customEndpoint: "npm brandup"
 
           - task: Npm@1
             displayName: "publish brandup-ui-helpers"
             inputs:
               command: "custom"
-              workingDir: "npmout/brandup-ui-helpers-$(Build.BuildNumber)/package"
-              customCommand: "publish"
+              workingDir: "$(Pipeline.Workspace)/npm"
+              customCommand: "publish brandup-ui-helpers-$(Build.BuildNumber).tgz"
               customEndpoint: "npm brandup"
 
           - task: Npm@1
             displayName: "publish brandup-ui-app"
             inputs:
               command: "custom"
-              workingDir: "npmout/brandup-ui-app-$(Build.BuildNumber)/package"
-              customCommand: "publish"
+              workingDir: "$(Pipeline.Workspace)/npm"
+              customCommand: "publish brandup-ui-app-$(Build.BuildNumber).tgz"
               customEndpoint: "npm brandup"
