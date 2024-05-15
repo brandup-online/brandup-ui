@@ -105,7 +105,7 @@ stages:
             displayName: "publish brandup-ui"
             inputs:
               command: "publish"
-              workingDir: "npmout/brandup-ui/package"
+              workingDir: "npmout/brandup-ui-$(Build.BuildNumber)/package"
               verbose: true
               publishEndpoint: "npm brandup"
 
@@ -113,7 +113,7 @@ stages:
             displayName: "publish brandup-ui-ajax"
             inputs:
               command: "publish"
-              workingDir: "npmout/brandup-ui-ajax/package"
+              workingDir: "npmout/brandup-ui-ajax-$(Build.BuildNumber)/package"
               verbose: true
               publishEndpoint: "npm brandup"
 
@@ -121,7 +121,7 @@ stages:
             displayName: "publish brandup-ui-dom"
             inputs:
               command: "publish"
-              workingDir: "npmout/brandup-ui-dom/package"
+              workingDir: "npmout/brandup-ui-dom-$(Build.BuildNumber)/package"
               verbose: true
               publishEndpoint: "npm brandup"
 
@@ -129,7 +129,7 @@ stages:
             displayName: "publish brandup-ui-helpers"
             inputs:
               command: "publish"
-              workingDir: "npmout/brandup-ui-helpers/package"
+              workingDir: "npmout/brandup-ui-helpers-$(Build.BuildNumber)/package"
               verbose: true
               publishEndpoint: "npm brandup"
 
@@ -137,6 +137,6 @@ stages:
             displayName: "publish brandup-ui-app"
             inputs:
               command: "publish"
-              workingDir: "npmout/brandup-ui-app/package"
+              workingDir: "npmout/brandup-ui-app-$(Build.BuildNumber)/package"
               verbose: true
               publishEndpoint: "npm brandup"
