@@ -63,12 +63,7 @@ stages:
               command: custom
               customCommand: "run npm:pack --pack-destination $(Build.ArtifactStagingDirectory)"
 
-          - task: npmAuthenticate@0
-            inputs:
-              workingFile: "$(Build.ArtifactStagingDirectory)/.npmrc"
-              customEndpoint: "npm brandup"
-
-          - publish: $(build.artifactstagingdirectory)
+          - publish: $(Build.ArtifactStagingDirectory)
             displayName: publish artifact
             condition: succeededOrFailed()
             artifact: npm
@@ -88,3 +83,60 @@ stages:
               git push origin "$(Build.BuildNumber)" --force
               Write-Output "Tagging $(Build.Repository.Name) with $(Build.BuildNumber)"
             displayName: set git tag
+
+      - job: Publish
+        displayName: "Publish packages"
+        dependsOn: [GitTag]
+        condition: succeeded()
+        steps:
+          - download: current
+            displayName: "download packages"
+            artifact: npm
+
+          - task: ExtractFiles@1
+            displayName: "unzip packages"
+            inputs:
+              archiveFilePatterns: "$(Pipeline.Workspace)/npm/*.tgz"
+              destinationFolder: "npmout"
+              cleanDestinationFolder: true
+              overwriteExistingFiles: true
+
+          - task: Npm@1
+            displayName: "publish brandup-ui"
+            inputs:
+              command: "publish"
+              workingDir: "npmout/brandup-ui/package"
+              verbose: true
+              publishEndpoint: "npm brandup"
+
+          - task: Npm@1
+            displayName: "publish brandup-ui-ajax"
+            inputs:
+              command: "publish"
+              workingDir: "npmout/brandup-ui-ajax/package"
+              verbose: true
+              publishEndpoint: "npm brandup"
+
+          - task: Npm@1
+            displayName: "publish brandup-ui-dom"
+            inputs:
+              command: "publish"
+              workingDir: "npmout/brandup-ui-dom/package"
+              verbose: true
+              publishEndpoint: "npm brandup"
+
+          - task: Npm@1
+            displayName: "publish brandup-ui-helpers"
+            inputs:
+              command: "publish"
+              workingDir: "npmout/brandup-ui-helpers/package"
+              verbose: true
+              publishEndpoint: "npm brandup"
+
+          - task: Npm@1
+            displayName: "publish brandup-ui-app"
+            inputs:
+              command: "publish"
+              workingDir: "npmout/brandup-ui-app/package"
+              verbose: true
+              publishEndpoint: "npm brandup"
