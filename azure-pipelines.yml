@@ -105,7 +105,7 @@ stages:
                   displayName: "publish brandup-ui"
                   inputs:
                       command: "custom"
-                      workingDir: "$(Pipeline.Workspace)/npm/brandup-ui/package"
+                      workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui/package"
                       customCommand: "publish"
                       customEndpoint: "npm brandup"
 
