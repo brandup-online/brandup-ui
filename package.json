@@ -1,0 +1,21 @@
+{
+	"version": "1.0.0",
+	"name": "brandup-ui-root",
+	"private": true,
+	"dependencies": {
+		"brandup-ui": "./npm/brandup-ui",
+		"brandup-ui-ajax": "./npm/brandup-ui-ajax",
+		"brandup-ui-dom": "./npm/brandup-ui-dom",
+		"brandup-ui-helpers": "./npm/brandup-ui-helpers",
+		"brandup-ui-app": "./npm/brandup-ui-app"
+	},
+	"scripts": {
+		"npm:install": "node ./scripts/npm.js install",
+		"npm:build": "node ./scripts/npm.js build",
+		"npm:version": "node ./scripts/updateversion.js",
+		"npm:pack": "node ./scripts/npm.js pack"
+	},
+	"devDependencies": {
+		"upath": "^2.0.1"
+	}
+}

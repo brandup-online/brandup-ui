@@ -331,13 +331,12 @@ ASALocalRun/
 
 
 /npm/*/coverage
-/npm/*/package-lock.json
+**/package-lock.json
 /npm/*/dist
 /npm/*/source/*.js
 /npm/*/.rpt2_cache
 /npm/*/source/**/*.d.ts
 /npm/*/source/**/*.js.map
-/brandup-ui-example/wwwroot/dist
-/brandup-ui-example/package-lock.json
-/brandup-ui-example/_client/**/*.js
-/brandup-ui-example/_client/**/*.js.map
+/example/wwwroot/dist
+/example/package-lock.json
+/example/src/**/*.js

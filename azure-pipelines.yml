@@ -1,0 +1,87 @@
+trigger:
+    - none
+
+resources:
+    - repo: self
+
+variables:
+    - group: brandup-ui
+    - name: vmImageName
+      value: "ubuntu-latest"
+    - name: envName
+      value: "brandup-ui"
+
+name: $(version-major).$(version-minor).$(rev:r)
+
+pool:
+    vmImage: $(vmImageName)
+
+stages:
+    - stage: "Build"
+      displayName: "Build stage"
+      jobs:
+          - job: "BuildNpm"
+            displayName: "Build NPM"
+            pool:
+                vmImage: $(vmImageName)
+                workspace:
+                    clean: all
+            steps:
+                - script: |
+                      echo "Begin build!"
+                      echo "build number - $(Build.BuildNumber)"
+                  displayName: "print variables"
+
+                - checkout: self
+                  clean: "true"
+                  persistCredentials: "true"
+
+                - task: "Npm@1"
+                  displayName: "root npm install"
+                  inputs:
+                      command: "install"
+
+                - task: "Npm@1"
+                  displayName: "packages npm install"
+                  inputs:
+                      command: "custom"
+                      customCommand: "run npm:install"
+
+                - task: "Npm@1"
+                  displayName: "packages npm build"
+                  inputs:
+                      command: "custom"
+                      customCommand: "run npm:build"
+
+                - task: "Npm@1"
+                  displayName: "packages npm version"
+                  inputs:
+                      command: "custom"
+                      customCommand: "run npm:version -- $(Build.BuildNumber)"
+
+                - task: "Npm@1"
+                  displayName: "packages npm pack"
+                  inputs:
+                      command: custom
+                      customCommand: "run npm:pack --pack-destination $(Build.ArtifactStagingDirectory)"
+
+                - publish: $(build.artifactstagingdirectory)
+                  displayName: publish artifact
+                  condition: succeededOrFailed()
+                  artifact: npm
+
+          - job: GitTag
+            displayName: "Add git tag"
+            dependsOn: [BuildNpm]
+            condition: succeeded()
+            steps:
+                - checkout: self
+                  clean: "true"
+                  persistCredentials: "true"
+
+                - pwsh: |
+                      git config --global user.name "AzureDevOps Agent"
+                      git tag "$(Build.BuildNumber)" --force
+                      git push origin "$(Build.BuildNumber)" --force
+                      Write-Output "Tagging $(Build.Repository.Name) with $(Build.BuildNumber)"
+                  displayName: set git tag

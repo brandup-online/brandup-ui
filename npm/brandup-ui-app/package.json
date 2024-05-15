@@ -1,17 +1,17 @@
 {
-  "name": "brandup-ui-dom",
-  "description": "Basic DOM framework.",
+  "name": "brandup-ui-app",
+  "description": "Basic infrastructure framework for web applications.",
   "keywords": [
     "brandup",
     "typescript",
     "ui",
-    "dom"
+    "app"
   ],
   "author": {
     "name": "Dmitry Kovyazin",
     "email": "it@brandup.online"
   },
-  "homepage": "https://github.com/brandup-online/brandup-ui/npm/brandup-ui-dom",
+  "homepage": "https://github.com/brandup-online/brandup-ui",
   "repository": {
     "type": "git",
     "url": "https://github.com/brandup-online/brandup-ui.git"
@@ -20,11 +20,15 @@
     "url": "https://github.com/brandup-online/brandup-ui/issues",
     "email": "it@brandup.online"
   },
-  "license": "Apache-2.0",
-  "version": "1.0.0",
   "main": "./dist/cjs/index.js",
   "module": "./dist/mjs/index.js",
   "types": "./dist/types.d.ts",
+  "license": "Apache-2.0",
+  "version": "1.0.0",
+  "dependencies": {
+    "brandup-ui": "file:../brandup-ui",
+    "brandup-ui-app": "file:"
+  },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-image": "^3.0.3",
@@ -45,8 +49,5 @@
   ],
   "scripts": {
     "build": "rollup -c --bundleConfigAsCjs"
-  },
-  "dependencies": {
-    "brandup-ui-dom": "file:"
   }
 }
