@@ -12,7 +12,6 @@ console.log(`build version: ${buildVersion}`);
 const rootDir = process.cwd();
 const npmDir = upath.join(rootDir, 'npm');
 
-
 fs.readdirSync(npmDir, { recursive: false }).forEach(file => {
     let packageFile = upath.join(npmDir, file, "package.json");
     let packageJson = getPackageJson(packageFile);
