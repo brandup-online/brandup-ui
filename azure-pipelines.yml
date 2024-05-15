@@ -8,8 +8,6 @@ variables:
     - group: brandup-ui
     - name: vmImageName
       value: "ubuntu-latest"
-    - name: envName
-      value: "brandup-ui"
 
 name: $(version-major).$(version-minor).$(rev:r)
 
