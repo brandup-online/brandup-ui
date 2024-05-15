@@ -97,7 +97,7 @@ stages:
                   displayName: "unzip brandup-ui"
                   inputs:
                       archiveFilePatterns: "$(Pipeline.Workspace)/npm/brandup-ui-$(Build.BuildNumber).tgz"
-                      destinationFolder: "npmout/brandup-ui"
+                      destinationFolder: "$(Pipeline.Workspace)/npmout/brandup-ui"
                       cleanDestinationFolder: true
                       overwriteExistingFiles: true
 
