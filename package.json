@@ -10,12 +10,13 @@
 		"brandup-ui-app": "./npm/brandup-ui-app"
 	},
 	"scripts": {
-		"npm:install": "node ./scripts/npm.js install",
-		"npm:build": "node ./scripts/npm.js build",
-		"npm:version": "node ./scripts/updateversion.js",
-		"npm:pack": "node ./scripts/npm.js pack"
+		"npm:install": "bnpm-build install",
+		"npm:build": "bnpm-build build",
+		"npm:version": "bnpm-version",
+		"npm:pack": "bnpm-build pack"
 	},
 	"devDependencies": {
-		"upath": "^2.0.1"
+		"upath": "^2.0.1",
+		"bnpm": "file:../bnpm"
 	}
 }
