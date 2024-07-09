@@ -43,5 +43,8 @@
 		"dist",
 		"tsconfig.json",
 		"README.md"
-	]
+	],
+	"scripts": {
+		"build": "rollup -c --bundleConfigAsCjs"
+	}
 }
