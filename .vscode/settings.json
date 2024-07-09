@@ -2,8 +2,6 @@
 	"javascript.format.semicolons": "insert",
 	"editor.formatOnSave": true,
 	"editor.formatOnPaste": true,
-	"editor.indentSize": "tabSize",
-	"editor.autoIndent": "full",
 	"editor.linkedEditing": true,
 	"[csharp]": {
 		"editor.defaultFormatter": "ms-dotnettools.csharp"

@@ -26,8 +26,7 @@
 	"license": "Apache-2.0",
 	"version": "1.0.0",
 	"dependencies": {
-		"brandup-ui": "file:../brandup-ui",
-		"brandup-ui-app": "file:"
+		"brandup-ui": "file:../brandup-ui"
 	},
 	"devDependencies": {
 		"@rollup/plugin-commonjs": "^25.0.8",
@@ -44,8 +43,5 @@
 		"dist",
 		"tsconfig.json",
 		"README.md"
-	],
-	"scripts": {
-		"build": "rollup -c --bundleConfigAsCjs"
-	}
+	]
 }

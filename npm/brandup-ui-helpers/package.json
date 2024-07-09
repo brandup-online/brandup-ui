@@ -44,8 +44,5 @@
 	],
 	"scripts": {
 		"build": "rollup -c --bundleConfigAsCjs"
-	},
-	"dependencies": {
-		"brandup-ui-helpers": "file:"
 	}
 }
