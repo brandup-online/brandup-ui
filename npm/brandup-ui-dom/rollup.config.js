@@ -4,39 +4,36 @@ import typescript from "rollup-plugin-typescript2";
 import dts from "rollup-plugin-dts";
 import terser from "@rollup/plugin-terser";
 import peerDepsExternal from "rollup-plugin-peer-deps-external";
-import image from '@rollup/plugin-image';
-import less from 'rollup-plugin-less';
 
 const packageJson = require("./package.json");
+const mainFile = "source/index.ts";
 
 export default [
   {
-    input: "source/index.ts",
+    input: mainFile,
     output: [
       {
         file: packageJson.main,
         format: "cjs",
-        sourcemap: true,
+        sourcemap: true
       },
       {
         file: packageJson.module,
         format: "esm",
-        sourcemap: true,
-      },
+        sourcemap: true
+      }
     ],
     plugins: [
       peerDepsExternal(), // исключает лишние зависимости
       resolve(), // работа с node_modules
       commonjs(), // поддержка CommonJS
       typescript({ tsconfig: "./tsconfig.json" }), // поддержка typescript
-      terser(), // минификация сборки
-      image(),
-      less(),
-    ],
+      terser() // минификация сборки
+    ]
   },
   {
-    input: "source/index.ts",
-    output: [{ file: packageJson.types, format: "es" }],
-    plugins: [dts.default(),less()],
-  },
+    input: mainFile,
+    output: [ { file: packageJson.types, format: "es" } ],
+    plugins: [ dts.default() ]
+  }
 ];

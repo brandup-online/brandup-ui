@@ -1,53 +1,51 @@
 {
-  "name": "brandup-ui-app",
-  "description": "Basic infrastructure framework for web applications.",
-  "keywords": [
-    "brandup",
-    "typescript",
-    "ui",
-    "app"
-  ],
-  "author": {
-    "name": "Dmitry Kovyazin",
-    "email": "it@brandup.online"
-  },
-  "homepage": "https://github.com/brandup-online/brandup-ui",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/brandup-online/brandup-ui.git"
-  },
-  "bugs": {
-    "url": "https://github.com/brandup-online/brandup-ui/issues",
-    "email": "it@brandup.online"
-  },
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/mjs/index.js",
-  "types": "./dist/types.d.ts",
-  "license": "Apache-2.0",
-  "version": "1.0.0",
-  "dependencies": {
-    "brandup-ui": "file:../brandup-ui",
-    "brandup-ui-app": "file:"
-  },
-  "devDependencies": {
-    "@rollup/plugin-commonjs": "^25.0.7",
-    "@rollup/plugin-image": "^3.0.3",
-    "@rollup/plugin-node-resolve": "^15.2.3",
-    "@rollup/plugin-terser": "^0.4.4",
-    "rollup": "^4.17.2",
-    "rollup-plugin-dts": "^6.1.0",
-    "rollup-plugin-less": "^1.1.3",
-    "rollup-plugin-peer-deps-external": "^2.2.4",
-    "rollup-plugin-typescript2": "^0.36.0",
-    "tslib": "^2.6.2",
-    "typescript": "^5.4.5"
-  },
-  "files": [
-    "dist",
-    "tsconfig.json",
-    "README.md"
-  ],
-  "scripts": {
-    "build": "rollup -c --bundleConfigAsCjs"
-  }
+	"name": "brandup-ui-app",
+	"description": "Basic infrastructure framework for web applications.",
+	"keywords": [
+		"brandup",
+		"typescript",
+		"ui",
+		"app"
+	],
+	"author": {
+		"name": "Dmitry Kovyazin",
+		"email": "it@brandup.online"
+	},
+	"homepage": "https://github.com/brandup-online/brandup-ui",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/brandup-online/brandup-ui.git"
+	},
+	"bugs": {
+		"url": "https://github.com/brandup-online/brandup-ui/issues",
+		"email": "it@brandup.online"
+	},
+	"main": "dist/cjs/index.js",
+	"module": "dist/mjs/index.js",
+	"types": "dist/types.d.ts",
+	"license": "Apache-2.0",
+	"version": "1.0.0",
+	"dependencies": {
+		"brandup-ui": "file:../brandup-ui",
+		"brandup-ui-app": "file:"
+	},
+	"devDependencies": {
+		"@rollup/plugin-commonjs": "^25.0.8",
+		"@rollup/plugin-node-resolve": "^15.2.3",
+		"@rollup/plugin-terser": "^0.4.4",
+		"rollup": "^4.18.1",
+		"rollup-plugin-dts": "^6.1.1",
+		"rollup-plugin-peer-deps-external": "^2.2.4",
+		"rollup-plugin-typescript2": "^0.36.0",
+		"tslib": "^2.6.3",
+		"typescript": "^5.5.3"
+	},
+	"files": [
+		"dist",
+		"tsconfig.json",
+		"README.md"
+	],
+	"scripts": {
+		"build": "rollup -c --bundleConfigAsCjs"
+	}
 }

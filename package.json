@@ -3,10 +3,11 @@
 	"name": "brandup-ui-root",
 	"private": true,
 	"devDependencies": {
-		"@brandup/autonpm": "^1.0.8"
+		"@brandup/autonpm": "^1.0.9"
 	},
 	"scripts": {
 		"npm:install": "autonpm install",
+		"npm:update": "autonpm update -save",
 		"npm:build": "autonpm build",
 		"npm:version": "autonpm version",
 		"npm:pack": "autonpm pack"
