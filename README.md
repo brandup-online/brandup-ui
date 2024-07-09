@@ -9,3 +9,5 @@
 [brandup-ui-ajax](npm/brandup-ui-ajax/README.md)
 
 [brandup-ui-helpers](npm/brandup-ui-helpers/README.md)
+
+[brandup-ui-app](npm/brandup-ui-app/README.md)
