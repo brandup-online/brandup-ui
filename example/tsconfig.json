@@ -1,22 +1,25 @@
 {
-  "compilerOptions": {
-    "module": "ES2020",
-    "moduleResolution": "node",
-    "target": "es5",
-    "sourceMap": false,
-    "strict": false,
-    "lib": [ "ES2020", "DOM" ],
-    "baseUrl": "./src",
-    "noImplicitAny": false,
-    "noEmitOnError": true,
-    "declarationMap": false
-  },
-  "type": "module",
-  "exclude": [
-    "node_modules",
-    "wwwroot",
-    ".idea",
-    ".vscode"
-  ],
-  "compileOnSave": true
+	"compilerOptions": {
+		"module": "ES2020",
+		"moduleResolution": "node",
+		"target": "ESNext",
+		"sourceMap": false,
+		"strict": false,
+		"lib": [
+			"ES2020",
+			"DOM"
+		],
+		"baseUrl": "./src",
+		"noImplicitAny": false,
+		"noEmitOnError": true,
+		"declarationMap": false
+	},
+	"type": "module",
+	"exclude": [
+		"node_modules",
+		"wwwroot",
+		".idea",
+		".vscode"
+	],
+	"compileOnSave": true
 }
