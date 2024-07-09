@@ -108,8 +108,6 @@ stages:
                   displayName: "download artifacts"
                   artifact: npm
 
-                # brandup-ui
-
                 - task: ExtractFiles@1
                   displayName: "unzip brandup-ui"
                   inputs:
@@ -117,32 +115,6 @@ stages:
                     destinationFolder: "$(Pipeline.Workspace)/npmout/brandup-ui"
                     cleanDestinationFolder: true
                     overwriteExistingFiles: true
-
-                - task: Npm@1
-                  displayName: "publish brandup-ui"
-                  inputs:
-                    command: publish
-                    workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui/package"
-                    publishEndpoint: "$(publish-npm-credentials)"
-
-                # brandup-ui-ajax
-
-                - task: ExtractFiles@1
-                  displayName: "unzip brandup-ui-ajax"
-                  inputs:
-                    archiveFilePatterns: "$(Pipeline.Workspace)/npm/brandup-ui-ajax-$(Build.BuildNumber).tgz"
-                    destinationFolder: "$(Pipeline.Workspace)/npmout/brandup-ui-ajax"
-                    cleanDestinationFolder: true
-                    overwriteExistingFiles: true
-
-                - task: Npm@1
-                  displayName: "publish brandup-ui-ajax"
-                  inputs:
-                    command: publish
-                    workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui-ajax/package"
-                    publishEndpoint: "$(publish-npm-credentials)"
-
-                # brandup-ui-dom
 
                 - task: ExtractFiles@1
                   displayName: "unzip brandup-ui-dom"
@@ -152,14 +124,13 @@ stages:
                     cleanDestinationFolder: true
                     overwriteExistingFiles: true
 
-                - task: Npm@1
-                  displayName: "publish brandup-ui-dom"
+                - task: ExtractFiles@1
+                  displayName: "unzip brandup-ui-ajax"
                   inputs:
-                    command: publish
-                    workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui-dom/package"
-                    publishEndpoint: "$(publish-npm-credentials)"
-
-                # brandup-ui-helpers
+                    archiveFilePatterns: "$(Pipeline.Workspace)/npm/brandup-ui-ajax-$(Build.BuildNumber).tgz"
+                    destinationFolder: "$(Pipeline.Workspace)/npmout/brandup-ui-ajax"
+                    cleanDestinationFolder: true
+                    overwriteExistingFiles: true
 
                 - task: ExtractFiles@1
                   displayName: "unzip brandup-ui-helpers"
@@ -169,6 +140,43 @@ stages:
                     cleanDestinationFolder: true
                     overwriteExistingFiles: true
 
+                - task: ExtractFiles@1
+                  displayName: "unzip brandup-ui-helpers"
+                  inputs:
+                    archiveFilePatterns: "$(Pipeline.Workspace)/npm/brandup-ui-app-$(Build.BuildNumber).tgz"
+                    destinationFolder: "$(Pipeline.Workspace)/npmout/brandup-ui-app"
+                    cleanDestinationFolder: true
+                    overwriteExistingFiles: true
+
+                # brandup-ui
+
+                - task: Npm@1
+                  displayName: "publish brandup-ui"
+                  inputs:
+                    command: publish
+                    workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui/package"
+                    publishEndpoint: "$(publish-npm-credentials)"
+
+                # brandup-ui-dom
+
+                - task: Npm@1
+                  displayName: "publish brandup-ui-dom"
+                  inputs:
+                    command: publish
+                    workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui-dom/package"
+                    publishEndpoint: "$(publish-npm-credentials)"
+
+                # brandup-ui-ajax
+
+                - task: Npm@1
+                  displayName: "publish brandup-ui-ajax"
+                  inputs:
+                    command: publish
+                    workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui-ajax/package"
+                    publishEndpoint: "$(publish-npm-credentials)"
+
+                # brandup-ui-helpers
+
                 - task: Npm@1
                   displayName: "publish brandup-ui-helpers"
                   inputs:
@@ -177,14 +185,6 @@ stages:
                     publishEndpoint: "$(publish-npm-credentials)"
 
                 # brandup-ui-app
-
-                - task: ExtractFiles@1
-                  displayName: "unzip brandup-ui-helpers"
-                  inputs:
-                    archiveFilePatterns: "$(Pipeline.Workspace)/npm/brandup-ui-app-$(Build.BuildNumber).tgz"
-                    destinationFolder: "$(Pipeline.Workspace)/npmout/brandup-ui-app"
-                    cleanDestinationFolder: true
-                    overwriteExistingFiles: true
 
                 - task: Npm@1
                   displayName: "publish brandup-ui-app"
