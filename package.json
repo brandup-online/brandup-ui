@@ -2,20 +2,13 @@
 	"version": "1.0.0",
 	"name": "brandup-ui-root",
 	"private": true,
-	"dependencies": {
-		"brandup-ui": "./npm/brandup-ui",
-		"brandup-ui-ajax": "./npm/brandup-ui-ajax",
-		"brandup-ui-dom": "./npm/brandup-ui-dom",
-		"brandup-ui-helpers": "./npm/brandup-ui-helpers",
-		"brandup-ui-app": "./npm/brandup-ui-app"
+	"devDependencies": {
+		"@brandup/autonpm": "^1.0.8"
 	},
 	"scripts": {
 		"npm:install": "autonpm install",
 		"npm:build": "autonpm build",
 		"npm:version": "autonpm version",
 		"npm:pack": "autonpm pack"
-	},
-	"devDependencies": {
-		"@brandup/autonpm": "^1.0.8"
 	}
 }
