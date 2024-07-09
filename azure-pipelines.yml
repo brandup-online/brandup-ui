@@ -1,142 +1,194 @@
 trigger:
-    - none
+  - main
 
 resources:
-    - repo: self
+  - repo: self
 
 variables:
-    - group: brandup-ui
-    - name: vmImageName
-      value: "ubuntu-latest"
+  - group: public-npm
+  - name: vmImageName
+    value: "ubuntu-latest"
+  - name: envName
+    value: "brandup-ui"
+  - name: version-major
+    value: "2"
+  - name: version-minor
+    value: "2"
 
 name: $(version-major).$(version-minor).$(rev:r)
 
 pool:
-    vmImage: $(vmImageName)
+  vmImage: $(vmImageName)
 
 stages:
-    - stage: "Build"
-      displayName: "Build stage"
-      jobs:
-          - job: "BuildNpm"
-            displayName: "Build NPM"
-            pool:
-                vmImage: $(vmImageName)
-                workspace:
-                    clean: all
-            steps:
-                - script: |
-                      echo "Begin build!"
-                      echo "build number - $(Build.BuildNumber)"
-                  displayName: "print variables"
+  - stage: "Build"
+    displayName: "Build"
+    jobs:
+      - job: "BuildNpm"
+        displayName: "Build NPM"
+        pool:
+          vmImage: $(vmImageName)
+          workspace:
+            clean: all
+        steps:
+          - script: |
+              echo "Begin build!"
+              echo "build number - $(Build.BuildNumber)"
+            displayName: "print variables"
 
-                - checkout: self
-                  clean: "true"
-                  persistCredentials: "true"
+          - checkout: self
+            clean: "true"
+            persistCredentials: "true"
 
-                - task: "Npm@1"
-                  displayName: "root npm install"
-                  inputs:
-                      command: "install"
+          - task: "Npm@1"
+            displayName: "root npm install"
+            inputs:
+              command: "install"
 
-                - task: "Npm@1"
-                  displayName: "packages npm install"
-                  inputs:
-                      command: "custom"
-                      customCommand: "run npm:install"
+          - task: "Npm@1"
+            displayName: "packages npm install"
+            inputs:
+              command: "custom"
+              customCommand: "run npm:install"
 
-                - task: "Npm@1"
-                  displayName: "packages npm build"
-                  inputs:
-                      command: "custom"
-                      customCommand: "run npm:build"
+          - task: "Npm@1"
+            displayName: "packages npm build"
+            inputs:
+              command: "custom"
+              customCommand: "run npm:build"
 
-                - task: "Npm@1"
-                  displayName: "packages npm version"
-                  inputs:
-                      command: "custom"
-                      customCommand: "run npm:version -- $(Build.BuildNumber)"
+          - task: "Npm@1"
+            displayName: "packages npm version"
+            inputs:
+              command: "custom"
+              customCommand: "run npm:version -- $(Build.BuildNumber)"
 
-                - task: "Npm@1"
-                  displayName: "packages npm pack"
-                  inputs:
-                      command: custom
-                      customCommand: "run npm:pack --pack-destination $(Build.ArtifactStagingDirectory)"
+          - task: "Npm@1"
+            displayName: "packages npm pack"
+            inputs:
+              command: custom
+              customCommand: "run npm:pack --pack-destination $(Build.ArtifactStagingDirectory)"
 
-                - publish: $(Build.ArtifactStagingDirectory)
-                  displayName: publish artifact
-                  condition: succeededOrFailed()
-                  artifact: npm
+          - publish: $(Build.ArtifactStagingDirectory)
+            displayName: publish artifact
+            condition: succeededOrFailed()
+            artifact: npm
 
-          - job: GitTag
-            displayName: "Add git tag"
-            dependsOn: [BuildNpm]
-            condition: succeeded()
-            steps:
-                - checkout: self
-                  clean: "true"
-                  persistCredentials: "true"
+      - job: GitTag
+        displayName: "Add git tag"
+        dependsOn: [BuildNpm]
+        condition: succeeded()
+        steps:
+          - checkout: self
+            clean: "true"
+            persistCredentials: "true"
 
-                - pwsh: |
-                      git config --global user.name "AzureDevOps Agent"
-                      git tag "$(Build.BuildNumber)" --force
-                      git push origin "$(Build.BuildNumber)" --force
-                      Write-Output "Tagging $(Build.Repository.Name) with $(Build.BuildNumber)"
-                  displayName: set git tag
+          - pwsh: |
+              git config --global user.name "AzureDevOps Agent"
+              git tag "$(Build.BuildNumber)" --force
+              git push origin "$(Build.BuildNumber)" --force
+              Write-Output "Tagging $(Build.Repository.Name) with $(Build.BuildNumber)"
+            displayName: set git tag
 
-          - job: Publish
-            displayName: "Publish packages"
-            dependsOn: [GitTag]
-            condition: succeeded()
-            steps:
+  - stage: Production
+    displayName: Deploy stage
+    dependsOn: Build
+    jobs:
+      - deployment: Production
+        condition: succeeded()
+        displayName: "NPM"
+        pool:
+          vmImage: $(vmImageName)
+        environment: $(envName)
+        strategy:
+          runOnce:
+            deploy:
+              steps:
                 - download: current
-                  displayName: "download packages"
+                  displayName: "download artifacts"
                   artifact: npm
+
+                # brandup-ui
 
                 - task: ExtractFiles@1
                   displayName: "unzip brandup-ui"
                   inputs:
-                      archiveFilePatterns: "$(Pipeline.Workspace)/npm/brandup-ui-$(Build.BuildNumber).tgz"
-                      destinationFolder: "$(Pipeline.Workspace)/npmout/brandup-ui"
-                      cleanDestinationFolder: true
-                      overwriteExistingFiles: true
+                    archiveFilePatterns: "$(Pipeline.Workspace)/npm/brandup-ui-$(Build.BuildNumber).tgz"
+                    destinationFolder: "$(Pipeline.Workspace)/npmout/brandup-ui"
+                    cleanDestinationFolder: true
+                    overwriteExistingFiles: true
 
                 - task: Npm@1
                   displayName: "publish brandup-ui"
                   inputs:
-                      command: "custom"
-                      workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui/package"
-                      customCommand: "publish"
-                      customEndpoint: "npm brandup"
+                    command: publish
+                    workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui/package"
+                    publishEndpoint: "$(publish-npm-credentials)"
+
+                # brandup-ui-ajax
+
+                - task: ExtractFiles@1
+                  displayName: "unzip brandup-ui-ajax"
+                  inputs:
+                    archiveFilePatterns: "$(Pipeline.Workspace)/npm/brandup-ui-ajax-$(Build.BuildNumber).tgz"
+                    destinationFolder: "$(Pipeline.Workspace)/npmout/brandup-ui-ajax"
+                    cleanDestinationFolder: true
+                    overwriteExistingFiles: true
 
                 - task: Npm@1
                   displayName: "publish brandup-ui-ajax"
                   inputs:
-                      command: "custom"
-                      workingDir: "$(Pipeline.Workspace)/npm"
-                      customCommand: "publish brandup-ui-ajax-$(Build.BuildNumber).tgz"
-                      customEndpoint: "npm brandup"
+                    command: publish
+                    workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui-ajax/package"
+                    publishEndpoint: "$(publish-npm-credentials)"
+
+                # brandup-ui-dom
+
+                - task: ExtractFiles@1
+                  displayName: "unzip brandup-ui-dom"
+                  inputs:
+                    archiveFilePatterns: "$(Pipeline.Workspace)/npm/brandup-ui-dom-$(Build.BuildNumber).tgz"
+                    destinationFolder: "$(Pipeline.Workspace)/npmout/brandup-ui-dom"
+                    cleanDestinationFolder: true
+                    overwriteExistingFiles: true
 
                 - task: Npm@1
                   displayName: "publish brandup-ui-dom"
                   inputs:
-                      command: "custom"
-                      workingDir: "$(Pipeline.Workspace)/npm"
-                      customCommand: "publish brandup-ui-dom-$(Build.BuildNumber).tgz"
-                      customEndpoint: "npm brandup"
+                    command: publish
+                    workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui-dom/package"
+                    publishEndpoint: "$(publish-npm-credentials)"
+
+                # brandup-ui-helpers
+
+                - task: ExtractFiles@1
+                  displayName: "unzip brandup-ui-helpers"
+                  inputs:
+                    archiveFilePatterns: "$(Pipeline.Workspace)/npm/brandup-ui-helpers-$(Build.BuildNumber).tgz"
+                    destinationFolder: "$(Pipeline.Workspace)/npmout/brandup-ui-helpers"
+                    cleanDestinationFolder: true
+                    overwriteExistingFiles: true
 
                 - task: Npm@1
                   displayName: "publish brandup-ui-helpers"
                   inputs:
-                      command: "custom"
-                      workingDir: "$(Pipeline.Workspace)/npm"
-                      customCommand: "publish brandup-ui-helpers-$(Build.BuildNumber).tgz"
-                      customEndpoint: "npm brandup"
+                    command: publish
+                    workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui-helpers/package"
+                    publishEndpoint: "$(publish-npm-credentials)"
+
+                # brandup-ui-app
+
+                - task: ExtractFiles@1
+                  displayName: "unzip brandup-ui-helpers"
+                  inputs:
+                    archiveFilePatterns: "$(Pipeline.Workspace)/npm/brandup-ui-app-$(Build.BuildNumber).tgz"
+                    destinationFolder: "$(Pipeline.Workspace)/npmout/brandup-ui-app"
+                    cleanDestinationFolder: true
+                    overwriteExistingFiles: true
 
                 - task: Npm@1
                   displayName: "publish brandup-ui-app"
                   inputs:
-                      command: "custom"
-                      workingDir: "$(Pipeline.Workspace)/npm"
-                      customCommand: "publish brandup-ui-app-$(Build.BuildNumber).tgz"
-                      customEndpoint: "npm brandup"
+                    command: publish
+                    workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui-app/package"
+                    publishEndpoint: "$(publish-npm-credentials)"

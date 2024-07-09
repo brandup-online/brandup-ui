@@ -30,16 +30,5 @@
 	"html.format.templating": true,
 	"html.format.indentHandlebars": true,
 	"html.format.unformatted": "svg,path",
-	"html.format.contentUnformatted": "svg,path",
-	"[yaml]": {
-		"editor.insertSpaces": true,
-		"editor.tabSize": 2,
-		"editor.autoIndent": "none",
-		"diffEditor.ignoreTrimWhitespace": false,
-		"editor.quickSuggestions": {
-			"other": true,
-			"comments": false,
-			"strings": true
-		}
-	}
+	"html.format.contentUnformatted": "svg,path"
 }
