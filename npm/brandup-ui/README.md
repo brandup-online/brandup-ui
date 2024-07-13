@@ -1,8 +1,22 @@
 # brandup-ui
 
-Класс UIElement - wrapper для HTMLElemnt. Служит для реализации бизнес-логики для элемента, который задаётся через метод **setElement**.
+[![Build Status](https://dev.azure.com/brandup/BrandUp%20Core/_apis/build/status%2FBrandUp%2Fbrandup-ui?branchName=master)](https://dev.azure.com/brandup/BrandUp%20Core/_build/latest?definitionId=69&branchName=master)
 
-**NPM Package:** [brandup-ui](https://www.npmjs.com/package/brandup-ui)
+## Installation
+
+Install NPM package [brandup-ui](https://www.npmjs.com/package/brandup-ui).
+
+```
+npm i brandup-ui@latest
+```
+
+## UIElement
+
+`UIElement` - wrapper для `HTMLElement`, который позволяет привязать к нему свою бизнес логику.
+
+Возможности:
+- Обработка комманд вызванных внутри `HTMLElement`, который связан с `UIElement`.
+- Обработка событий элемента `HTMLElement`, который связан с `UIElement`.
 
 ```
 abstract class UIElement {
@@ -29,10 +43,6 @@ abstract class UIElement {
     destroy(): void;
 }
 ```
-
-Возможности:
-- Обработка комманд из интерфейса.
-- Обработка событий элемента.
 
 ## Command handling
 

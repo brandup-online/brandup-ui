@@ -2,107 +2,110 @@
 import { PageModel } from "../pages/base";
 import { DOM } from "brandup-ui-dom";
 import { AJAXMethod, AjaxResponse, ajaxRequest } from "brandup-ui-ajax";
+import { ExampleApplication } from "../app";
+import { ExampleApplicationModel } from "../typings/app";
 
-export class PagesMiddleware extends Middleware {
-    private _appContentElem: HTMLElement;
-    private _pages: { [key: string]: PageDefinition };
-    private _page: PageModel = null;
+export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
+	private _appContentElem: HTMLElement;
+	private _pages: { [key: string]: PageDefinition };
+	private _page: PageModel = null;
 
-    start(context: StartContext, next: () => void, end: () => void) {
-        this._appContentElem = document.getElementById("app-content");
-        if (!this._appContentElem)
-            throw new Error("Not found page content container.");
+	start(context: StartContext, next: () => void, end: () => void) {
+		this._appContentElem = document.getElementById("app-content");
+		if (!this._appContentElem)
+			throw new Error("Not found page content container.");
 
-        this._pages = {
-            '/': { type: () => import("../pages/index"), title: "Main page" },
-            '/about': { type: () => import("../pages/about"), title: "About page" }
-        };
+		this._pages = {
+			'/': { type: () => import("../pages/index"), title: "Main page" },
+			'/navigation': { type: () => import("../pages/navigation"), title: "Navigation" },
+			'/forms': { type: () => import("../pages/forms"), title: "Forms" }
+		};
 
-        window.addEventListener("popstate", (e: PopStateEvent) => {
-            e.preventDefault();
+		window.addEventListener("popstate", (e: PopStateEvent) => {
+			e.preventDefault();
 
-            this.app.nav({ url: location.href, replace: true });
-        });
+			this.app.nav({ url: location.href, replace: true });
+		});
 
-        super.start(context, next, end);
-    }
+		super.start(context, next, end);
+	}
 
-    loaded(context: LoadContext, next: () => void, end: () => void) {
-        super.loaded(context, next, end);
-    }
+	loaded(context: LoadContext, next: () => void, end: () => void) {
+		super.loaded(context, next, end);
+	}
 
-    navigate(context: NavigateContext, next: () => void, end: () => void) {
-        if (this._page) {
-            this._page.destroy();
-            this._page = null;
-        }
+	navigate(context: NavigateContext, next: () => void, end: () => void) {
+		if (this._page) {
+			this._page.destroy();
+			this._page = null;
+		}
 
-        const pageDef = this._pages[context.path];
-        if (!pageDef) {
-            this._nav(context, "Page not found");
+		const pageDef = this._pages[context.path];
+		if (!pageDef) {
+			this._nav(context, "Page not found");
 
-            DOM.empty(this._appContentElem);
-            this._appContentElem.innerText = "Page not found";
+			DOM.empty(this._appContentElem);
+			this._appContentElem.innerText = "Page not found";
 
-            end();
-            return;
-        }
+			end();
+			return;
+		}
 
-        this._nav(context, pageDef.title);
+		this._nav(context, pageDef.title);
 
-        pageDef.type()
-            .then((t) => {
-                DOM.empty(this._appContentElem);
+		pageDef.type()
+			.then((t) => {
+				DOM.empty(this._appContentElem);
 
-                const content = document.createDocumentFragment();
-                const contentElem = DOM.tag("div", "page");
-                content.appendChild(contentElem);
+				const content = document.createDocumentFragment();
+				const contentElem = DOM.tag("div", "page");
+				content.appendChild(contentElem);
 
-                this._page = new t.default(this.app, contentElem);
+				this._page = new t.default(this.app, contentElem);
 
-                this._appContentElem.appendChild(content);
+				this._appContentElem.appendChild(content);
 
-                super.navigate(context, next, end);
-            })
-            .catch((reason) => {
-                console.error(reason);
+				super.navigate(context, next, end);
+			})
+			.catch((reason) => {
+				console.error(reason);
 
-                end();
-            });
-    }
+				end();
+			});
+	}
 
-    submit(context: SubmitContext, next: () => void, end: () => void) {
-        const data = new FormData(context.form);
-        const antyElem = <HTMLInputElement>document.getElementsByName("__RequestVerificationToken")[0];
-        data.append(antyElem.name, antyElem.value);
+	submit(context: SubmitContext, next: () => void, end: () => void) {
+		const data = new FormData(context.form);
+		//const antyElem = <HTMLInputElement>document.getElementsByName("__RequestVerificationToken")[0];
+		//data.append(antyElem.name, antyElem.value);
 
-        ajaxRequest({
-            url: context.url,
-            method: <AJAXMethod>context.method.toUpperCase(),
-            data: data,
-            success: (response: AjaxResponse) => {
-                alert(response.data);
+		ajaxRequest({
+			url: context.url,
+			method: <AJAXMethod>context.method.toUpperCase(),
+			data: data,
+			success: (response: AjaxResponse) => {
+				alert(response.data);
 
-                super.submit(context, next, end);
-            }
-        });
-    }
+				super.submit(context, next, end);
+			}
+		});
+	}
 
-    stop(context: StopContext, next: () => void, end: () => void) {
-        super.stop(context, next, end);
-    }
+	stop(context: StopContext, next: () => void, end: () => void) {
+		super.stop(context, next, end);
+	}
 
-    private _nav(context: NavigateContext, title: string) {
-        if (context.replace)
-            window.history.replaceState(window.history.state, title, context.url);
-        else
-            window.history.pushState(window.history.state, title, context.url);
+	private _nav(context: NavigateContext, title: string) {
+		if (context.replace)
+			window.history.replaceState(window.history.state, title, context.url);
+		else
+			window.history.pushState(window.history.state, title, context.url);
 
-        document.title = title;
-    }
+		document.title = title;
+	}
 }
 
 interface PageDefinition {
-    title: string;
-    type: () => Promise<any>;
+	title: string;
+	type: () => Promise<any>;
 }

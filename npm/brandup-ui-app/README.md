@@ -1,6 +1,16 @@
 # brandup-ui-app
 
-## App start
+[![Build Status](https://dev.azure.com/brandup/BrandUp%20Core/_apis/build/status%2FBrandUp%2Fbrandup-ui?branchName=master)](https://dev.azure.com/brandup/BrandUp%20Core/_build/latest?definitionId=69&branchName=master)
+
+## Installation
+
+Install NPM package [brandup-ui-app](https://www.npmjs.com/package/brandup-ui-app).
+
+```
+npm i brandup-ui-app@latest
+```
+
+## Configure and start application
 
 Configure your application with middlewares and run.
 
@@ -9,26 +19,33 @@ import { ApplicationBuilder } from "brandup-ui-app";
 import { PagesMiddleware } from "./middlewares/pages";
 import "./styles.less";
 
-interface WebsiteModel extends ApplicationModel {
+// Customize application model
+interface ExampleApplicationModel extends ApplicationModel {
 }
 
-const appModel: WebsiteModel = {}
+// Customize application type
+export class ExampleApplication extends Application<ExampleApplicationModel> {
+}
 
-const builder = new ApplicationBuilder();
-builder.useMiddleware(new PagesMiddleware());
+const builder = new ApplicationBuilder<ExampleApplicationModel>();
+builder
+	.useApp(ExampleApplication)
+	.useMiddleware(new PagesMiddleware());
 
-const app = builder.build<WebsiteModel>({ basePath: "/" }, appModel);
+const appModel: ExampleApplicationModel = {};
+const app = builder.build<ExampleApplicationModel>({ basePath: "/" }, appModel);
 
-app.init();
+app.start();
 app.load();
+app.nav({ url: null, replace: true });
 ```
 
-## App middlewares
+## Middlewares
 
 Inject to application lifecycle events.
 
 ```
-export class PagesMiddleware extends Middleware<WebsiteModel> {
+export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
     start(_context, next) {
         console.log("start");
 
@@ -57,3 +74,5 @@ export class PagesMiddleware extends Middleware<WebsiteModel> {
     }
 }
 ```
+
+Example SPA navigation middleware: [example/src/frontend/middlewares/pages.ts](/example/src/frontend/middlewares/pages.ts)

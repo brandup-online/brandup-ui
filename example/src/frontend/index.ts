@@ -1,13 +1,16 @@
 ﻿import { ApplicationBuilder } from "brandup-ui-app";
 import { PagesMiddleware } from "./middlewares/pages";
-import "./styles/styles.less";
 import { RealtimeMiddleware } from "./middlewares/realtime";
+import { ExampleApplicationModel } from "./typings/app";
+import { ExampleApplication } from "./app";
+import "./styles/styles.less";
 
-const builder = new ApplicationBuilder();
+const builder = new ApplicationBuilder<ExampleApplicationModel>();
 
 builder
-    .useMiddleware(new PagesMiddleware())
-    .useMiddleware(new RealtimeMiddleware());
+	.useApp(ExampleApplication)
+	.useMiddleware(new PagesMiddleware())
+	.useMiddleware(new RealtimeMiddleware());
 
 const app = builder.build({ basePath: "/" }, {});
 

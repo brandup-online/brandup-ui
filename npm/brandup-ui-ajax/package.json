@@ -38,10 +38,10 @@
 	},
 	"files": [
 		"dist",
-		"tsconfig.json",
 		"README.md"
 	],
 	"scripts": {
-		"build": "rollup -c --bundleConfigAsCjs"
+		"build": "rollup -c --bundleConfigAsCjs",
+		"watch": "rollup -c -w --bundleConfigAsCjs"
 	}
 }

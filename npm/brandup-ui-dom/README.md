@@ -1,5 +1,17 @@
 # brandup-ui-dom
 
+[![Build Status](https://dev.azure.com/brandup/BrandUp%20Core/_apis/build/status%2FBrandUp%2Fbrandup-ui?branchName=master)](https://dev.azure.com/brandup/BrandUp%20Core/_build/latest?definitionId=69&branchName=master)
+
+## Installation
+
+Install NPM package [brandup-ui-dom](https://www.npmjs.com/package/brandup-ui-dom).
+
+```
+npm i brandup-ui-dom@latest
+```
+
+## DOM helper
+
 Методы для простой работы с DOM моделью.
 
 ```
