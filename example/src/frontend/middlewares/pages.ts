@@ -8,19 +8,24 @@ import { ExampleApplicationModel } from "../typings/app";
 export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
 	private _appContentElem: HTMLElement;
 	private _pages: { [key: string]: PageDefinition };
-	private _page: PageModel = null;
+	private _page: PageModel | null = null;
 
-	start(context: StartContext, next: () => void, end: () => void) {
-		this._appContentElem = document.getElementById("app-content");
-		if (!this._appContentElem)
+	constructor() {
+		super();
+
+		const appContentElem = document.getElementById("app-content")
+		if (!appContentElem)
 			throw new Error("Not found page content container.");
+		this._appContentElem = appContentElem;
 
 		this._pages = {
 			'/': { type: () => import("../pages/index"), title: "Main page" },
 			'/navigation': { type: () => import("../pages/navigation"), title: "Navigation" },
 			'/forms': { type: () => import("../pages/forms"), title: "Forms" }
 		};
+	}
 
+	start(context: StartContext, next: () => void, end: () => void) {
 		window.addEventListener("popstate", (e: PopStateEvent) => {
 			e.preventDefault();
 

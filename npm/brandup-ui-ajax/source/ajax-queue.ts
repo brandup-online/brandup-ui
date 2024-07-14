@@ -7,12 +7,11 @@ export interface AjaxQueueOptions {
 
 export class AjaxQueue {
 	private _options: AjaxQueueOptions;
-	private _requests: Array<{ options: AjaxRequest; xhr?: XMLHttpRequest }>;
-	private _curent!: { options: AjaxRequest; xhr?: XMLHttpRequest };
+	private _requests: Array<{ options: AjaxRequest; xhr: XMLHttpRequest | null }> = [];
+	private _curent: { options: AjaxRequest; xhr: XMLHttpRequest | null } | null = null;
+	private _destroyed = false;
 
 	constructor(options?: AjaxQueueOptions) {
-		this._requests = [];
-		this._curent = null;
 		this._options = options ? options : {};
 	}
 
@@ -24,13 +23,13 @@ export class AjaxQueue {
 		if (!options)
 			throw "Ajax request options is required.";
 
-		if (!this._requests)
+		if (this._destroyed)
 			return;
 
-		const successFunc = options.success ? options.success : () => { return; };
+		const successFunc = options.success ? options.success : () => { };
 		options.success = (response) => { this.__success(successFunc, response); };
 
-		this._requests.push({ options: options });
+		this._requests.push({ options: options, xhr: null });
 
 		if (this._curent === null)
 			this.__execute();
@@ -40,27 +39,28 @@ export class AjaxQueue {
 		this._requests = [];
 
 		if (abortCurrentRequest && this._curent) {
-			this._curent.xhr.abort();
+			this._curent.xhr?.abort();
 			this._curent = null;
 		}
 	}
 
 	destroy() {
-		this._requests = null;
+		this._destroyed = true;
+		this._requests = [];
 
 		if (this._curent) {
-			this._curent.xhr.abort();
+			this._curent.xhr?.abort();
 			this._curent = null;
 		}
 	}
 
 	private __execute() {
-		if (this._requests === null)
-			throw "Ajax queue is destroed.";
-		if (this._curent !== null)
-			throw "Ajax queue currently is executing.";
+		if (this._destroyed)
+			throw "AjaxQueue is destroed.";
+		if (this._curent)
+			throw "AjaxQueue currently is executing.";
 
-		this._curent = this._requests.shift();
+		this._curent = this._requests.shift() ?? null;
 		if (this._curent) {
 			if (this._options.preRequest) {
 				if (this._options.preRequest(this._curent.options) === false) {
@@ -71,8 +71,6 @@ export class AjaxQueue {
 
 			this._curent.xhr = ajaxRequest(this._curent.options);
 		}
-		else
-			this._curent = null;
 	}
 
 	private __success(originSuccess: ajaxDelegate, response: AjaxResponse) {

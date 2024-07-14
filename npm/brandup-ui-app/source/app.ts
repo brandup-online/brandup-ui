@@ -16,13 +16,13 @@ export const NavIgnoreAttributeName = "data-nav-ignore";
 export class Application<TModel extends ApplicationModel = {}> extends UIElement {
 	readonly env: EnvironmentModel;
 	readonly model: TModel;
-	private __invoker: MiddlewareInvoker;
+	private readonly __invoker: MiddlewareInvoker;
 	private __isInit = false;
 	private __isLoad = false;
 	private __isDestroy = false;
-	private __clickFunc: (e: MouseEvent) => void;
-	private __keyDownUpFunc: (e: KeyboardEvent) => void;
-	private __submitFunc: (e: Event) => void;
+	private readonly __clickFunc: (e: MouseEvent) => void;
+	private readonly __keyDownUpFunc: (e: KeyboardEvent) => void;
+	private readonly __submitFunc: (e: SubmitEvent) => void;
 	private _ctrlPressed = false;
 	private __loadingCounter = 0;
 
@@ -58,6 +58,10 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 				this.__invoker.next(m);
 			});
 		}
+
+		this.__clickFunc = (e: MouseEvent) => this.__onClick(e);
+		this.__keyDownUpFunc = (e: KeyboardEvent) => this.__onKeyDownUp(e);
+		this.__submitFunc = (e: SubmitEvent) => this.__onSubmit(e);
 	}
 
 	get typeName(): string { return "Application" }
@@ -78,10 +82,10 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 
 		console.info("app starting");
 
-		window.addEventListener("click", this.__clickFunc = (e: MouseEvent) => this.__onClick(e), false);
-		window.addEventListener("keydown", this.__keyDownUpFunc = (e: KeyboardEvent) => this.__onKeyDownUp(e), false);
+		window.addEventListener("click", this.__clickFunc, false);
+		window.addEventListener("keydown", this.__keyDownUpFunc, false);
 		window.addEventListener("keyup", this.__keyDownUpFunc, false);
-		window.addEventListener("submit", this.__submitFunc = (e: SubmitEvent) => this.__onSubmit(e), false);
+		window.addEventListener("submit", this.__submitFunc, false);
 
 		const context: StartContext = {
 			items: {}
@@ -129,8 +133,8 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 			context = {};
 
 		let path: string;
-		let query: URLSearchParams = null;
-		let hash: string = null;
+		let query: URLSearchParams | null = null;
+		let hash: string | null = null;
 		if (!url) {
 			path = location.pathname;
 			if (location.search)
@@ -198,7 +202,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 				}
 				else {
 					query.delete(key);
-					value.forEach(val => query.append(key, val));
+					value.forEach(val => query?.append(key, val));
 				}
 			}
 		}
@@ -206,11 +210,11 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		// Собираем полный адрес без домена
 
 		let fullUrl = path;
-		let queryStr = query?.toString();
-		if (queryStr)
+		let queryStr: string | null = null;
+		if (query && query.size) {
+			queryStr = query.toString();
 			fullUrl += "?" + queryStr;
-		else
-			queryStr = null;
+		}
 		if (hash) {
 			fullUrl += hash;
 			hash = hash.substring(1);
@@ -257,7 +261,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	}
 
 	submit(options: SubmitOptions) {
-		const { form, button } = options;
+		const { form, button = null } = options;
 		let { context, callback } = options;
 
 		if (form.classList.contains(LoadingElementClass))
@@ -413,7 +417,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	}
 
 	private __onClick(e: MouseEvent) {
-		let elem = e.target as HTMLElement;
+		let elem: HTMLElement | null = e.target as HTMLElement;
 		let ignore = false;
 		while (elem) {
 			if (elem.hasAttribute(NavIgnoreAttributeName)) {
@@ -423,33 +427,23 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 
 			if (elem.classList && elem.classList.contains(NavUrlClassName))
 				break;
+
 			if (elem === e.currentTarget)
 				return;
 
-			if (typeof elem.parentElement === "undefined")
-				elem = elem.parentNode as HTMLElement;
-			else
-				elem = elem.parentElement;
-
-			if (!elem)
-				return true;
+			elem = elem.parentElement;
 		}
 
-		if (this._ctrlPressed)
-			return true;
-
-		if (elem.hasAttribute("target")) {
-			if (elem.getAttribute("target") === "_blank")
-				return true;
-		}
+		if (!elem || this._ctrlPressed || elem.getAttribute("target") === "_blank")
+			return;
 
 		e.preventDefault();
 		e.stopPropagation();
 
 		if (ignore)
-			return false;
+			return;
 
-		let url: string = null;
+		let url: string | null;
 		if (elem.tagName === "A")
 			url = elem.getAttribute("href");
 		else if (elem.hasAttribute(NavUrlAttributeName))
@@ -458,7 +452,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 			throw "Не удалось получить Url адрес для перехода.";
 
 		if (elem.classList.contains(LoadingElementClass))
-			return false;
+			return;
 		elem.classList.add(LoadingElementClass);
 
 		this.nav({
@@ -467,7 +461,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 			callback: () => { elem.classList.remove(LoadingElementClass); }
 		});
 
-		return false;
+		return;
 	}
 	private __onKeyDownUp(e: KeyboardEvent) {
 		this._ctrlPressed = e.ctrlKey;

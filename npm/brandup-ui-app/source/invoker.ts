@@ -4,7 +4,7 @@ import { ApplicationModel } from "./typings/app";
 
 export class MiddlewareInvoker {
 	readonly middleware: Middleware<Application, ApplicationModel>;
-	private __next: MiddlewareInvoker;
+	private __next: MiddlewareInvoker | null = null;
 	private static emptyFunc = () => { return; };
 
 	constructor(middleware: Middleware<Application, ApplicationModel>) {
@@ -24,7 +24,7 @@ export class MiddlewareInvoker {
 		if (!callback)
 			callback = MiddlewareInvoker.emptyFunc;
 
-		const nextFunc = this.__next ? () => { this.__next.invoke(method, context, callback); } : callback;
+		const nextFunc = this.__next ? () => { this.__next?.invoke(method, context, callback); } : callback;
 		const endFunc = () => { callback(); };
 
 		if (typeof this.middleware[method] === "function")

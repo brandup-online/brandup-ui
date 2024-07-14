@@ -9,16 +9,16 @@ export interface ApplicationModel {
 // navigation
 
 export interface NavigationOptions {
-	url?: string;
-	query?: { [key: string]: string | string[] },
+	url?: string | null;
+	query?: { [key: string]: string | string[] } | null,
 	replace?: boolean;
-	context?: { [key: string]: any };
-	callback?: (result: NavigationResult) => void;
+	context?: { [key: string]: any } | null;
+	callback?: (result: NavigationResult) => void | null;
 }
 
 export interface NavigationResult {
 	status: NavigationStatus;
-	context?: { [key: string]: any };
+	context: { [key: string]: any } | null;
 }
 
 export type NavigationStatus = "Success" | "Cancelled" | "Error" | "External";
@@ -27,11 +27,11 @@ export type NavigationStatus = "Success" | "Cancelled" | "Error" | "External";
 
 export interface SubmitOptions {
 	form: HTMLFormElement;
-	button?: HTMLButtonElement;
-	context?: { [key: string]: any };
-	callback?: (result: SubmitResult) => void;
+	button?: HTMLButtonElement | null;
+	context?: { [key: string]: any } | null;
+	callback?: (result: SubmitResult) => void | null
 }
 
 export interface SubmitResult {
-	context?: { [key: string]: any };
+	context: { [key: string]: any } | null;
 }

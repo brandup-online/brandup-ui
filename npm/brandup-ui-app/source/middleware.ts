@@ -2,9 +2,9 @@ import { ApplicationModel } from "./typings/app";
 import { Application } from "./app";
 
 export class Middleware<TApp extends Application<TModel>, TModel extends ApplicationModel = {}> {
-	private _app: TApp;
+	private _app: TApp | null = null;
 
-	get app(): TApp { return this._app; }
+	get app(): TApp { return <TApp>this._app; }
 
 	bind(app: TApp) {
 		this._app = app;
@@ -40,9 +40,9 @@ export interface LoadContext extends InvokeContext {
 export interface NavigateContext extends InvokeContext {
 	readonly url: string;
 	readonly path: string;
-	readonly query: string;
+	readonly query: string | null;
 	readonly queryParams: { [key: string]: Array<string> };
-	readonly hash: string;
+	readonly hash: string | null;
 	readonly replace: boolean;
 	readonly context: { [key: string]: any };
 }
@@ -52,7 +52,7 @@ export interface StopContext extends InvokeContext {
 
 export interface SubmitContext extends InvokeContext {
 	readonly form: HTMLFormElement;
-	readonly button: HTMLButtonElement;
+	readonly button: HTMLButtonElement | null;
 	readonly method: string;
 	readonly enctype: string;
 	readonly url: string;

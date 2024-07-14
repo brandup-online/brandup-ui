@@ -5,13 +5,13 @@ import { CommandContext } from "brandup-ui";
 import { ajaxRequest } from "brandup-ui-ajax";
 
 export default class IndexModel extends PageModel {
-    get typeName(): string { return "IndexModel" }
-    get header(): string { return "Main" }
+	get typeName(): string { return "IndexModel" }
+	get header(): string { return "Main" }
 
-    protected _onRenderElement(element: HTMLElement) {
-        super._onRenderElement(element);
+	protected _onRenderElement(element: HTMLElement) {
+		super._onRenderElement(element);
 
-        element.appendChild(DOM.tag("div", "page-content",`
+		element.appendChild(DOM.tag("div", "page-content", `
         <div class="list">
             <div class="item"><a href="" data-command="command1"><b>command</b></a></div>
             <div class="item"><a href="" data-command="command1-cant">command (cant exec)</a></div>
@@ -36,107 +36,107 @@ export default class IndexModel extends PageModel {
         </div>
         `));
 
-        this.app.middleware(RealtimeMiddleware).subscribe("main");
+		this.app.middleware(RealtimeMiddleware).subscribe("main");
 
-        this.registerCommand("command1", (elem: HTMLElement) => { elem.innerHTML = "ok"; });
-        this.registerCommand("command1-cant", (elem: HTMLElement) => { elem.innerHTML = "ok"; }, () => { return false; });
-        this.registerCommand("command2", (elem: HTMLElement, context: CommandContext) => { context.transparent = true; elem.innerHTML = "ok"; });
-        this.registerCommand("command2-cant", (elem: HTMLElement) => { elem.innerHTML = "ok"; }, () => { return false; });
-        this.registerCommand("command-svg", (elem: HTMLElement) => { elem.innerHTML = "ok"; });
+		this.registerCommand("command1", (elem: HTMLElement) => { elem.innerHTML = "ok"; });
+		this.registerCommand("command1-cant", (elem: HTMLElement) => { elem.innerHTML = "ok"; }, () => { return false; });
+		this.registerCommand("command2", (elem: HTMLElement, context: CommandContext) => { context.transparent = true; elem.innerHTML = "ok"; });
+		this.registerCommand("command2-cant", (elem: HTMLElement) => { elem.innerHTML = "ok"; }, () => { return false; });
+		this.registerCommand("command-svg", (elem: HTMLElement) => { elem.innerHTML = "ok"; });
 
-        this.registerAsyncCommand("command1-async", (context) => {
-            context.timeout = 3000;
+		this.registerAsyncCommand("command1-async", (context) => {
+			context.timeout = 3000;
 
-            context.target.innerHTML = "Loading...";
-            const t = window.setTimeout(() => {
-                context.target.innerHTML = "Ok";
-                context.complate();
-            }, 2000);
+			context.target.innerHTML = "Loading...";
+			const t = window.setTimeout(() => {
+				context.target.innerHTML = "Ok";
+				context.complate();
+			}, 2000);
 
-            context.timeoutCallback = () => {
-                clearTimeout(t);
-            };
-        });
+			context.timeoutCallback = () => {
+				clearTimeout(t);
+			};
+		});
 
-        this.registerAsyncCommand("command-dom1", (context) => {
-            context.target.insertAdjacentElement("afterend", DOM.tag("div", "test", "test"));
-            context.complate();
-        });
+		this.registerAsyncCommand("command-dom1", (context) => {
+			context.target.insertAdjacentElement("afterend", DOM.tag("div", "test", "test"));
+			context.complate();
+		});
 
-        this.registerAsyncCommand("command-dom2", (context) => {
-            const elem = DOM.tag("div", {
-                class: ["test1", "test2"],
-                dataset: { test: "test" },
-                styles: { display: "block" },
-                events: { "click": () => alert(elem.dataset["test"]) },
-                id: "test",
-                command: "test1000"
-            }, "test");
+		this.registerAsyncCommand("command-dom2", (context) => {
+			const elem = DOM.tag("div", {
+				class: ["test1", "test2"],
+				dataset: { test: "test" },
+				styles: { display: "block" },
+				events: { "click": () => alert(elem.dataset["test"]) },
+				id: "test",
+				command: "test1000"
+			}, "test");
 
-            context.target.insertAdjacentElement("afterend", elem);
-            context.complate();
-        });
+			context.target.insertAdjacentElement("afterend", elem);
+			context.complate();
+		});
 
-        this.registerCommand("test1000", () => {
-            this.destroy();
-        });
+		this.registerCommand("test1000", () => {
+			this.destroy();
+		});
 
-        this.registerAsyncCommand("command-dom3", (context) => {
-            import('./modules/test')
-                .then((m) => {
-                    m.Test(context.target);
-                    context.complate();
-                })
-                .catch(() => {
-                    context.target.innerText = "error";
-                    context.complate();
-                });
-        });
+		this.registerAsyncCommand("command-dom3", (context) => {
+			import('./modules/test')
+				.then((m) => {
+					m.Test(context.target);
+					context.complate();
+				})
+				.catch(() => {
+					context.target.innerText = "error";
+					context.complate();
+				});
+		});
 
-        this.registerCommand("upload-file", () => {
-            const input = <HTMLInputElement>DOM.tag("input", { type: "file" });
-            input.click();
+		this.registerCommand("upload-file", () => {
+			const input = <HTMLInputElement>DOM.tag("input", { type: "file" });
+			input.click();
 
-            input.addEventListener("change", () => {
-                if (!input.files.length)
-                    return;
+			input.addEventListener("change", () => {
+				if (!input.files || !input.files.length)
+					return;
 
-                ajaxRequest({
-                    url: "",
-                    urlParams: { handler: "UploadFile" },
-                    method: "POST",
-                    data: input.files.item(0),
-                    success: (response) => {
-                        if (response.status == 200) {
-                            alert(JSON.stringify(response.data));
-                        }
-                        else
-                            alert(response.state);
-                    }
-                });
-            });
-        });
+				ajaxRequest({
+					url: "",
+					urlParams: { handler: "UploadFile" },
+					method: "POST",
+					data: input.files.item(0),
+					success: (response) => {
+						if (response.status == 200) {
+							alert(JSON.stringify(response.data));
+						}
+						else
+							alert(response.state);
+					}
+				});
+			});
+		});
 
-        this.registerCommand("upload-form", () => {
-            const input = <HTMLInputElement>DOM.tag("input", { type: "file", name: "file" });
-            const form = <HTMLFormElement>DOM.tag("form", { enctype: "multipart/form-data" }, input);
-            input.click();
+		this.registerCommand("upload-form", () => {
+			const input = <HTMLInputElement>DOM.tag("input", { type: "file", name: "file" });
+			const form = <HTMLFormElement>DOM.tag("form", { enctype: "multipart/form-data" }, input);
+			input.click();
 
-            input.addEventListener("change", () => {
-                ajaxRequest({
-                    url: "",
-                    urlParams: { handler: "UploadForm" },
-                    method: "POST",
-                    data: form,
-                    success: (response) => {
-                        if (response.status == 200) {
-                            alert(JSON.stringify(response.data));
-                        }
-                        else
-                            alert(response.state);
-                    }
-                });
-            });
-        });
-    }
+			input.addEventListener("change", () => {
+				ajaxRequest({
+					url: "",
+					urlParams: { handler: "UploadForm" },
+					method: "POST",
+					data: form,
+					success: (response) => {
+						if (response.status == 200) {
+							alert(JSON.stringify(response.data));
+						}
+						else
+							alert(response.state);
+					}
+				});
+			});
+		});
+	}
 }
