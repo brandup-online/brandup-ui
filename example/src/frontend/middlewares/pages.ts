@@ -31,17 +31,24 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 		window.addEventListener("popstate", (e: PopStateEvent) => {
 			e.preventDefault();
 
-			this.app.nav({ url: location.href, replace: true });
+			console.log("popstate");
+
+			this.app.nav({ url: null, replace: true });
 		});
 
 		super.start(context, next, end);
 	}
 
-	loaded(context: LoadContext, next: () => void, end: () => void) {
-		super.loaded(context, next, end);
-	}
-
 	navigate(context: NavigateContext, next: () => void, end: () => void) {
+		if (context.external) {
+			const linkElem = <HTMLLinkElement>DOM.tag("a", { href: context.url, target: "_blank" });
+			linkElem.click();
+			linkElem.remove();
+
+			end();
+			return;
+		}
+
 		if (this._page) {
 			this._page.destroy();
 			this._page = null;
@@ -59,7 +66,7 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 				return page?.render(this._appContentElem);
 			})
 			.then(() => {
-				context.items["page"] = this._page;
+				context["page"] = this._page;
 
 				super.navigate(context, next, end);
 			})
