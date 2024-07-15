@@ -20,9 +20,6 @@ export class AjaxQueue {
 	get isEmpty(): boolean { return !this._requests.length; }
 
 	push(options: AjaxRequest) {
-		if (!options)
-			throw "Ajax request options is required.";
-
 		if (this._destroyed)
 			return;
 
@@ -74,7 +71,7 @@ export class AjaxQueue {
 	}
 
 	private __success(originSuccess: ajaxDelegate, response: AjaxResponse) {
-		if (this._requests === null)
+		if (this._destroyed)
 			return;
 
 		if (this._options.postRequest) {
