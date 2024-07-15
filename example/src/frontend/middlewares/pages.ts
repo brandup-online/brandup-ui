@@ -1,14 +1,22 @@
 ﻿import { LoadContext, Middleware, NavigateContext, StartContext, StopContext, SubmitContext } from "brandup-ui-app";
-import { PageModel } from "../pages/base";
+import { Page } from "../pages/base";
 import { DOM } from "brandup-ui-dom";
 import { AJAXMethod, AjaxResponse, ajaxRequest } from "brandup-ui-ajax";
 import { ExampleApplication } from "../app";
 import { ExampleApplicationModel } from "../typings/app";
 
+const ROUTES: { [key: string]: PageDefinition } = {
+	'/': { type: () => import("../pages/index") },
+	'/navigation': { type: () => import("../pages/navigation") },
+	'/forms': { type: () => import("../pages/forms") },
+	'/ajax': { type: () => import("../pages/ajax") }
+};
+
+const ROUTE_NOTFOUND: PageDefinition = { type: () => import("../pages/notfound") };
+
 export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
 	private _appContentElem: HTMLElement;
-	private _pages: { [key: string]: PageDefinition };
-	private _page: PageModel | null = null;
+	private _page: Page | null = null;
 
 	constructor() {
 		super();
@@ -17,12 +25,6 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 		if (!appContentElem)
 			throw new Error("Not found page content container.");
 		this._appContentElem = appContentElem;
-
-		this._pages = {
-			'/': { type: () => import("../pages/index"), title: "Main page" },
-			'/navigation': { type: () => import("../pages/navigation"), title: "Navigation" },
-			'/forms': { type: () => import("../pages/forms"), title: "Forms" }
-		};
 	}
 
 	start(context: StartContext, next: () => void, end: () => void) {
@@ -45,30 +47,19 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 			this._page = null;
 		}
 
-		const pageDef = this._pages[context.path];
-		if (!pageDef) {
-			this._nav(context, "Page not found");
-
-			DOM.empty(this._appContentElem);
-			this._appContentElem.innerText = "Page not found";
-
-			end();
-			return;
-		}
-
-		this._nav(context, pageDef.title);
+		let pageDef = ROUTES[context.path.toLowerCase()] || ROUTE_NOTFOUND;
 
 		pageDef.type()
 			.then((t) => {
 				DOM.empty(this._appContentElem);
 
-				const content = document.createDocumentFragment();
-				const contentElem = DOM.tag("div", "page");
-				content.appendChild(contentElem);
+				const page = new t.default(this.app);
+				this._nav(context, page);
 
-				this._page = new t.default(this.app, contentElem);
-
-				this._appContentElem.appendChild(content);
+				return page?.render(this._appContentElem);
+			})
+			.then(() => {
+				context.items["page"] = this._page;
 
 				super.navigate(context, next, end);
 			})
@@ -81,8 +72,6 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 
 	submit(context: SubmitContext, next: () => void, end: () => void) {
 		const data = new FormData(context.form);
-		//const antyElem = <HTMLInputElement>document.getElementsByName("__RequestVerificationToken")[0];
-		//data.append(antyElem.name, antyElem.value);
 
 		ajaxRequest({
 			url: context.url,
@@ -100,7 +89,11 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 		super.stop(context, next, end);
 	}
 
-	private _nav(context: NavigateContext, title: string) {
+	private _nav(context: NavigateContext, page: Page) {
+		this._page = page;
+
+		const title = page.header;
+
 		if (context.replace)
 			window.history.replaceState(window.history.state, title, context.url);
 		else
@@ -111,6 +104,5 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 }
 
 interface PageDefinition {
-	title: string;
-	type: () => Promise<any>;
+	type: () => Promise<{ default: typeof Page | any }>;
 }

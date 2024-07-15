@@ -12,28 +12,28 @@ import Routes from "./routes/index";
 export const distDir = path.join(__dirname, "../../../wwwroot/dist");
 
 export default class ExampleServer {
-    private __server: Server | undefined;
-    get server() { return this.__server };
+	private __server: Server | undefined;
+	get server() { return this.__server };
 
-    constructor(app: Application) {
-        this.config(app);
-        new Routes(app);
-    }
+	constructor(app: Application) {
+		this.config(app);
+		new Routes(app);
+	}
 
-    private config(app: Application): void {
-        const corsOptions: CorsOptions = {
-            origin: "*"
-        };
+	private config(app: Application): void {
+		const corsOptions: CorsOptions = {
+			origin: "*"
+		};
 
-        app.use(cors(corsOptions));
-        app.use(express.json());
-        app.use(express.urlencoded({ extended: true }));
+		app.use(cors(corsOptions));
+		app.use(express.json());
+		app.use(express.urlencoded({ extended: true }));
 
-        app.use(express.static(distDir));
+		app.use(express.static(distDir));
 
-        const privateKey = fs.readFileSync(path.join(__dirname, "../sslcert", "local.decrypted.key"), "utf8");
-        const certificate = fs.readFileSync(path.join(__dirname, "../sslcert", "local.crt"), "utf8");
-        const credentials = { key: privateKey, cert: certificate };
-        this.__server = https.createServer(credentials, app);
-    }
+		const privateKey = fs.readFileSync(path.join(__dirname, "../sslcert", "local.decrypted.key"), "utf8");
+		const certificate = fs.readFileSync(path.join(__dirname, "../sslcert", "local.crt"), "utf8");
+		const credentials = { key: privateKey, cert: certificate };
+		this.__server = https.createServer(credentials, app);
+	}
 }

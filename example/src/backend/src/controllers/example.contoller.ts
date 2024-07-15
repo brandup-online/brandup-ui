@@ -1,15 +1,15 @@
-import { Request, Response } from "express";
 const path = require("path");
+import { Request, Response } from "express";
 import { distDir } from "..";
 
 export default class ExampleContoller {
-    getHTMLTemplate(req: Request, res: Response): void {
-        console.log('getHTMLTemplate')
-        return res.sendFile(path.join("index.html"), { root: distDir });
-    }
+	spa(req: Request, res: Response): void {
+		console.log(`spa: ${req.path}`)
+		return res.sendFile(path.join("index.html"), { root: distDir });
+	}
 
-    redirectForms(req: Request, res: Response): void {
-        console.log('redirectForms')
-        res.redirect("/forms");
-    }
+	redirectForms(req: Request, res: Response): void {
+		console.log('redirectForms')
+		res.redirect("/forms");
+	}
 }
