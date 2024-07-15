@@ -30,6 +30,8 @@ export class ApplicationBuilder<TModel extends ApplicationModel> {
 		if (!env.basePath)
 			env.basePath = "/";
 
-		return new this.__appType(env, model, this.__middlewares);
+		const app = new this.__appType(env, model);
+		app.initialize(this.__middlewares);
+		return app;
 	}
 }

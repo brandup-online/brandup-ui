@@ -1,5 +1,6 @@
 export interface EnvironmentModel {
 	basePath: string;
+	[key: string]: any;
 }
 
 export interface ApplicationModel {
