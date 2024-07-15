@@ -272,12 +272,10 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 			button.classList.add(LoadingElementClass);
 
 		if (!callback)
-			callback = () => { return; };
+			callback = () => { };
 
 		if (!context)
 			context = {};
-
-		context["formSubmit"] = form;
 
 		let method = form.method;
 		let enctype = form.enctype;
