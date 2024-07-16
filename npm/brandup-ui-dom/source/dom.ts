@@ -1,20 +1,20 @@
 export class DOM {
-	static getElementById(id: string): HTMLElement {
+	static getElementById(id: string): HTMLElement | null {
 		return document.getElementById(id);
 	}
-	static getElementByClass(parentElement: Element, className: string): HTMLElement {
+	static getElementByClass(parentElement: Element, className: string): HTMLElement | null {
 		const elements = parentElement.getElementsByClassName(className);
 		if (elements.length === 0)
 			return null;
 		return elements.item(0) as HTMLElement;
 	}
-	static getElementByName(name: string): HTMLElement {
+	static getElementByName(name: string): HTMLElement | null {
 		const elements = document.getElementsByName(name);
 		if (elements.length === 0)
 			return null;
 		return elements.item(0) as HTMLElement;
 	}
-	static getElementByTagName(parentElement: Element, tagName: string): HTMLElement {
+	static getElementByTagName(parentElement: Element, tagName: string): HTMLElement | null {
 		const elements = parentElement.getElementsByTagName(tagName);
 		if (elements.length === 0)
 			return null;
@@ -23,13 +23,13 @@ export class DOM {
 	static getElementsByTagName(parentElement: Element, tagName: string) {
 		return parentElement.getElementsByTagName(tagName);
 	}
-	static queryElement(parentElement: Element, query: string): HTMLElement {
+	static queryElement(parentElement: Element, query: string): HTMLElement | null {
 		return parentElement.querySelector(query);
 	}
 	static queryElements(parentElement: Element, query: string): NodeListOf<HTMLElement> {
 		return parentElement.querySelectorAll(query);
 	}
-	static nextElementByClass(currentElement: Element, className: string): HTMLElement {
+	static nextElementByClass(currentElement: Element, className: string): HTMLElement | null {
 		let n = currentElement.nextSibling;
 		while (n) {
 			if (n.nodeType === 1) {
@@ -41,7 +41,7 @@ export class DOM {
 		}
 		return null;
 	}
-	static prevElementByClass(currentElement: Element, className: string): HTMLElement {
+	static prevElementByClass(currentElement: Element, className: string): HTMLElement | null {
 		let n = currentElement.previousSibling;
 		while (n) {
 			if (n.nodeType === 1) {
@@ -53,7 +53,7 @@ export class DOM {
 		}
 		return null;
 	}
-	static prevElement(currentElement: Element): HTMLElement {
+	static prevElement(currentElement: Element): HTMLElement | null {
 		let n = currentElement.previousSibling;
 		while (n) {
 			if (n.nodeType === 1) {
@@ -64,7 +64,7 @@ export class DOM {
 		}
 		return null;
 	}
-	static nextElement(currentElement: Element): HTMLElement {
+	static nextElement(currentElement: Element): HTMLElement | null {
 		let n = currentElement.nextSibling;
 		while (n) {
 			if (n.nodeType === 1) {
@@ -86,6 +86,8 @@ export class DOM {
 			else {
 				for (let key in options) {
 					const value = options[key];
+					if (value === undefined)
+						continue;
 
 					switch (key) {
 						case "id": {
@@ -93,8 +95,9 @@ export class DOM {
 							break;
 						}
 						case "styles": {
-							for (const sKey in value as object) {
-								elem.style[sKey] = value[sKey];
+							if (value) {
+								for (const sKey in value as object)
+									elem.style[sKey] = value[sKey];
 							}
 							break;
 						}
@@ -115,14 +118,16 @@ export class DOM {
 							break;
 						}
 						case "dataset": {
-							for (const dataName in value as object) {
-								elem.dataset[dataName] = value[dataName];
+							if (value) {
+								for (const dataName in value as object)
+									elem.dataset[dataName] = value[dataName];
 							}
 							break;
 						}
 						case "events": {
-							for (const eventName in value as object) {
-								elem.addEventListener(eventName, value[eventName]);
+							if (value) {
+								for (const eventName in value as object)
+									elem.addEventListener(eventName, value[eventName]);
 							}
 							break;
 						}
@@ -131,10 +136,10 @@ export class DOM {
 								elem.setAttribute(key, value !== null ? JSON.stringify(value) : "");
 							}
 							else if (typeof value === "string") {
-								elem.setAttribute(key, value !== null ? value as string : "");
+								elem.setAttribute(key, value ? value as string : "");
 							}
 							else {
-								elem.setAttribute(key, value !== null ? value.toString() : "");
+								elem.setAttribute(key, value ? value.toString() : "");
 							}
 							break;
 						}
@@ -190,7 +195,8 @@ export class DOM {
 
 	static empty(element: Element) {
 		while (element.hasChildNodes()) {
-			element.removeChild(element.firstChild);
+			if (element.firstChild)
+				element.removeChild(element.firstChild);
 		}
 	}
 }
@@ -199,10 +205,10 @@ export interface ElementOptions {
 	id?: string,
 	dataset?: ElementData;
 	styles?: ElementStyles;
-	class?: string | Array<string>;
+	class?: string | string[];
 	events?: { [name: string]: EventListenerOrEventListenerObject };
 	command?: string;
-	[name: string]: string | number | boolean | object; // attributes
+	[name: string]: string | number | boolean | object | null | undefined; // attributes
 }
 
 export interface ElementData {

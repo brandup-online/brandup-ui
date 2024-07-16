@@ -1,6 +1,6 @@
 import { Application } from "./app";
 import { Middleware, InvokeContext } from "./middleware";
-import { ApplicationModel } from "./typings/app";
+import { ApplicationModel, ContextData } from "./typings/app";
 
 export class MiddlewareInvoker {
 	readonly middleware: Middleware<Application, ApplicationModel>;
@@ -31,5 +31,19 @@ export class MiddlewareInvoker {
 			this.middleware[method](context, nextFunc, endFunc);
 		else
 			nextFunc();
+	}
+
+	invokeAsync<TContext extends InvokeContext>(method: string, context: TContext): Promise<ContextData> {
+		return new Promise<ContextData>(resolve => {
+			const success = () => { resolve(context.data); }
+
+			const nextFunc = this.__next ? () => { this.__next?.invoke(method, context, success); } : success;
+			const endFunc = () => { success(); };
+
+			if (typeof this.middleware[method] === "function")
+				this.middleware[method](context, nextFunc, endFunc);
+			else
+				nextFunc();
+		});
 	}
 }

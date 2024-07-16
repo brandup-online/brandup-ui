@@ -1,4 +1,4 @@
-import { ApplicationModel } from "./typings/app";
+import { ApplicationModel, ContextData } from "./typings/app";
 import { Application } from "./app";
 
 export class Middleware<TApp extends Application<TModel>, TModel extends ApplicationModel = {}> {
@@ -38,7 +38,7 @@ export interface LoadContext extends InvokeContext {
 }
 
 export interface NavigateContext extends InvokeContext {
-	readonly source: "nav" | "form";
+	readonly source: "nav" | "submit";
 	/** Full url for navigation. */
 	readonly url: string;
 	/** Scheme, host and port. */
@@ -66,6 +66,5 @@ export interface StopContext extends InvokeContext {
 }
 
 export interface InvokeContext {
-	readonly context: { [key: string]: any };
-	[key: string]: any;
+	readonly data: ContextData;
 }

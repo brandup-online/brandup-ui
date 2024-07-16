@@ -85,9 +85,17 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 			method: <AJAXMethod>context.method.toUpperCase(),
 			data: data,
 			success: (response: AjaxResponse) => {
-				alert(response.data);
+				if (response.status === 200) {
+					alert(response.data);
 
-				super.submit(context, next, end);
+					super.submit(context, next, end);
+				}
+				else {
+					end();
+				}
+			},
+			abort: () => {
+				end();
 			}
 		});
 	}
@@ -101,7 +109,7 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 
 		const title = page.header;
 
-		if (context.replace)
+		if (context.replace || context.data["first"])
 			window.history.replaceState(window.history.state, title, context.url);
 		else
 			window.history.pushState(window.history.state, title, context.url);

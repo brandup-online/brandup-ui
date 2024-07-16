@@ -13,13 +13,13 @@ export interface NavigationOptions {
 	url?: string | null;
 	query?: QueryParams;
 	replace?: boolean;
-	context?: { [key: string]: any };
+	context?: ContextData;
 	callback?: (result: CallbackResult) => void | null;
 }
 
 export interface CallbackResult {
 	status: CallbackStatus;
-	context: { [key: string]: any } | null;
+	context: ContextData;
 }
 
 export type CallbackStatus = "Success" | "Error";
@@ -30,11 +30,15 @@ export interface SubmitOptions {
 	form: HTMLFormElement;
 	button?: HTMLButtonElement | null;
 	query?: QueryParams;
-	context?: { [key: string]: any };
+	context?: ContextData;
 	callback?: (result: CallbackResult) => void
 }
 
 // common
+
+export interface ContextData {
+	[key: string]: any;
+}
 
 export interface QueryParams {
 	[key: string]: string | string[];

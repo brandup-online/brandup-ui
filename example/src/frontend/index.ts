@@ -14,6 +14,4 @@ builder
 
 const app = builder.build({ basePath: "/" }, {});
 
-app.start(() => { console.log("app start callback"); });
-app.load(() => { console.log("app load callback"); });
-app.nav({ replace: true, context: { first: true } });
+app.run({ first: true });

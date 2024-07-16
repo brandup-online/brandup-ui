@@ -35,9 +35,9 @@ builder
 const appModel: ExampleApplicationModel = {};
 const app = builder.build<ExampleApplicationModel>({ basePath: "/" }, appModel);
 
-app.start();
-app.load();
-app.nav({ url: null, replace: true });
+app.run({ ...context params })
+	.then(context => { })
+	.catch(reason => { });
 ```
 
 ## Middlewares
@@ -46,19 +46,19 @@ Inject to application lifecycle events.
 
 ```
 export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
-    start(_context, next) {
+    start(context: StartContext, next: () => { }, end: () => { }) {
         console.log("start");
 
         next();
     }
 
-    loaded(_context, next) {
+    loaded(context: LoadContext, next: () => { }, end: () => { }) {
         console.log("loaded");
 
         next();
     }
 
-    navigate(context: NavigateContext) {
+    navigate(context: NavigateContext, next: () => { }, end: () => { }) {
         if (context.replace)
             location.replace(context.url);
         else
@@ -67,7 +67,13 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
         return;
     }
 
-    stop(_context, next) {
+    submit(context: SubmitContext, next: () => { }, end: () => { }) {
+        console.log("submit");
+
+        next();
+    }
+
+    stop(context: StopContext, next: () => { }, end: () => { }) {
         console.log("stop");
 
         next();
