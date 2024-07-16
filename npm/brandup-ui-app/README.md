@@ -46,19 +46,21 @@ Inject to application lifecycle events.
 
 ```
 export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
-    start(context: StartContext, next: () => { }, end: () => { }) {
+    start(context: StartContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
         console.log("start");
 
         next(); // call next middleware
+		// end(); // end call start hierarhy of next middlewares
+		// error(); // error signal for call hierarhy
     }
 
-    loaded(context: LoadContext, next: () => { }, end: () => { }) {
+    loaded(context: LoadContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
         console.log("loaded");
 
         next();
     }
 
-    navigate(context: NavigateContext, next: () => { }, end: () => { }) {
+    navigate(context: NavigateContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
         if (context.replace)
             location.replace(context.url);
         else
@@ -67,13 +69,13 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
         end(); // end call navigate tree
     }
 
-    submit(context: SubmitContext, next: () => { }, end: () => { }) {
+    submit(context: SubmitContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
         console.log("submit");
 
         next();
     }
 
-    stop(context: StopContext, next: () => { }, end: () => { }) {
+    stop(context: StopContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
         console.log("stop");
 
         next();
@@ -82,3 +84,19 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 ```
 
 Example SPA navigation middleware: [example/src/frontend/middlewares/pages.ts](/example/src/frontend/middlewares/pages.ts)
+
+### Async middleware execution
+
+```
+export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
+	navigate(context: NavigateContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
+        new Promise<void>((resolve, reject) => {
+				// async operation (AJAX, load module, ... )
+			})
+			.then(() => { 
+				next(); // or end()
+			})
+			.catch(reason => error(reason));
+    }
+}
+```

@@ -10,23 +10,23 @@ export class Middleware<TApp extends Application<TModel>, TModel extends Applica
 		this._app = app;
 	}
 
-	start(context: StartContext, next: () => void, end: () => void, error: (reason: any) => void) {
+	start(context: StartContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
 		next();
 	}
 
-	loaded(context: LoadContext, next: () => void, end: () => void, error: (reason: any) => void) {
+	loaded(context: LoadContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
 		next();
 	}
 
-	navigate(context: NavigateContext, next: () => void, end: () => void, error: (reason: any) => void) {
+	navigate(context: NavigateContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
 		next();
 	}
 
-	submit(context: SubmitContext, next: () => void, end: () => void, error: (reason: any) => void) {
+	submit(context: SubmitContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
 		next();
 	}
 
-	stop(context: StopContext, next: () => void, end: () => void, error: (reason: any) => void) {
+	stop(context: StopContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
 		next();
 	}
 }
