@@ -68,9 +68,3 @@ export interface StopContext extends InvokeContext {
 export interface InvokeContext {
 	readonly data: ContextData;
 }
-
-export interface InvokeCallback {
-	next: () => void;
-	end: () => void;
-	error: (reason: any) => void;
-}
