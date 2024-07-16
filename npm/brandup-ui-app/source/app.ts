@@ -180,7 +180,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		if (options.query)
 			urlHelper.extendQuery(navUrl, options.query);
 
-		var result = new Promise<ContextData>((resolve, reject) => {
+		const result = new Promise<ContextData>((resolve, reject) => {
 			if (method.toLowerCase() === "get") {
 				urlHelper.extendQuery(navUrl, new FormData(form));
 
@@ -205,19 +205,13 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 					external: navUrl.external
 				};
 
-				try {
-					this.__invoker.invoke("submit", submitContext, () => {
-						console.info(`submit ${method} success ${navUrl.full}`);
+				const submitResult = this.__invoker.invoke("submit", submitContext);
 
-						resolve(context);
-					});
-				}
-				catch (e) {
-					console.error(`submit ${method} error ${navUrl.full}`);
-					console.error(e);
+				submitResult
+					.then(() => console.info(`submit ${method} success ${navUrl.full}`))
+					.catch(reason => console.error(`submit ${method} error ${navUrl.full} reason: ${reason}`));
 
-					reject(e);
-				}
+				return submitResult;
 			}
 		});
 
@@ -260,12 +254,12 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		location.reload();
 	}
 
-	destroy(callback?: (app: Application) => void) {
+	destroy(): Promise<ContextData> {
 		if (this.__isDestroy)
-			return;
+			return Promise.reject('Application already destroyed.');
 		this.__isDestroy = true;
 
-		console.info("app destroing");
+		console.info("app destroy begin");
 
 		window.removeEventListener("click", this.__clickFunc, false);
 		window.removeEventListener("keydown", this.__keyDownUpFunc, false);
@@ -276,12 +270,13 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 			data: {}
 		};
 
-		this.__invoker.invoke("stop", context, () => {
-			console.info("app stopped");
+		const stopResult = this.__invoker.invoke("stop", context);
 
-			if (callback)
-				callback(this);
-		});
+		stopResult
+			.then(data => console.info("app destroy success"))
+			.catch(reason => console.error(`app destroy error: ${reason}`));
+
+		return stopResult;
 	}
 
 	/**
@@ -330,24 +325,20 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		this.__isStarted = true;
 
 		const context: StartContext = { data: contextData };
-		var result = this.__invoker.invokeAsync("start", context);
+		const startResult = this.__invoker.invoke("start", context);
 
-		result
-			.then(data => {
+		startResult
+			.then(() => {
 				console.info("app start success");
 
 				window.addEventListener("click", this.__clickFunc, false);
 				window.addEventListener("keydown", this.__keyDownUpFunc, false);
 				window.addEventListener("keyup", this.__keyDownUpFunc, false);
 				window.addEventListener("submit", this.__submitFunc, false);
-
-				return data;
 			})
-			.catch(reason => {
-				console.error(`app start error: ${reason}`);
-			});
+			.catch(reason => console.error(`app start error: ${reason}`));
 
-		return result;
+		return startResult;
 	}
 
 	private __load(contextData: ContextData): Promise<ContextData> {
@@ -359,19 +350,13 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		this.__isLoad = true;
 
 		const context: LoadContext = { data: contextData };
-		var result = this.__invoker.invokeAsync("loaded", context);
+		const loadResult = this.__invoker.invoke("loaded", context);
 
-		result
-			.then(data => {
-				console.info("app load success");
+		loadResult
+			.then(() => console.info("app load success"))
+			.catch(reason => console.error(`app load error: ${reason}`));
 
-				return data;
-			})
-			.catch(reason => {
-				console.error(`app load error: ${reason}`);
-			});
-
-		return result;
+		return loadResult;
 	}
 
 	private __nav(navUrl: ParsedUrl, source: "nav" | "submit", contextData: ContextData, replace: boolean): Promise<ContextData> {
@@ -393,20 +378,14 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 
 		this.beginLoadingIndicator();
 
-		var result = this.__invoker.invokeAsync("navigate", context);
+		const navResult = this.__invoker.invoke("navigate", context);
 
-		result
-			.then(data => {
-				console.info(`app nav success ${navUrl.full}`);
-
-				return data;
-			})
-			.catch(reason => {
-				console.error(`app nav error ${navUrl.full}: ${reason}`);
-			})
+		navResult
+			.then(() => console.info(`app nav success ${navUrl.full}`))
+			.catch(reason => console.error(`app nav error ${navUrl.full}: ${reason}`))
 			.finally(() => this.endLoadingIndicator());
 
-		return result;
+		return navResult;
 	}
 
 	private __onClick(e: MouseEvent) {

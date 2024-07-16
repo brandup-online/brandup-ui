@@ -39,5 +39,10 @@ export default class NavigationPage extends Page {
 		this.registerCommand("nav4", () => {
 			this.app.nav({ query: { test: "test" }, replace: true });
 		});
+
+		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "nav5" }, "nav: error")));
+		this.registerCommand("nav5", () => {
+			this.app.nav({ context: { error: true } });
+		});
 	}
 }

@@ -1,5 +1,5 @@
 import { Application } from "./app";
-import { Middleware, InvokeContext } from "./middleware";
+import { Middleware, InvokeContext, InvokeCallback } from "./middleware";
 import { ApplicationModel, ContextData } from "./typings/app";
 
 export class MiddlewareInvoker {
@@ -20,30 +20,29 @@ export class MiddlewareInvoker {
 		this.__next = new MiddlewareInvoker(middleware);
 	}
 
-	invoke<TContext extends InvokeContext>(method: string, context: TContext, callback?: () => void) {
-		if (!callback)
-			callback = MiddlewareInvoker.emptyFunc;
+	invoke<TContext extends InvokeContext>(method: string, context: TContext): Promise<ContextData> {
+		return new Promise<ContextData>((resolve, reject) => {
+			const success = () => { resolve(context.data); }
+			const error = (reason) => { reject(reason || `Error invoke middleware method ${method}`); };
 
-		const nextFunc = this.__next ? () => { this.__next?.invoke(method, context, callback); } : callback;
-		const endFunc = () => { callback(); };
-
-		if (typeof this.middleware[method] === "function")
-			this.middleware[method](context, nextFunc, endFunc);
-		else
-			nextFunc();
+			this.__invoke(method, context, success, error);
+		});
 	}
 
-	invokeAsync<TContext extends InvokeContext>(method: string, context: TContext): Promise<ContextData> {
-		return new Promise<ContextData>(resolve => {
-			const success = () => { resolve(context.data); }
+	private __invoke<TContext extends InvokeContext>(method: string, context: TContext, success: () => void, reject: (reason: any) => void) {
+		const nextFunc = this.__next ? () => { this.__next?.__invoke(method, context, success, reject); } : success;
+		const endFunc = () => { success(); };
+		const errorFunc = (reason: any) => { reject(reason); };
 
-			const nextFunc = this.__next ? () => { this.__next?.invoke(method, context, success); } : success;
-			const endFunc = () => { success(); };
-
-			if (typeof this.middleware[method] === "function")
-				this.middleware[method](context, nextFunc, endFunc);
-			else
-				nextFunc();
-		});
+		if (typeof this.middleware[method] === "function") {
+			try {
+				this.middleware[method](context, nextFunc, endFunc, errorFunc);
+			}
+			catch (e) {
+				reject(e);
+			}
+		}
+		else
+			nextFunc();
 	}
 }

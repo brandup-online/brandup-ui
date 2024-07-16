@@ -10,23 +10,23 @@ export class Middleware<TApp extends Application<TModel>, TModel extends Applica
 		this._app = app;
 	}
 
-	start(context: StartContext, next: () => void, end: () => void) {
+	start(context: StartContext, next: () => void, end: () => void, error: (reason: any) => void) {
 		next();
 	}
 
-	loaded(context: LoadContext, next: () => void, end: () => void) {
+	loaded(context: LoadContext, next: () => void, end: () => void, error: (reason: any) => void) {
 		next();
 	}
 
-	navigate(context: NavigateContext, next: () => void, end: () => void) {
+	navigate(context: NavigateContext, next: () => void, end: () => void, error: (reason: any) => void) {
 		next();
 	}
 
-	submit(context: SubmitContext, next: () => void, end: () => void) {
+	submit(context: SubmitContext, next: () => void, end: () => void, error: (reason: any) => void) {
 		next();
 	}
 
-	stop(context: StopContext, next: () => void, end: () => void) {
+	stop(context: StopContext, next: () => void, end: () => void, error: (reason: any) => void) {
 		next();
 	}
 }
@@ -67,4 +67,10 @@ export interface StopContext extends InvokeContext {
 
 export interface InvokeContext {
 	readonly data: ContextData;
+}
+
+export interface InvokeCallback {
+	next: () => void;
+	end: () => void;
+	error: (reason: any) => void;
 }

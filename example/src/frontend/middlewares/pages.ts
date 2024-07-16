@@ -27,7 +27,7 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 		this._appContentElem = appContentElem;
 	}
 
-	start(context: StartContext, next: () => void, end: () => void) {
+	start(context: StartContext, next: () => void, end: () => void, error: (reason: any) => void) {
 		window.addEventListener("popstate", (e: PopStateEvent) => {
 			e.preventDefault();
 
@@ -36,10 +36,10 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 			this.app.nav({ url: null, replace: true });
 		});
 
-		super.start(context, next, end);
+		super.start(context, next, end, error);
 	}
 
-	navigate(context: NavigateContext, next: () => void, end: () => void) {
+	navigate(context: NavigateContext, next: () => void, end: () => void, error: (reason: any) => void) {
 		if (context.external) {
 			const linkElem = <HTMLLinkElement>DOM.tag("a", { href: context.url, target: "_blank" });
 			linkElem.click();
@@ -68,16 +68,12 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 			.then(() => {
 				context["page"] = this._page;
 
-				super.navigate(context, next, end);
+				next();
 			})
-			.catch((reason) => {
-				console.error(reason);
-
-				end();
-			});
+			.catch(error);
 	}
 
-	submit(context: SubmitContext, next: () => void, end: () => void) {
+	submit(context: SubmitContext, next: () => void, end: () => void, error: (reason: any) => void) {
 		const data = new FormData(context.form);
 
 		ajaxRequest({
@@ -87,21 +83,15 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 			success: (response: AjaxResponse) => {
 				if (response.status === 200) {
 					alert(response.data);
-
-					super.submit(context, next, end);
+					next();
 				}
-				else {
-					end();
-				}
+				else
+					error(`Submit request status: ${response.status}`);
 			},
 			abort: () => {
-				end();
+				error("Submit request aborted.");
 			}
 		});
-	}
-
-	stop(context: StopContext, next: () => void, end: () => void) {
-		super.stop(context, next, end);
 	}
 
 	private _nav(context: NavigateContext, page: Page) {

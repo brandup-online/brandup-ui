@@ -10,7 +10,7 @@ Install NPM package [brandup-ui-app](https://www.npmjs.com/package/brandup-ui-ap
 npm i brandup-ui-app@latest
 ```
 
-## Configure and start application
+## Configure and run application
 
 Configure your application with middlewares and run.
 
@@ -49,7 +49,7 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
     start(context: StartContext, next: () => { }, end: () => { }) {
         console.log("start");
 
-        next();
+        next(); // call next middleware
     }
 
     loaded(context: LoadContext, next: () => { }, end: () => { }) {
@@ -64,7 +64,7 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
         else
             location.assign(context.url);
 
-        return;
+        end(); // end call navigate tree
     }
 
     submit(context: SubmitContext, next: () => { }, end: () => { }) {
