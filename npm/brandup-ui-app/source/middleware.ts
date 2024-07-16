@@ -38,27 +38,34 @@ export interface LoadContext extends InvokeContext {
 }
 
 export interface NavigateContext extends InvokeContext {
+	readonly source: "nav" | "form";
+	/** Full url for navigation. */
 	readonly url: string;
+	/** Scheme, host and port. */
+	readonly origin: string;
+	/** Path of navigation url. */
 	readonly path: string;
-	readonly query: string | null;
-	readonly queryParams: { [key: string]: Array<string> };
+	/** Query parameters of navigation url. */
+	readonly query: URLSearchParams;
+	/** Hash of navigation url. */
 	readonly hash: string | null;
+	/** Replace current navigation entry. */
 	readonly replace: boolean;
-	readonly context: { [key: string]: any };
+	/** Navigation origin is different of current page origin. */
+	readonly external: boolean;
+}
+
+export interface SubmitContext extends NavigateContext {
+	readonly form: HTMLFormElement;
+	readonly button: HTMLButtonElement | null;
+	readonly method: string;
+	readonly enctype: string;
 }
 
 export interface StopContext extends InvokeContext {
 }
 
-export interface SubmitContext extends InvokeContext {
-	readonly form: HTMLFormElement;
-	readonly button: HTMLButtonElement | null;
-	readonly method: string;
-	readonly enctype: string;
-	readonly url: string;
-	readonly context: { [key: string]: any };
-}
-
 export interface InvokeContext {
-	readonly items: { [key: string]: any };
+	readonly context: { [key: string]: any };
+	[key: string]: any;
 }

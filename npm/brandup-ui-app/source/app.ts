@@ -1,7 +1,8 @@
 import { UIElement } from "brandup-ui";
-import { EnvironmentModel, ApplicationModel, NavigationOptions, NavigationStatus, SubmitOptions } from "./typings/app";
+import { EnvironmentModel, ApplicationModel, NavigationOptions, SubmitOptions } from "./typings/app";
 import { LoadContext, Middleware, NavigateContext, StartContext, StopContext, SubmitContext } from "./middleware";
 import { MiddlewareInvoker } from "./invoker";
+import urlHelper from "./helpers/url";
 
 export const FormClassName = "appform";
 export const LoadingElementClass = "loading";
@@ -17,55 +18,58 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	readonly env: EnvironmentModel;
 	readonly model: TModel;
 	private readonly __invoker: MiddlewareInvoker;
-	private __isInit = false;
-	private __isLoad = false;
-	private __isDestroy = false;
 	private readonly __clickFunc: (e: MouseEvent) => void;
 	private readonly __keyDownUpFunc: (e: KeyboardEvent) => void;
 	private readonly __submitFunc: (e: SubmitEvent) => void;
-	private _ctrlPressed = false;
+	private __isInitialized = false;
+	private __isStarted = false;
+	private __isLoad = false;
+	private __isDestroy = false;
+	private __ctrlPressed = false;
 	private __loadingCounter = 0;
 
 	private __middlewares: { [key: string]: Middleware<Application<TModel>, TModel> } = {};
 	private __middlewaresNames: { [key: string]: string } = {};
 
-	constructor(env: EnvironmentModel, model: TModel, middlewares: Array<Middleware<Application<TModel>, TModel>>) {
+	constructor(env: EnvironmentModel, model: TModel) {
 		super();
 
 		this.env = env;
 		this.model = model;
 
-		this.setElement(document.body);
+		this.__clickFunc = (e: MouseEvent) => this.__onClick(e);
+		this.__keyDownUpFunc = (e: KeyboardEvent) => this.__onKeyDownUp(e);
+		this.__submitFunc = (e: SubmitEvent) => this.__onSubmit(e);
 
 		const core = new Middleware();
 		core.bind(this);
 		this.__invoker = new MiddlewareInvoker(core);
-
-		if (middlewares && middlewares.length > 0) {
-			middlewares.forEach((m) => {
-				m.bind(this);
-
-				var name = m.constructor.name.toLowerCase();
-				if (name.endsWith("middleware"))
-					name = name.substring(0, name.length - "middleware".length);
-
-				if (this.__middlewares.hasOwnProperty(name))
-					throw `Middleware "${name}" already registered.`;
-
-				this.__middlewares[name] = m;
-				this.__middlewaresNames[m.constructor.name] = name;
-
-				this.__invoker.next(m);
-			});
-		}
-
-		this.__clickFunc = (e: MouseEvent) => this.__onClick(e);
-		this.__keyDownUpFunc = (e: KeyboardEvent) => this.__onKeyDownUp(e);
-		this.__submitFunc = (e: SubmitEvent) => this.__onSubmit(e);
 	}
 
 	get typeName(): string { return "Application" }
 	get invoker(): MiddlewareInvoker { return this.__invoker; }
+
+	initialize(middlewares: Array<Middleware<Application<TModel>, TModel>>) {
+		if (this.__isInitialized)
+			throw 'Application already initialized.';
+		this.__isInitialized = true;
+
+		middlewares.forEach((m) => {
+			m.bind(this);
+
+			var name = m.constructor.name.toLowerCase();
+			if (name.endsWith("middleware"))
+				name = name.substring(0, name.length - "middleware".length);
+
+			if (this.__middlewares.hasOwnProperty(name))
+				throw `Middleware "${name}" already registered.`;
+
+			this.__middlewares[name] = m;
+			this.__middlewaresNames[m.constructor.name] = name;
+
+			this.__invoker.next(m);
+		});
+	}
 
 	middleware<T extends Middleware<Application<TModel>, TModel>>(c: new () => T): T {
 		const name = this.__middlewaresNames[c.name];
@@ -76,20 +80,20 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	}
 
 	start(callback?: (app: Application) => void) {
-		if (this.__isInit)
+		if (this.__isStarted)
 			return;
-		this.__isInit = true;
+		this.__isStarted = true;
 
 		console.info("app starting");
+
+		this.setElement(document.body);
 
 		window.addEventListener("click", this.__clickFunc, false);
 		window.addEventListener("keydown", this.__keyDownUpFunc, false);
 		window.addEventListener("keyup", this.__keyDownUpFunc, false);
 		window.addEventListener("submit", this.__submitFunc, false);
 
-		const context: StartContext = {
-			items: {}
-		};
+		const context: StartContext = { context: {} };
 
 		this.__invoker.invoke("start", context, () => {
 			console.info("app started");
@@ -100,7 +104,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	}
 
 	load(callback?: (app: Application) => void) {
-		if (!this.__isInit)
+		if (!this.__isStarted)
 			throw "Before executing the load method, you need to execute the init method.";
 
 		if (this.__isLoad)
@@ -109,9 +113,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 
 		console.info("app loading");
 
-		const context: LoadContext = {
-			items: {}
-		};
+		const context: LoadContext = { context: {} };
 
 		this.__invoker.invoke("loaded", context, () => {
 			console.info("app loaded");
@@ -124,124 +126,28 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	}
 
 	nav(options: NavigationOptions) {
-		let { url, replace = false, context, callback } = options;
+		let { url = null, replace = false, context = {}, callback = () => { } } = options;
 
-		if (!callback)
-			callback = () => { };
+		const navUrl = urlHelper.parseUrl(url);
 
-		if (!context)
-			context = {};
+		if (options.query)
+			urlHelper.extendQuery(navUrl, options.query);
 
-		let path: string;
-		let query: URLSearchParams | null = null;
-		let hash: string | null = null;
-		if (!url) {
-			path = location.pathname;
-			if (location.search)
-				query = new URLSearchParams(location.search);
-			if (location.hash)
-				hash = location.hash;
-		}
-		else {
-			if (url.startsWith("#")) {
-				path = location.pathname;
-				if (location.search)
-					query = new URLSearchParams(location.search);
-				hash = url;
-			}
-			else if (url.startsWith("?")) {
-				path = location.pathname;
-				query = new URLSearchParams(url);
-			}
-			else {
-				if (url.startsWith("http")) {
-					// Если адрес абсолютный
-
-					const currentBaseUrl = `${location.protocol}//${location.host}`;
-					if (!url.startsWith(currentBaseUrl)) {
-						// Если домен и протокол отличается от текущего, то перезагружаем страницу
-
-						callback({ status: "External", context });
-
-						location.href = url;
-						return;
-					}
-
-					url = url.substring(currentBaseUrl.length);
-				}
-
-				const hashIndex = url.lastIndexOf("#");
-				if (hashIndex > 0) {
-					hash = url.substring(hashIndex);
-					url = url.substring(0, hashIndex);
-				}
-
-				const qyeryIndex = url.indexOf("?");
-				if (qyeryIndex > 0) {
-					query = new URLSearchParams(url.substring(qyeryIndex + 1));
-					url = url.substring(0, qyeryIndex);
-				}
-				else
-					query = new URLSearchParams();
-
-				path = url;
-			}
-		}
-
-		if (hash === "#")
-			hash = null;
-
-		if (options.query) {
-			if (!query)
-				query = new URLSearchParams();
-
-			for (let key in options.query) {
-				const value = options.query[key];
-				if (!Array.isArray(value)) {
-					query.set(key, value);
-				}
-				else {
-					query.delete(key);
-					value.forEach(val => query?.append(key, val));
-				}
-			}
-		}
-
-		// Собираем полный адрес без домена
-
-		let fullUrl = path;
-		let queryStr: string | null = null;
-		if (query && query.size) {
-			queryStr = query.toString();
-			fullUrl += "?" + queryStr;
-		}
-		if (hash) {
-			fullUrl += hash;
-			hash = hash.substring(1);
-		}
+		console.info(`app navigate: ${navUrl.full}`);
 
 		try {
-			console.info(`app navigate: ${fullUrl}`);
-
 			this.beginLoadingIndicator();
 
-			const queryDict: { [key: string]: Array<string> } = {};
-			query?.forEach((v, k) => {
-				if (!queryDict[k])
-					queryDict[k] = [v];
-				else
-					queryDict[k].push(v);
-			});
-
 			const navContext: NavigateContext = {
-				items: {},
-				url: fullUrl,
-				path,
-				query: queryStr,
-				queryParams: queryDict,
-				hash,
+				source: "nav",
+				context,
+				url: navUrl.full,
+				origin: navUrl.origin,
+				path: navUrl.path,
+				query: navUrl.query,
+				hash: navUrl.hash,
 				replace,
-				context
+				external: navUrl.external
 			};
 
 			console.info(navContext);
@@ -261,8 +167,10 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	}
 
 	submit(options: SubmitOptions) {
-		const { form, button = null } = options;
-		let { context, callback } = options;
+		const { form, button = null, context = {}, callback = () => { } } = options;
+
+		if (!form.checkValidity)
+			return;
 
 		if (form.classList.contains(LoadingElementClass))
 			return false;
@@ -271,17 +179,10 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		if (button)
 			button.classList.add(LoadingElementClass);
 
-		if (!callback)
-			callback = () => { return; };
-
-		if (!context)
-			context = {};
-
-		context["formSubmit"] = form;
-
 		let method = form.method;
 		let enctype = form.enctype;
 		let url = form.action;
+		let replace = form.hasAttribute(NavUrlReplaceAttributeName);
 
 		if (button) {
 			// Если отправка с кнопки, то берём её параметры
@@ -291,13 +192,16 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 				enctype = button.formEnctype;
 			if (button.hasAttribute("formaction"))
 				url = button.formAction;
+			if (button.hasAttribute(NavUrlReplaceAttributeName))
+				replace = true;
 		}
 
-		const urlHashIndex = url.lastIndexOf("#");
-		if (urlHashIndex > 0)
-			url = url.substring(0, urlHashIndex);
+		const navUrl = urlHelper.parseUrl(url);
 
-		console.info(`form sibmiting: ${method.toUpperCase()} ${url}`);
+		if (options.query)
+			urlHelper.extendQuery(navUrl, options.query);
+
+		console.info(`form ${method} to ${navUrl.full}`);
 
 		const complexCallback = () => {
 			form.classList.remove(LoadingElementClass);
@@ -305,51 +209,87 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 			if (button)
 				button.classList.remove(LoadingElementClass);
 
-			callback({ context });
+			callback({ status: "Success", context });
 
 			this.endLoadingIndicator();
 
-			console.info(`form sibmited`);
+			console.info(`form ${method}`);
 		};
-
-		if (method.toLowerCase() === "get") {
-			const formData = new FormData(form);
-			const queryParams: { [key: string]: string | string[] } = {};
-			formData.forEach((v, k) => {
-				if (queryParams[k])
-					(<string[]>queryParams[k]).push(v.toString());
-				else
-					queryParams[k] = [v.toString()];
-			});
-
-			this.nav({
-				url,
-				query: queryParams,
-				replace: form.hasAttribute(NavUrlReplaceAttributeName),
-				context: context,
-				callback: complexCallback
-			});
-
-			return;
-		}
 
 		this.beginLoadingIndicator();
 
-		var submitContext: SubmitContext = {
-			form,
-			button,
-			method,
-			enctype,
-			url,
-			items: {},
-			context
-		}
+		if (method.toLowerCase() === "get") {
+			urlHelper.extendQuery(navUrl, new FormData(form));
 
-		this.__invoker.invoke("submit", submitContext, complexCallback);
+			let submitContext: SubmitContext = {
+				source: "form",
+				context,
+				form,
+				button,
+				method,
+				enctype,
+				url: navUrl.full,
+				origin: navUrl.origin,
+				path: navUrl.path,
+				query: navUrl.query,
+				hash: navUrl.hash,
+				replace: replace,
+				external: navUrl.external
+			};
+
+			try {
+				this.__invoker.invoke("navigate", submitContext, complexCallback);
+			}
+			catch (e) {
+				console.error(`form ${method} error`);
+				console.error(e);
+
+				callback({ status: "Error", context });
+				this.endLoadingIndicator();
+			}
+		}
+		else {
+			let submitContext: SubmitContext = {
+				source: "form",
+				context,
+				form,
+				button,
+				method,
+				enctype,
+				url: navUrl.full,
+				origin: navUrl.origin,
+				path: navUrl.path,
+				query: navUrl.query,
+				hash: navUrl.hash,
+				replace: replace,
+				external: navUrl.external
+			};
+
+			try {
+				this.__invoker.invoke("submit", submitContext, complexCallback);
+			}
+			catch (e) {
+				console.error(`form ${method} error`);
+				console.error(e);
+
+				callback({ status: "Error", context });
+				this.endLoadingIndicator();
+			}
+		}
 	}
 
+	/**
+	 * Reload page with nav.
+	 */
 	reload() {
 		this.nav({ url: null, replace: true });
+	}
+
+	/**
+	 * Global reload page in browser.
+	 */
+	restart() {
+		location.reload();
 	}
 
 	destroy(callback?: (app: Application) => void) {
@@ -365,7 +305,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		window.removeEventListener("submit", this.__submitFunc, false);
 
 		const context: StopContext = {
-			items: {}
+			context: {}
 		};
 
 		this.__invoker.invoke("stop", context, () => {
@@ -434,7 +374,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 			elem = elem.parentElement;
 		}
 
-		if (!elem || this._ctrlPressed || elem.getAttribute("target") === "_blank")
+		if (!elem || this.__ctrlPressed || elem.getAttribute("target") === "_blank")
 			return;
 
 		e.preventDefault();
@@ -449,7 +389,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		else if (elem.hasAttribute(NavUrlAttributeName))
 			url = elem.getAttribute(NavUrlAttributeName);
 		else
-			throw "Не удалось получить Url адрес для перехода.";
+			throw "Not found url for navigation.";
 
 		if (elem.classList.contains(LoadingElementClass))
 			return;
@@ -460,11 +400,9 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 			replace: elem.hasAttribute(NavUrlReplaceAttributeName),
 			callback: () => { elem.classList.remove(LoadingElementClass); }
 		});
-
-		return;
 	}
 	private __onKeyDownUp(e: KeyboardEvent) {
-		this._ctrlPressed = e.ctrlKey;
+		this.__ctrlPressed = e.ctrlKey;
 	}
 	private __onSubmit(e: SubmitEvent) {
 		const form = e.target as HTMLFormElement;

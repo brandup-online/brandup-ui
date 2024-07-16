@@ -8,12 +8,17 @@ export default class NavigationPage extends Page {
 	protected async onRenderContent(container: HTMLElement) {
 		container.appendChild(DOM.tag("p", null, "Working page navigation."));
 
-		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "/forms", class: "applink" }, "link: navigate to page")));
+		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "/forms" }, "link: direct navigate")));
+		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "/forms", class: "applink" }, "link: navigate to /forms")));
+		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "/forms/", class: "applink" }, "link: navigate to /forms/")));
+		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "forms", class: "applink" }, "link: navigate to forms")));
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "/test", class: "applink" }, "link: notfound")));
+		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "https://ya.ru", class: "applink" }, "link: external")));
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "/forms", class: "applink", dataset: { navReplace: "true" } }, "link: navigate with replace")));
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "/forms#test", class: "applink" }, "link: navigate to page with hash")));
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "#test", class: "applink" }, "link: navigate only hash")));
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "?test=test", class: "applink" }, "link: navigate only params")));
+		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "?test=test#test", class: "applink" }, "link: navigate with params and hash")));
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "nav1" }, "nav: with add query param")));
 		this.registerCommand("nav1", () => {
