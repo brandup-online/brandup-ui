@@ -12,7 +12,7 @@ class ExampleRoutes {
     intializeRoutes() {
         this.router.get("/redirect", this.controller.redirectForms);
 
-        this.router.get("*", this.controller.getHTMLTemplate);
+        this.router.get("*", this.controller.spa);
     }
 }
 

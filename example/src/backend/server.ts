@@ -10,21 +10,19 @@ const PORT_DEFAULT = 443;
 
 let port: number = PORT_DEFAULT;
 process.argv.map(value => {
-    if (value.indexOf(PORT_ARG_PREFIX) !== 0)
-        return;
+	if (value.indexOf(PORT_ARG_PREFIX) !== 0)
+		return;
 
-    port = parseInt(value.substring(PORT_ARG_PREFIX.length)) ?? PORT_DEFAULT;
+	port = parseInt(value.substring(PORT_ARG_PREFIX.length)) ?? PORT_DEFAULT;
 });
 console.log(`run on port ${port}`);
 
 if (!server.server) throw "server creation error";
 
-server.server.listen(port, () => {
-    console.log(`Server start https://localhost:${port}`);
-}).on("error", (err: any) => {
-    if (err.code === "EADDRINUSE") {
-        console.log("Error: address already in use");
-    } else {
-        console.log(err);
-    }
-});
+server.server.listen(port, () => { console.log(`Server start https://localhost:${port}`); })
+	.on("error", (err: any) => {
+		if (err.code === "EADDRINUSE")
+			console.log("Error: address already in use");
+		else
+			console.log(err);
+	});
