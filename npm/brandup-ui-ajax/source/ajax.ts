@@ -33,6 +33,7 @@ export interface AjaxRequest<TState = any> {
 	disableCache?: boolean | null;
 	state?: TState | null;
 }
+
 export interface AjaxResponse<TData = any, TState = any> {
 	data: TData;
 	status: number;
@@ -54,16 +55,9 @@ export const urlEncode = (data: string, rfc3986 = true) => {
 };
 
 export const ajaxRequest = (options: AjaxRequest) => {
-	if (!options)
-		throw new Error();
-
-	const xhr = new XMLHttpRequest();
-	xhr.withCredentials = true;
-	if (options.timeout === 0 || options.timeout)
-		xhr.timeout = options.timeout;
-
-	let url = options.url ? options.url : location.href;
+	let url = options.url || location.href;
 	let urlParams = options.urlParams;
+
 	if (options.disableCache) {
 		if (!urlParams) urlParams = {};
 		urlParams["_"] = new Date().getTime().toString();
@@ -96,6 +90,45 @@ export const ajaxRequest = (options: AjaxRequest) => {
 	}
 
 	const method = options.method ? options.method : "GET";
+
+	const xhr = new XMLHttpRequest();
+	xhr.withCredentials = true;
+	if (options.timeout === 0 || options.timeout)
+		xhr.timeout = options.timeout;
+
+	xhr.onreadystatechange = (e: Event) => {
+		switch (xhr.readyState) {
+			case XMLHttpRequest.DONE: {
+				if (options.success) {
+					let responseData: any = null;
+
+					if (xhr.response) {
+						const ct = xhr.getResponseHeader("Content-Type");
+						if (ct && (ct.indexOf("application/json", 0) === 0 || ct.indexOf("application/problem+json", 0) === 0))
+							responseData = JSON.parse(xhr.responseText);
+						else if (ct && ct.indexOf("application/xml", 0) === 0)
+							responseData = xhr.responseXML;
+						else
+							responseData = xhr.responseText;
+					}
+
+					options.success({
+						data: responseData,
+						status: xhr.status,
+						xhr: xhr,
+						state: options.state
+					});
+				}
+				break;
+			}
+		}
+	};
+
+	xhr.onabort = (e: ProgressEvent) => {
+		if (options.abort)
+			options.abort(options, xhr);
+	}
+
 	xhr.open(method, url, true);
 	xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
 
@@ -173,41 +206,6 @@ export const ajaxRequest = (options: AjaxRequest) => {
 		xhr.send();
 	else
 		xhr.send(data);
-
-	xhr.onreadystatechange = (e: Event) => {
-		const x = e.target as XMLHttpRequest;
-
-		switch (x.readyState) {
-			case XMLHttpRequest.DONE: {
-				if (options.success) {
-					let responseData: any = null;
-
-					if (x.response) {
-						const ct = x.getResponseHeader("Content-Type");
-						if (ct && (ct.indexOf("application/json", 0) === 0 || ct.indexOf("application/problem+json", 0) === 0))
-							responseData = JSON.parse(x.responseText);
-						else if (ct && ct.indexOf("application/xml", 0) === 0)
-							responseData = x.responseXML;
-						else
-							responseData = x.responseText;
-					}
-
-					options.success({
-						data: responseData,
-						status: x.status,
-						xhr: x,
-						state: options.state
-					});
-				}
-				break;
-			}
-		}
-	};
-
-	xhr.onabort = (e: ProgressEvent) => {
-		if (options.abort)
-			options.abort(options, <XMLHttpRequest>e.target);
-	}
 
 	return xhr;
 };
