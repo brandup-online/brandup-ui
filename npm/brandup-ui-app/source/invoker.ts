@@ -23,9 +23,8 @@ export class MiddlewareInvoker {
 	invoke<TContext extends InvokeContext>(method: string, context: TContext): Promise<ContextData> {
 		return new Promise<ContextData>((resolve, reject) => {
 			this.__invoke(method, context,
-				() => {
-					resolve(context.data);
-				}, reject);
+				() => resolve(context.data),
+				(reason: any) => reject(reason || `Error middleware method ${method}.`));
 		});
 	}
 
