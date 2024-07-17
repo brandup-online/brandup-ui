@@ -128,7 +128,7 @@ const extendQuery = (url: ParsedUrl, query: QueryParams | URLSearchParams | Form
 const buildUrl = (url: ParsedUrl) => {
 	let relativeUrl = url.path;
 
-	if (queryIsNotEmpty(url.query))
+	if (url.query.size)
 		relativeUrl += "?" + url.query.toString();
 
 	if (url.hash)
