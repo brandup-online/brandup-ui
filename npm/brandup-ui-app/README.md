@@ -35,9 +35,16 @@ builder
 const appModel: ExampleApplicationModel = {};
 const app = builder.build<ExampleApplicationModel>({ basePath: "/" }, appModel);
 
-app.run({ ...context params })
+app.run({ ...optional context params })
 	.then(context => { })
 	.catch(reason => { });
+```
+
+Default HTMLElement of application is `document.body`. Set custom element:
+
+```
+const appElement = document.getElementById("app")
+app.run({ ...optional context params }, appElement);
 ```
 
 ## Middlewares

@@ -92,13 +92,14 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	/**
 	 * Run application.
 	 * @param contextData Run context data.
+	 * @param element HTMLElement of application. Default is document.body.
 	 * @returns Promise of runned result.
 	 */
-	run(contextData?: ContextData | null): Promise<ContextData> {
+	run(contextData?: ContextData | null, element?: HTMLElement): Promise<ContextData> {
 		if (!contextData)
 			contextData = {};
 
-		this.setElement(document.body);
+		this.setElement(element || document.body);
 		this.beginLoadingIndicator();
 
 		var result = this.__start(contextData)
