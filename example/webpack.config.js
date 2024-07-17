@@ -5,7 +5,10 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CleanCSSPlugin = require("less-plugin-clean-css");
 const TerserPlugin = require("terser-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const bundleOutputDir = './wwwroot/dist';
+// const ModernBuildPlugin = require('./utils/ModernBuildPlugin');
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
+
+let bundleOutputDir = './wwwroot/dist';
 const frontDir = path.resolve(__dirname, "src", "frontend");
 
 const lessLoaderOptions = { webpackImporter: true, lessOptions: { math: 'always', plugins: [new CleanCSSPlugin({ advanced: true })] } };
@@ -31,9 +34,13 @@ var splitChunks = {
 
 module.exports = (env) => {
     const isDevBuild = process.env.NODE_ENV !== "production";
+    const isModern = process.env.BROWSERS_ENV === "fallback";
+    const prefix = isModern ? "fallback" : "modern";
 
     console.log(`NODE_ENV: "${process.env.NODE_ENV}"`);
     console.log(`isDevBuild: ${isDevBuild}`);
+
+    const getFilePath = (relativePath) => relativePath; //path.join(prefix, relativePath);
 
     return [{
         mode: isDevBuild ? "development" : "production",
@@ -43,8 +50,8 @@ module.exports = (env) => {
         resolve: { extensions: ['.js', '.jsx', '.ts', '.tsx', '.less'] },
         output: {
             path: path.join(__dirname, bundleOutputDir),
-            filename: '[name].js',
-            chunkFilename: isDevBuild ? '[name].js' : '[name].[contenthash].js',
+            filename: getFilePath('[name].js'),
+            chunkFilename: isDevBuild ? getFilePath('[name].js') : getFilePath('[name].[contenthash].js'),
             iife: true,
             clean: true,
             publicPath: './'
@@ -52,9 +59,11 @@ module.exports = (env) => {
         module: {
             rules: [
                 {
-                    test: /\.tsx?$/,
-                    loader: 'ts-loader',
-                    options: { allowTsInNodeModules: true, onlyCompileBundledFiles: true }
+                    test: /\.(?:ts|js|mjs|cjs)$/,
+                    exclude: /node_modules/,
+                    use: {
+                        loader: 'babel-loader'
+                    }
                 },
                 {
                     test: /\.(le|c)ss$/,
@@ -80,7 +89,7 @@ module.exports = (env) => {
                 {
                     test: /\.(png|jpg|jpeg|gif)$/,
                     use: 'url-loader?limit=25000'
-                }
+                },
             ]
         },
         optimization: {
@@ -106,15 +115,18 @@ module.exports = (env) => {
         },
         plugins: [
             new MiniCssExtractPlugin({
-                filename: '[name].css',
+                filename: getFilePath('[name].css'),
                 chunkFilename: isDevBuild ? '[id].css' : '[id].[contenthash].css',
                 ignoreOrder: true
+            }),
+            new WebpackManifestPlugin({
+                fileName: getFilePath('manifest.json'),
             }),
             new HtmlWebpackPlugin({
                 filename: "index.html",
                 template: path.join(frontDir, "template.html"),
                 publicPath:"./"
-            }),
+            })
         ]
     }];
 };

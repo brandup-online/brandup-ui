@@ -1,4 +1,4 @@
-﻿import { LoadContext, Middleware, NavigateContext, StartContext, StopContext, SubmitContext } from "brandup-ui-app";
+﻿import { Middleware, NavigateContext, StartContext, StopContext, SubmitContext } from "brandup-ui-app";
 import { Page } from "../pages/base";
 import { DOM } from "brandup-ui-dom";
 import { AJAXMethod, AjaxResponse, ajaxRequest } from "brandup-ui-ajax";

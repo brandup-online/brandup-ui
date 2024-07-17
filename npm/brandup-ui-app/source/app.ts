@@ -304,7 +304,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 				query.set(key, value);
 			}
 
-			if (urlHelper.queryIsNotEmpty(query))
+			if (query.size)
 				url += "?" + query.toString();
 		}
 
