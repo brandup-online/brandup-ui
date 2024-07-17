@@ -86,7 +86,7 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 					next();
 				}
 				else
-					error(`Submit request status: ${response.status}`);
+					error(`Submit response status: ${response.status}`);
 			},
 			abort: () => {
 				error("Submit request aborted.");

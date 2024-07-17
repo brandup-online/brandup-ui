@@ -17,6 +17,22 @@ export default class FormsPage extends Page {
 		]));
 
 		container.appendChild(DOM.tag("div", null, [
+			DOM.tag("p", null, "Submit post with empty action"),
+			DOM.tag("form", { class: "appform", method: "post" }, [
+				DOM.tag("input", { type: "text", name: "value" }),
+				DOM.tag("button", { type: "submit" }, "Send")
+			])
+		]));
+
+		container.appendChild(DOM.tag("div", null, [
+			DOM.tag("p", null, "Submit post with button formaction"),
+			DOM.tag("form", { class: "appform", method: "post", action: "/forms" }, [
+				DOM.tag("input", { type: "text", name: "value" }),
+				DOM.tag("button", { type: "submit", formaction: this.app.uri("/send") }, "Send")
+			])
+		]));
+
+		container.appendChild(DOM.tag("div", null, [
 			DOM.tag("p", null, "Submit form with get method"),
 			DOM.tag("form", { class: "appform", method: "get" }, [
 				DOM.tag("input", { type: "text", name: "value" }),

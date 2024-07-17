@@ -22,21 +22,20 @@ export class MiddlewareInvoker {
 
 	invoke<TContext extends InvokeContext>(method: string, context: TContext): Promise<ContextData> {
 		return new Promise<ContextData>((resolve, reject) => {
-			const success = () => { resolve(context.data); }
-			const error = (reason: any) => { reject(reason || `Error invoke middleware method ${method}`); };
-
-			this.__invoke(method, context, success, error);
+			this.__invoke(method, context,
+				() => {
+					resolve(context.data);
+				}, reject);
 		});
 	}
 
 	private __invoke<TContext extends InvokeContext>(method: string, context: TContext, success: () => void, reject: (reason: any) => void) {
 		const nextFunc = this.__next ? () => { this.__next?.__invoke(method, context, success, reject); } : success;
 		const endFunc = () => { success(); };
-		const errorFunc = (reason: any) => { reject(reason); };
 
 		if (typeof this.middleware[method] === "function") {
 			try {
-				this.middleware[method](context, nextFunc, endFunc, errorFunc);
+				this.middleware[method](context, nextFunc, endFunc, reject);
 			}
 			catch (e) {
 				reject(e);

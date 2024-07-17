@@ -166,11 +166,11 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		if (button) {
 			// Если отправка с кнопки, то берём её параметры
 			if (button.hasAttribute("formmethod"))
-				method = button.formMethod;
+				method = <string>button.getAttribute("formmethod");
 			if (button.hasAttribute("formenctype"))
-				enctype = button.formEnctype;
+				enctype = <string>button.getAttribute("formenctype");
 			if (button.hasAttribute("formaction"))
-				url = button.formAction;
+				url = <string>button.getAttribute("formaction");
 			if (button.hasAttribute(NavUrlReplaceAttributeName))
 				replace = true;
 		}
@@ -180,47 +180,47 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		if (options.query)
 			urlHelper.extendQuery(navUrl, options.query);
 
-		const result = new Promise<ContextData>((resolve, reject) => {
-			if (method.toLowerCase() === "get") {
-				urlHelper.extendQuery(navUrl, new FormData(form));
+		let result: Promise<ContextData>;
 
-				return this.__nav(navUrl, "submit", context, replace);
-			}
-			else {
-				console.info(`submit ${method} begin ${navUrl.full}`);
+		if (method.toLowerCase() === "get") {
+			urlHelper.extendQuery(navUrl, new FormData(form));
 
-				let submitContext: SubmitContext = {
-					source: "submit",
-					data: context,
-					form,
-					button,
-					method,
-					enctype,
-					url: navUrl.full,
-					origin: navUrl.origin,
-					path: navUrl.path,
-					query: navUrl.query,
-					hash: navUrl.hash,
-					replace: replace,
-					external: navUrl.external
-				};
+			result = this.__nav(navUrl, "submit", context, replace);
+		}
+		else {
+			console.info(`submit ${method} begin ${navUrl.full}`);
 
-				const submitResult = this.__invoker.invoke("submit", submitContext);
+			let submitContext: SubmitContext = {
+				source: "submit",
+				data: context,
+				form,
+				button,
+				method,
+				enctype,
+				url: navUrl.full,
+				origin: navUrl.origin,
+				path: navUrl.path,
+				query: navUrl.query,
+				hash: navUrl.hash,
+				replace: replace,
+				external: navUrl.external
+			};
 
-				submitResult
-					.then(() => console.info(`submit ${method} success ${navUrl.full}`))
-					.catch(reason => console.error(`submit ${method} error ${navUrl.full} reason: ${reason}`));
-
-				return submitResult;
-			}
-		});
+			result = this.__invoker.invoke("submit", submitContext);
+		}
 
 		result
-			.then(() => {
+			.then((data) => {
+				console.info(`submit ${method} success ${navUrl.full}`)
+
 				if (callback)
 					callback({ status: "Success", context });
+
+				return data;
 			})
 			.catch(reason => {
+				console.error(`submit ${method} error ${navUrl.full} reason: ${reason}`)
+
 				if (callback)
 					callback({ status: "Error", context });
 			})
@@ -304,7 +304,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 				query.set(key, value);
 			}
 
-			if (query.size)
+			if (urlHelper.queryIsNotEmpty(query))
 				url += "?" + query.toString();
 		}
 
