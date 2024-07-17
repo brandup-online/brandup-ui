@@ -6,22 +6,21 @@ export class RealtimeMiddleware extends Middleware<ExampleApplication, ExampleAp
 
 	// Middleware members
 
-	start(context: StartContext, next: () => void, end: () => void, error: (reason: any) => void) {
+	start(context: StartContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
 		super.start(context, next, end, error);
 	}
 
-	navigate(context: NavigateContext, next: () => void, end: () => void, error: (reason: any) => void) {
+	async navigate(context: NavigateContext) {
 		if (context.data["error"]) {
 			alert("error no good");
-			console.error("realtime navigate: shouldn't have");
+
+			throw "realtime navigate: shouldn't have";
 		}
 
 		console.log("realtime navigate: ok");
-
-		super.navigate(context, next, end, error);
 	}
 
-	submit(context: SubmitContext, next: () => void, end: () => void, error: (reason: any) => void) {
+	submit(context: SubmitContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
 		console.log("realtime submit: ok");
 
 		super.submit(context, next, end, error);

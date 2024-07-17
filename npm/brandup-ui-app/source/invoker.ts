@@ -5,7 +5,6 @@ import { ApplicationModel, ContextData } from "./typings/app";
 export class MiddlewareInvoker {
 	readonly middleware: Middleware<Application, ApplicationModel>;
 	private __next: MiddlewareInvoker | null = null;
-	private static emptyFunc = () => { return; };
 
 	constructor(middleware: Middleware<Application, ApplicationModel>) {
 		this.middleware = middleware;
@@ -24,7 +23,7 @@ export class MiddlewareInvoker {
 		return new Promise<ContextData>((resolve, reject) => {
 			this.__invoke(method, context,
 				() => resolve(context.data),
-				(reason: any) => reject(reason || `Error middleware method ${method}.`));
+				(reason: any) => reject(reason || `Error middleware ${method} method execution.`));
 		});
 	}
 
@@ -33,11 +32,23 @@ export class MiddlewareInvoker {
 		const endFunc = () => { success(); };
 
 		if (typeof this.middleware[method] === "function") {
+			let methodResult: any;
+
 			try {
-				this.middleware[method](context, nextFunc, endFunc, reject);
+				methodResult = this.middleware[method](context, nextFunc, endFunc, reject);
 			}
 			catch (e) {
 				reject(e);
+				return;
+			}
+
+			if (methodResult && methodResult instanceof Promise) {
+				// Middleware method is async
+
+				const resultPromise = <Promise<boolean>>methodResult;
+				resultPromise
+					.then(isNext => (isNext === undefined || isNext) ? nextFunc() : endFunc())
+					.catch(reason => reject(reason));
 			}
 		}
 		else

@@ -89,14 +89,15 @@ Example SPA navigation middleware: [example/src/frontend/middlewares/pages.ts](/
 
 ```
 export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
-	navigate(context: NavigateContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
-        new Promise<void>((resolve, reject) => {
-				// async operation (AJAX, load module, ... )
-			})
-			.then(() => { 
-				next(); // or end()
-			})
-			.catch(reason => error(reason));
+	async navigate(context: NavigateContext) {
+        await ...
+
+		return true;
     }
 }
 ```
+
+Middleware method return variants:
+
+- `true`, any value or nothing - call next middleware
+- `false` - end call next middlewares.
