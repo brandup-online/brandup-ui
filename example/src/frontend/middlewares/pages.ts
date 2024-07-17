@@ -57,11 +57,11 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 
 		DOM.empty(this._appContentElem);
 
-		const page = this._page = new pageType.default(this.app);
+		const page: Page = new pageType.default(this.app);
 
 		this._nav(context, page);
 
-		page?.render(this._appContentElem);
+		page.render(this._appContentElem);
 		context.data["page"] = page;
 	}
 
@@ -91,7 +91,7 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 
 		const title = page.header;
 
-		if (context.replace || context.data["first"])
+		if (context.replace || context.source === "first")
 			window.history.replaceState(window.history.state, title, context.url);
 		else
 			window.history.pushState(window.history.state, title, context.url);

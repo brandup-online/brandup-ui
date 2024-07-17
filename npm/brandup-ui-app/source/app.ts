@@ -1,6 +1,6 @@
 import { UIElement } from "brandup-ui";
 import { EnvironmentModel, ApplicationModel, NavigationOptions, SubmitOptions, ContextData } from "./typings/app";
-import { LoadContext, Middleware, NavigateContext, StartContext, StopContext, SubmitContext } from "./middleware";
+import { LoadContext, Middleware, NavigateContext, StartContext, StopContext, SubmitContext, NavigateSource } from "./middleware";
 import { MiddlewareInvoker } from "./invoker";
 import urlHelper, { ParsedUrl } from "./helpers/url";
 
@@ -103,7 +103,10 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 
 		var result = this.__start(contextData)
 			.then(data => this.__load(data))
-			.then(data => this.nav({ url: null, context: data }));
+			.then(data => {
+				const navUrl = urlHelper.parseUrl(null);
+				return this.__nav(navUrl, "first", data, false);
+			});
 
 		result
 			.catch(reason => console.error(`Unable to run application with reason: ${reason}`))
@@ -165,9 +168,12 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 
 		if (button) {
 			// Get button patameters for request
-			method = button.formMethod || method;
-			enctype = button.formEnctype || enctype;
-			url = button.formAction || url;
+			if (button.hasAttribute("formmethod"))
+				method = button.formMethod;
+			if (button.hasAttribute("formenctype"))
+				enctype = button.formEnctype;
+			if (button.hasAttribute("formaction"))
+				url = button.formAction;
 
 			if (button.hasAttribute(NavUrlReplaceAttributeName))
 				replace = true;
@@ -359,7 +365,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		return loadResult;
 	}
 
-	private __nav(navUrl: ParsedUrl, source: "nav" | "submit", contextData: ContextData, replace: boolean): Promise<ContextData> {
+	private __nav(navUrl: ParsedUrl, source: NavigateSource, contextData: ContextData, replace: boolean): Promise<ContextData> {
 		console.info(`app nav begin ${navUrl.full}`);
 
 		const context: NavigateContext = {

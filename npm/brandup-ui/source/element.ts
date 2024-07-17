@@ -35,7 +35,7 @@ export abstract class UIElement {
 
 		this.__element = elem;
 
-		this.__element[ElemPropertyName] = this;
+		(<any>this.__element)[ElemPropertyName] = this;
 		this.__element.dataset[ElemAttributeName] = this.typeName;
 
 		this.defineEvent("command", { cancelable: false, bubbles: true });
@@ -210,7 +210,7 @@ export abstract class UIElement {
 		if (this.__element) {
 			//this.__element.removeAttribute(ElemAttributeName);
 			delete this.__element.dataset[ElemAttributeName];
-			delete this.__element[ElemPropertyName];
+			delete (<any>this.__element)[ElemPropertyName];
 
 			this.__element = null;
 		}
@@ -256,7 +256,7 @@ export enum CommandsExecStatus {
 const fundUiElementByCommand = (elem: HTMLElement, commandName: string): UIElement | null => {
 	while (elem) {
 		if (elem.dataset[ElemAttributeName]) {
-			const uiElem: UIElement = elem[ElemPropertyName];
+			const uiElem: UIElement = (<any>elem)[ElemPropertyName];
 			if (uiElem.hasCommand(commandName))
 				return uiElem;
 		}

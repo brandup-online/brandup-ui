@@ -27,15 +27,17 @@ export class MiddlewareInvoker {
 		});
 	}
 
-	private __invoke<TContext extends InvokeContext>(method: string, context: TContext, success: () => void, reject: (reason: any) => void) {
+	private __invoke<TContext extends InvokeContext>(method: string, context: TContext, success: VoidFunction, reject: (reason: any) => void) {
 		const nextFunc = this.__next ? () => { this.__next?.__invoke(method, context, success, reject); } : success;
 		const endFunc = () => { success(); };
 
-		if (typeof this.middleware[method] === "function") {
-			let methodResult: any;
+		const methodFunc: (context: TContext, next?: VoidFunction, end?: VoidFunction, error?: (reason: any) => void) => void | Promise<boolean | any | void> = (<any>this.middleware)[method];
+
+		if (typeof methodFunc === "function") {
+			let methodResult: boolean | void | Promise<boolean | any | void>;
 
 			try {
-				methodResult = this.middleware[method](context, nextFunc, endFunc, reject);
+				methodResult = methodFunc.call(this.middleware, context, nextFunc, endFunc, reject);
 			}
 			catch (e) {
 				reject(e);

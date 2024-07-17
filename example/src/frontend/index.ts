@@ -16,4 +16,4 @@ builder
 
 const app = builder.build({ basePath: "/" }, {});
 
-app.run({ first: true });
+app.run();

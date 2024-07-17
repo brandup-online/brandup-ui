@@ -42,7 +42,7 @@ app.run({ ...context params })
 
 ## Middlewares
 
-Inject to application lifecycle events.
+Inject to application lifecycle event methods. Middleware methods are called one after another in the order in which they were registered in the `ApplicationBuilder`.
 
 ```
 export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
@@ -54,10 +54,8 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 		// error(); // error signal for call hierarhy
     }
 
-    loaded(context: LoadContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
+    async loaded(context: LoadContext) {
         console.log("loaded");
-
-        next();
     }
 
     navigate(context: NavigateContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {

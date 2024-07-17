@@ -12,7 +12,7 @@
 		"baseUrl": "./src",
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
-		"noImplicitAny": false,
+		"noImplicitAny": true,
 		"noEmitOnError": true,
 		"declarationMap": false,
 		"resolveJsonModule": true,
