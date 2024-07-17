@@ -164,13 +164,11 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		let replace = form.hasAttribute(NavUrlReplaceAttributeName);
 
 		if (button) {
-			// Если отправка с кнопки, то берём её параметры
-			if (button.hasAttribute("formmethod"))
-				method = <string>button.getAttribute("formmethod");
-			if (button.hasAttribute("formenctype"))
-				enctype = <string>button.getAttribute("formenctype");
-			if (button.hasAttribute("formaction"))
-				url = <string>button.getAttribute("formaction");
+			// Get button patameters for request
+			method = button.formMethod || method;
+			enctype = button.formEnctype || enctype;
+			url = button.formAction || url;
+
 			if (button.hasAttribute(NavUrlReplaceAttributeName))
 				replace = true;
 		}
@@ -319,6 +317,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		return url;
 	}
 
+	/** Start middlewares. */
 	private __start(contextData: ContextData): Promise<ContextData> {
 		if (this.__isStarted)
 			throw 'Application already started.';
@@ -341,6 +340,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		return startResult;
 	}
 
+	/** Loaded middlewares. */
 	private __load(contextData: ContextData): Promise<ContextData> {
 		if (!this.__isStarted)
 			throw "Before executing the load method, you need to execute the init method.";
