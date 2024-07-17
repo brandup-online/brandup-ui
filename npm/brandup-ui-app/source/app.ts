@@ -1,6 +1,6 @@
 import { UIElement } from "brandup-ui";
 import { EnvironmentModel, ApplicationModel, NavigationOptions, SubmitOptions, ContextData } from "./typings/app";
-import { LoadContext, Middleware, NavigateContext, StartContext, StopContext, SubmitContext, NavigateSource } from "./middleware";
+import { LoadContext, Middleware, NavigateContext, StartContext, StopContext, SubmitContext, NavigateSource, SubmitMethod } from "./middleware";
 import { MiddlewareInvoker } from "./invoker";
 import urlHelper, { ParsedUrl } from "./helpers/url";
 
@@ -180,6 +180,8 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 				replace = true;
 		}
 
+		method = method.toUpperCase();
+
 		const navUrl = urlHelper.parseUrl(url);
 
 		if (options.query)
@@ -187,7 +189,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 
 		let result: Promise<ContextData>;
 
-		if (method.toLowerCase() === "get") {
+		if (method === "GET") {
 			urlHelper.extendQuery(navUrl, new FormData(form));
 
 			result = this.__nav(navUrl, "submit", context, replace);
@@ -200,7 +202,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 				data: context,
 				form,
 				button,
-				method,
+				method: <SubmitMethod>method,
 				enctype,
 				url: navUrl.full,
 				origin: navUrl.origin,

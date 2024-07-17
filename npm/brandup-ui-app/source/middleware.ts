@@ -67,9 +67,11 @@ export type NavigateSource = "first" | "nav" | "submit";
 export interface SubmitContext extends NavigateContext {
 	readonly form: HTMLFormElement;
 	readonly button: HTMLButtonElement | null;
-	readonly method: string;
+	readonly method: SubmitMethod;
 	readonly enctype: string;
 }
+
+export type SubmitMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 export interface StopContext extends InvokeContext {
 }
