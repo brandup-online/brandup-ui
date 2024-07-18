@@ -188,10 +188,9 @@ export const request = async (options: AjaxRequest, abortSignal?: AbortSignal): 
 	try {
 		const response = await fetch(url, {
 			method,
-			headers: prepared.headers,
+			headers: new Headers(prepared.headers),
 			cache: options.disableCache ? "no-cache" : "default",
 			redirect: "follow",
-			mode: "no-cors",
 			signal: AbortSignal.any(abortSignals),
 			body: prepared.body
 		});

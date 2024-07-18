@@ -140,6 +140,19 @@ export default class AjaxPage extends Page {
 			});
 		});
 
+		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "send-headers" }, "send headers")));
+		this.registerCommand("send-headers", () => {
+			this.queue.push({
+				method: "POST",
+				url: "/_ajax/send-json",
+				headers: { aaa: "aaa" },
+				data: { test: "test" },
+				disableCache: true,
+				success: (response) => console.log("success send-headers"),
+				error: (request, reason) => alert(reason)
+			});
+		});
+
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "response-headers" }, "get response headers")));
 		this.registerCommand("response-headers", () => {
 			this.queue.push({
