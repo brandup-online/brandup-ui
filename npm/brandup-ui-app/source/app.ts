@@ -202,7 +202,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 				data: context,
 				form,
 				button,
-				method: <SubmitMethod>method,
+				method: method,
 				enctype,
 				url: navUrl.full,
 				origin: navUrl.origin,

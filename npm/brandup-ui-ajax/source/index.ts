@@ -1,2 +1,2 @@
-export * from "./ajax"
+export * from "./request"
 export * from "./ajax-queue"

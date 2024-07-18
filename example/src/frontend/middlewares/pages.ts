@@ -1,7 +1,7 @@
 ﻿import { Middleware, NavigateContext, StartContext, StopContext, SubmitContext } from "brandup-ui-app";
 import { Page } from "../pages/base";
 import { DOM } from "brandup-ui-dom";
-import { AJAXMethod, AjaxResponse, ajaxRequest } from "brandup-ui-ajax";
+import { AjaxQueue, AjaxResponse } from "brandup-ui-ajax";
 import { ExampleApplication } from "../app";
 import { ExampleApplicationModel } from "../typings/app";
 
@@ -16,6 +16,7 @@ const ROUTE_NOTFOUND: PageDefinition = { type: () => import("../pages/notfound")
 
 export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
 	private _appContentElem: HTMLElement;
+	private readonly _ajax: AjaxQueue;
 	private _page: Page | null = null;
 	private _loaderElem?: HTMLElement;
 
@@ -26,9 +27,11 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 		if (!appContentElem)
 			throw new Error("Not found page content container.");
 		this._appContentElem = appContentElem;
+
+		this._ajax = new AjaxQueue();
 	}
 
-	async start(context: StartContext) {
+	async start(_context: StartContext) {
 		window.addEventListener("popstate", (e: PopStateEvent) => {
 			e.preventDefault();
 
@@ -58,8 +61,6 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 
 		const pageType = await pageDef.type();
 
-		DOM.empty(this._appContentElem);
-
 		const page: Page = new pageType.default(this.app);
 
 		this._nav(context, page);
@@ -71,22 +72,35 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 	submit(context: SubmitContext, next: () => void, end: () => void, error: (reason: any) => void) {
 		const data = new FormData(context.form);
 
-		ajaxRequest({
+		this._ajax.push({
 			url: context.url,
-			method: <AJAXMethod>context.method.toUpperCase(),
+			method: context.method,
 			data: data,
 			success: (response: AjaxResponse) => {
-				if (response.status === 200) {
+				if (response.redirected) {
+					next();
+
+					this.app.nav({ url: response.url });
+				}
+				else if (response.status === 200) {
 					alert(response.data);
 					next();
 				}
-				else
+				else {
+					alert(`error submit ${response.status}`);
 					error(`Submit response status: ${response.status}`);
+				}
 			},
-			abort: () => {
+			error: () => {
 				error("Submit request aborted.");
 			}
 		});
+	}
+
+	stop(_context: StopContext, next: VoidFunction) {
+		next();
+
+		this._ajax.destroy();
 	}
 
 	private _nav(context: NavigateContext, page: Page) {

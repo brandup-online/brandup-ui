@@ -71,7 +71,7 @@ export interface SubmitContext extends NavigateContext {
 	readonly enctype: string;
 }
 
-export type SubmitMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+export type SubmitMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | string;
 
 export interface StopContext extends InvokeContext {
 }
