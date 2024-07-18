@@ -37,10 +37,10 @@
 		"webpack-manifest-plugin": "^5.0.0"
 	},
 	"scripts": {
-		"build": "cross-env NODE_ENV=production webpack --config webpack.config.js",
-		"build:fallback": "cross-env BROWSERS_ENV=fallback npm run build",
-		"build:modern": "cross-env BROWSERS_ENV=modern npm run build",
-		"build:full": "npm run build:fallback && npm run build:modern",
+		"build": "npm run build:fallback && npm run build:modern",
+		"build:webpack": "cross-env NODE_ENV=production webpack --config webpack.config.js",
+		"build:fallback": "cross-env BROWSERS_ENV=fallback npm run build:webpack",
+		"build:modern": "cross-env BROWSERS_ENV=modern npm run build:webpack",
 		"dev-build": "cross-env NODE_ENV=development webpack --config webpack.config.js",
 		"watch": "cross-env NODE_ENV=development webpack --config webpack.config.js --watch",
 		"start": "npm run build && tsc ./src/backend/server.ts && node ./src/backend/server.js --port=8316",

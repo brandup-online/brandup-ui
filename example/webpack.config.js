@@ -5,7 +5,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CleanCSSPlugin = require("less-plugin-clean-css");
 const TerserPlugin = require("terser-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-// const ModernBuildPlugin = require('./utils/ModernBuildPlugin');
+const ModernBuildPlugin = require('./utils/ModernBuildPlugin');
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 
 let bundleOutputDir = './wwwroot/dist';
@@ -34,8 +34,8 @@ var splitChunks = {
 
 module.exports = (env) => {
     const isDevBuild = process.env.NODE_ENV !== "production";
-    const isModern = process.env.BROWSERS_ENV === "fallback";
-    const prefix = isModern ? "fallback" : "modern";
+    const isModern = process.env.BROWSERS_ENV === "modern";
+    const prefix = isModern ? "modern" : "fallback";
 
     console.log(`NODE_ENV: "${process.env.NODE_ENV}"`);
     console.log(`isDevBuild: ${isDevBuild}`);
@@ -128,7 +128,7 @@ module.exports = (env) => {
                     template: path.join(frontDir, "template.html"),
                     publicPath:"./"
                 }),
-                // new ModernBuildPlugin(),
+                new ModernBuildPlugin(path.join(__dirname, bundleOutputDir, "fallback")),
             ] : []),
         ]
     }];
