@@ -61,7 +61,7 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 		// error(); // error signal for call hierarhy
     }
 
-    async loaded(context: LoadContext) {
+    async loaded(context: StartContext) {
         console.log("loaded");
     }
 
@@ -97,7 +97,8 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 	async navigate(context: NavigateContext) {
         await ...
 
-		return true;
+		// return false; // end call next middlewares.
+		return true; // or nothing
     }
 }
 ```
