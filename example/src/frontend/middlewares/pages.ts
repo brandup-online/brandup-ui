@@ -17,6 +17,7 @@ const ROUTE_NOTFOUND: PageDefinition = { type: () => import("../pages/notfound")
 export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
 	private _appContentElem: HTMLElement;
 	private _page: Page | null = null;
+	private _loaderElem?: HTMLElement;
 
 	constructor() {
 		super();
@@ -35,6 +36,8 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 
 			this.app.nav({ url: null, replace: true });
 		});
+
+		this.app.element?.insertAdjacentElement("beforeend", this._loaderElem = DOM.tag("div", "app-loader"));
 	}
 
 	async navigate(context: NavigateContext) {
