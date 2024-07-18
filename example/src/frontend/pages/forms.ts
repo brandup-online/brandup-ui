@@ -49,6 +49,14 @@ export default class FormsPage extends Page {
 		]));
 
 		container.appendChild(DOM.tag("div", null, [
+			DOM.tag("p", null, "Submit form and external redirect"),
+			DOM.tag("form", { class: "appform", method: "post", action: this.app.uri("/_form/redirect-external") }, [
+				DOM.tag("input", { type: "text", name: "value" }),
+				DOM.tag("button", { type: "submit" }, "Send")
+			])
+		]));
+
+		container.appendChild(DOM.tag("div", null, [
 			DOM.tag("p", null, "Submit form with get method"),
 			DOM.tag("form", { class: "appform", method: "get" }, [
 				DOM.tag("input", { type: "text", name: "value" }),

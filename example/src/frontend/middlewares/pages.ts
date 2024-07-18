@@ -69,7 +69,7 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 		context.data["page"] = page;
 	}
 
-	submit(context: SubmitContext, next: () => void, end: () => void, error: (reason: any) => void) {
+	submit(context: SubmitContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
 		const data = new FormData(context.form);
 
 		this._ajax.push({
@@ -78,9 +78,9 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 			data: data,
 			success: (response: AjaxResponse) => {
 				if (response.redirected) {
-					next();
-
-					this.app.nav({ url: response.url });
+					this.app.nav({
+						url: response.url, callback: () => end()
+					});
 				}
 				else if (response.status === 200) {
 					alert(response.data);

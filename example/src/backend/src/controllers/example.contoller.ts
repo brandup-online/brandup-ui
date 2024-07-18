@@ -15,6 +15,10 @@ export default class ExampleContoller {
 		res.redirect("/");
 	}
 
+	formRedirectExternal(_req: Request, res: Response): void {
+		res.redirect("https://ya.ru");
+	}
+
 	sendJson(_req: Request, res: Response): void {
 		res.json({ name: "test" });
 	}

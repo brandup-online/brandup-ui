@@ -158,6 +158,7 @@ export const request = async (options: AjaxRequest, abortSignal?: AbortSignal): 
 			headers: prepared.headers,
 			cache: options.disableCache ? "no-cache" : "default",
 			redirect: "follow",
+			mode: "no-cors",
 			signal: AbortSignal.any(abortSignals),
 			body: prepared.body
 		});
