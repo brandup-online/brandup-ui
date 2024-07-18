@@ -1,4 +1,4 @@
-﻿import { LoadContext, Middleware, NavigateContext, StartContext, StopContext, SubmitContext } from "brandup-ui-app";
+﻿import { Middleware, NavigateContext, StartContext, StopContext, SubmitContext } from "brandup-ui-app";
 import { Page } from "../pages/base";
 import { DOM } from "brandup-ui-dom";
 import { AJAXMethod, AjaxResponse, ajaxRequest } from "brandup-ui-ajax";
@@ -27,7 +27,7 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 		this._appContentElem = appContentElem;
 	}
 
-	start(context: StartContext, next: () => void, end: () => void, error: (reason: any) => void) {
+	async start(context: StartContext) {
 		window.addEventListener("popstate", (e: PopStateEvent) => {
 			e.preventDefault();
 
@@ -35,18 +35,15 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 
 			this.app.nav({ url: null, replace: true });
 		});
-
-		super.start(context, next, end, error);
 	}
 
-	navigate(context: NavigateContext, next: () => void, end: () => void, error: (reason: any) => void) {
+	async navigate(context: NavigateContext) {
 		if (context.external) {
 			const linkElem = <HTMLLinkElement>DOM.tag("a", { href: context.url, target: "_blank" });
 			linkElem.click();
 			linkElem.remove();
 
-			end();
-			return;
+			return false;
 		}
 
 		if (this._page) {
@@ -56,21 +53,16 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 
 		let pageDef = ROUTES[context.path.toLowerCase()] || ROUTE_NOTFOUND;
 
-		pageDef.type()
-			.then((t) => {
-				DOM.empty(this._appContentElem);
+		const pageType = await pageDef.type();
 
-				const page = new t.default(this.app);
-				this._nav(context, page);
+		DOM.empty(this._appContentElem);
 
-				return page?.render(this._appContentElem);
-			})
-			.then(() => {
-				context["page"] = this._page;
+		const page: Page = new pageType.default(this.app);
 
-				next();
-			})
-			.catch(error);
+		this._nav(context, page);
+
+		page.render(this._appContentElem);
+		context.data["page"] = page;
 	}
 
 	submit(context: SubmitContext, next: () => void, end: () => void, error: (reason: any) => void) {
@@ -99,7 +91,7 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 
 		const title = page.header;
 
-		if (context.replace || context.data["first"])
+		if (context.replace || context.source === "first")
 			window.history.replaceState(window.history.state, title, context.url);
 		else
 			window.history.pushState(window.history.state, title, context.url);

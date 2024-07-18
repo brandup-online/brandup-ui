@@ -1,4 +1,13 @@
-const plugins = [];
+const plugins = [
+	[
+		'@babel/plugin-transform-runtime', {
+			absoluteRuntime: false,
+			corejs: false,
+			helpers: true,
+			useESModules: true
+		}
+	]
+]; // '@babel/plugin-transform-runtime'
 
 const isModern = process.env.BROWSERS_ENV === 'modern';
 
@@ -8,9 +17,9 @@ module.exports = {
         "useBuiltIns": "usage",
         "corejs": "3.37.1",
         "targets": isModern ? { esmodules: true } : undefined,
-        // "debug": true
+        "debug": false
     }],
     "@babel/preset-typescript",
   ],
-  plugins,
+  plugins: plugins
 };

@@ -35,14 +35,21 @@ builder
 const appModel: ExampleApplicationModel = {};
 const app = builder.build<ExampleApplicationModel>({ basePath: "/" }, appModel);
 
-app.run({ ...context params })
+app.run({ ...optional context params })
 	.then(context => { })
 	.catch(reason => { });
 ```
 
+Default HTMLElement of application is `document.body`. Set custom element:
+
+```
+const appElement = document.getElementById("app")
+app.run({ ...optional context params }, appElement);
+```
+
 ## Middlewares
 
-Inject to application lifecycle events.
+Inject to application lifecycle event methods. Middleware methods are called one after another in the order in which they were registered in the `ApplicationBuilder`.
 
 ```
 export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
@@ -54,10 +61,8 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 		// error(); // error signal for call hierarhy
     }
 
-    loaded(context: LoadContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
+    async loaded(context: LoadContext) {
         console.log("loaded");
-
-        next();
     }
 
     navigate(context: NavigateContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
@@ -89,14 +94,15 @@ Example SPA navigation middleware: [example/src/frontend/middlewares/pages.ts](/
 
 ```
 export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
-	navigate(context: NavigateContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
-        new Promise<void>((resolve, reject) => {
-				// async operation (AJAX, load module, ... )
-			})
-			.then(() => { 
-				next(); // or end()
-			})
-			.catch(reason => error(reason));
+	async navigate(context: NavigateContext) {
+        await ...
+
+		return true;
     }
 }
 ```
+
+Middleware method return variants:
+
+- `true`, any value or nothing - call next middleware
+- `false` - end call next middlewares.

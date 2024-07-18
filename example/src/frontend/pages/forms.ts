@@ -39,5 +39,13 @@ export default class FormsPage extends Page {
 				DOM.tag("button", { type: "submit" }, "Send")
 			])
 		]));
+
+		container.appendChild(DOM.tag("div", null, [
+			DOM.tag("p", null, "Submit form with get to other page"),
+			DOM.tag("form", { class: "appform", method: "get", action: "/" }, [
+				DOM.tag("input", { type: "text", name: "value" }),
+				DOM.tag("button", { type: "submit" }, "Send")
+			])
+		]));
 	}
 }

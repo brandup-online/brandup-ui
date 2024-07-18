@@ -40,7 +40,7 @@ module.exports = (env) => {
     console.log(`NODE_ENV: "${process.env.NODE_ENV}"`);
     console.log(`isDevBuild: ${isDevBuild}`);
 
-    const getFilePath = (relativePath) => path.join(prefix, relativePath);
+    const getFilePath = (relativePath) => relativePath; //path.join(prefix, relativePath);
 
     return [{
         mode: isDevBuild ? "development" : "production",
@@ -53,7 +53,7 @@ module.exports = (env) => {
             filename: getFilePath('[name].js'),
             chunkFilename: isDevBuild ? getFilePath('[name].js') : getFilePath('[name].[contenthash].js'),
             iife: true,
-            // clean: true,
+            clean: true,
             publicPath: './'
         },
         module: {
@@ -62,7 +62,7 @@ module.exports = (env) => {
                     test: /\.(?:ts|js|mjs|cjs)$/,
                     exclude: /node_modules/,
                     use: {
-                        loader: 'babel-loader',
+                        loader: 'babel-loader'
                     }
                 },
                 {

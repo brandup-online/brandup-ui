@@ -138,12 +138,6 @@ const buildUrl = (url: ParsedUrl) => {
 	url.relative = relativeUrl;
 };
 
-const queryIsNotEmpty = (query: URLSearchParams) => {
-	let result = false;
-	query.forEach(() => { result = true });
-	return result;
-}
-
 export interface ParsedUrl {
 	full: string;
 	relative: string;
@@ -156,6 +150,5 @@ export interface ParsedUrl {
 
 export default {
 	parseUrl,
-	extendQuery,
-	queryIsNotEmpty
+	extendQuery
 };

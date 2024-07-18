@@ -38,7 +38,8 @@ export interface LoadContext extends InvokeContext {
 }
 
 export interface NavigateContext extends InvokeContext {
-	readonly source: "nav" | "submit";
+	/** Source navigation event. */
+	readonly source: NavigateSource;
 	/** Full url for navigation. */
 	readonly url: string;
 	/** Scheme, host and port. */
@@ -55,12 +56,22 @@ export interface NavigateContext extends InvokeContext {
 	readonly external: boolean;
 }
 
+/**
+ * Navigation event source.
+ * first - first navigation from run.
+ * nav - from nav app method.
+ * submit - from submit app method. For only get submit.
+ */
+export type NavigateSource = "first" | "nav" | "submit";
+
 export interface SubmitContext extends NavigateContext {
 	readonly form: HTMLFormElement;
 	readonly button: HTMLButtonElement | null;
-	readonly method: string;
+	readonly method: SubmitMethod;
 	readonly enctype: string;
 }
+
+export type SubmitMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 export interface StopContext extends InvokeContext {
 }

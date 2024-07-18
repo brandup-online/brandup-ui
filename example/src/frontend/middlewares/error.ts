@@ -6,10 +6,8 @@ export class ErrorMiddleware extends Middleware<ExampleApplication, ExampleAppli
 
 	// Middleware members
 
-	navigate(context: NavigateContext, next: () => void, end: () => void, error: (reason: any) => void) {
+	async navigate(context: NavigateContext) {
 		if (context.data["error"])
 			throw "Custom error";
-
-		super.navigate(context, next, end, error);
 	}
 }

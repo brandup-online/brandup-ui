@@ -1,6 +1,6 @@
 import { UIElement } from "brandup-ui";
 import { EnvironmentModel, ApplicationModel, NavigationOptions, SubmitOptions, ContextData } from "./typings/app";
-import { LoadContext, Middleware, NavigateContext, StartContext, StopContext, SubmitContext } from "./middleware";
+import { LoadContext, Middleware, NavigateContext, StartContext, StopContext, SubmitContext, NavigateSource, SubmitMethod } from "./middleware";
 import { MiddlewareInvoker } from "./invoker";
 import urlHelper, { ParsedUrl } from "./helpers/url";
 
@@ -92,18 +92,22 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	/**
 	 * Run application.
 	 * @param contextData Run context data.
+	 * @param element HTMLElement of application. Default is document.body.
 	 * @returns Promise of runned result.
 	 */
-	run(contextData?: ContextData | null): Promise<ContextData> {
+	run(contextData?: ContextData | null, element?: HTMLElement): Promise<ContextData> {
 		if (!contextData)
 			contextData = {};
 
-		this.setElement(document.body);
+		this.setElement(element || document.body);
 		this.beginLoadingIndicator();
 
 		var result = this.__start(contextData)
 			.then(data => this.__load(data))
-			.then(data => this.nav({ url: null, context: data }));
+			.then(data => {
+				const navUrl = urlHelper.parseUrl(null);
+				return this.__nav(navUrl, "first", data, false);
+			});
 
 		result
 			.catch(reason => console.error(`Unable to run application with reason: ${reason}`))
@@ -164,16 +168,19 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		let replace = form.hasAttribute(NavUrlReplaceAttributeName);
 
 		if (button) {
-			// Если отправка с кнопки, то берём её параметры
+			// Get button patameters for request
 			if (button.hasAttribute("formmethod"))
-				method = <string>button.getAttribute("formmethod");
+				method = button.formMethod;
 			if (button.hasAttribute("formenctype"))
-				enctype = <string>button.getAttribute("formenctype");
+				enctype = button.formEnctype;
 			if (button.hasAttribute("formaction"))
-				url = <string>button.getAttribute("formaction");
+				url = button.formAction;
+
 			if (button.hasAttribute(NavUrlReplaceAttributeName))
 				replace = true;
 		}
+
+		method = method.toUpperCase();
 
 		const navUrl = urlHelper.parseUrl(url);
 
@@ -182,7 +189,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 
 		let result: Promise<ContextData>;
 
-		if (method.toLowerCase() === "get") {
+		if (method === "GET") {
 			urlHelper.extendQuery(navUrl, new FormData(form));
 
 			result = this.__nav(navUrl, "submit", context, replace);
@@ -195,7 +202,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 				data: context,
 				form,
 				button,
-				method,
+				method: <SubmitMethod>method,
 				enctype,
 				url: navUrl.full,
 				origin: navUrl.origin,
@@ -304,7 +311,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 				query.set(key, value);
 			}
 
-			if (urlHelper.queryIsNotEmpty(query))
+			if (query.size)
 				url += "?" + query.toString();
 		}
 
@@ -319,6 +326,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		return url;
 	}
 
+	/** Start middlewares. */
 	private __start(contextData: ContextData): Promise<ContextData> {
 		if (this.__isStarted)
 			throw 'Application already started.';
@@ -341,6 +349,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		return startResult;
 	}
 
+	/** Loaded middlewares. */
 	private __load(contextData: ContextData): Promise<ContextData> {
 		if (!this.__isStarted)
 			throw "Before executing the load method, you need to execute the init method.";
@@ -359,7 +368,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		return loadResult;
 	}
 
-	private __nav(navUrl: ParsedUrl, source: "nav" | "submit", contextData: ContextData, replace: boolean): Promise<ContextData> {
+	private __nav(navUrl: ParsedUrl, source: NavigateSource, contextData: ContextData, replace: boolean): Promise<ContextData> {
 		console.info(`app nav begin ${navUrl.full}`);
 
 		const context: NavigateContext = {

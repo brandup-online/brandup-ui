@@ -97,7 +97,7 @@ export class DOM {
 						case "styles": {
 							if (value) {
 								for (const sKey in value as object)
-									elem.style[sKey] = value[sKey];
+									(<any>elem.style)[sKey] = (<any>value)[sKey];
 							}
 							break;
 						}
@@ -120,14 +120,14 @@ export class DOM {
 						case "dataset": {
 							if (value) {
 								for (const dataName in value as object)
-									elem.dataset[dataName] = value[dataName];
+									elem.dataset[dataName] = (<any>value)[dataName];
 							}
 							break;
 						}
 						case "events": {
 							if (value) {
 								for (const eventName in value as object)
-									elem.addEventListener(eventName, value[eventName]);
+									elem.addEventListener(eventName, (<any>value)[eventName]);
 							}
 							break;
 						}

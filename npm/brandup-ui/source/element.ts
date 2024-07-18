@@ -7,25 +7,17 @@ export type CommandDelegate = (elem: HTMLElement, context: CommandContext) => vo
 export type CommandCanExecuteDelegate = (elem: HTMLElement, context: CommandContext) => boolean;
 export type CommandAsyncDelegate = (context: CommandAsyncContext) => void;
 
-interface CommandHandler {
-	name: string;
-	execute?: CommandDelegate;
-	canExecute?: CommandCanExecuteDelegate | null;
-	delegate?: CommandAsyncDelegate | null;
-	isExecuting: boolean;
-}
-
 export abstract class UIElement {
 	private __element: HTMLElement | null = null;
 	private __events: { [key: string]: EventOptions | null } = {};
 	private __commandHandlers: { [key: string]: CommandHandler } = {};
 
-	static hasElement(elem: HTMLElement) {
-		return !!elem.dataset[ElemAttributeName];
-	}
-
 	abstract typeName: string;
+
+	// Element members
+
 	get element(): HTMLElement | null { return this.__element; }
+
 	protected setElement(elem: HTMLElement) {
 		if (!elem)
 			throw "Not set value elem.";
@@ -35,7 +27,7 @@ export abstract class UIElement {
 
 		this.__element = elem;
 
-		this.__element[ElemPropertyName] = this;
+		(<any>this.__element)[ElemPropertyName] = this;
 		this.__element.dataset[ElemAttributeName] = this.typeName;
 
 		this.defineEvent("command", { cancelable: false, bubbles: true });
@@ -43,10 +35,18 @@ export abstract class UIElement {
 		this._onRenderElement(elem);
 	}
 
-	// HTMLElement Events
+	// static members
+
+	static hasElement(elem: HTMLElement) {
+		return !!elem.dataset[ElemAttributeName];
+	}
+
+	// HTMLElement event members
+
 	protected defineEvent(eventName: string, eventOptions?: EventOptions) {
 		this.__events[eventName] = eventOptions ? eventOptions : null;
 	}
+
 	protected raiseEvent<T = {}>(eventName: string, eventArgs?: T): boolean {
 		if (!(eventName in this.__events))
 			throw `Not found event "${eventName}".`;
@@ -68,12 +68,15 @@ export abstract class UIElement {
 
 		return this.dispatchEvent(event);
 	}
+
 	addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) {
 		this.__element?.addEventListener(type, listener, options);
 	}
+
 	removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions) {
 		this.__element?.removeEventListener(type, listener, options);
 	}
+
 	dispatchEvent(event: Event): boolean {
 		if (!this.__element)
 			throw "HTMLElement is not defined.";
@@ -81,8 +84,9 @@ export abstract class UIElement {
 		return this.__element.dispatchEvent(event);
 	}
 
-	// Commands
-	registerCommand(name: string, execute: CommandDelegate, canExecute: CommandCanExecuteDelegate | null = null) {
+	// Command members
+
+	registerCommand(name: string, execute: CommandDelegate, canExecute?: CommandCanExecuteDelegate) {
 		name = this.verifyCommandName(name);
 
 		this.__commandHandlers[name] = {
@@ -92,7 +96,8 @@ export abstract class UIElement {
 			isExecuting: false
 		};
 	}
-	registerAsyncCommand(name: string, delegate: CommandAsyncDelegate, canExecute: CommandCanExecuteDelegate | null = null) {
+
+	registerAsyncCommand(name: string, delegate: CommandAsyncDelegate, canExecute?: CommandCanExecuteDelegate) {
 		name = this.verifyCommandName(name);
 
 		this.__commandHandlers[name] = {
@@ -102,15 +107,11 @@ export abstract class UIElement {
 			isExecuting: false
 		};
 	}
-	private verifyCommandName(name: string) {
-		const key = name.toLowerCase();
-		if (key in this.__commandHandlers)
-			throw `Command "${name}" already registered.`;
-		return key;
-	}
+
 	hasCommand(name: string) {
 		return name.toLowerCase() in this.__commandHandlers;
 	}
+
 	execCommand(name: string, elem: HTMLElement): CommandExecutionResult {
 		if (!this.__element)
 			throw "UIElement is not set HTMLElement.";
@@ -199,22 +200,37 @@ export abstract class UIElement {
 		return { result: CommandsExecStatus.Success, context: context };
 	}
 
+	private verifyCommandName(name: string) {
+		const key = name.toLowerCase();
+		if (key in this.__commandHandlers)
+			throw `Command "${name}" already registered.`;
+		return key;
+	}
+
 	protected _onRenderElement(_elem: HTMLElement) {
 		return;
 	}
+
 	protected _onCanExecCommand(_name: string, _elem: HTMLElement): boolean {
 		return true;
 	}
 
 	destroy() {
 		if (this.__element) {
-			//this.__element.removeAttribute(ElemAttributeName);
 			delete this.__element.dataset[ElemAttributeName];
-			delete this.__element[ElemPropertyName];
+			delete (<any>this.__element)[ElemPropertyName];
 
 			this.__element = null;
 		}
 	}
+}
+
+interface CommandHandler {
+	name: string;
+	isExecuting: boolean;
+	execute?: CommandDelegate;
+	canExecute?: CommandCanExecuteDelegate;
+	delegate?: CommandAsyncDelegate;
 }
 
 export interface EventOptions {
@@ -233,7 +249,7 @@ export interface CommandContext {
 	/** Елемент, который принял команду. */
 	target: HTMLElement;
 	uiElem: UIElement;
-	transparent?: boolean;
+	transparent: boolean;
 }
 
 export interface CommandExecutionResult {
@@ -242,9 +258,9 @@ export interface CommandExecutionResult {
 }
 
 export interface CommandAsyncContext extends CommandContext {
-	complate: () => void;
 	timeout: number;
-	timeoutCallback: () => void;
+	complate: VoidFunction;
+	timeoutCallback: VoidFunction;
 }
 
 export enum CommandsExecStatus {
@@ -256,7 +272,7 @@ export enum CommandsExecStatus {
 const fundUiElementByCommand = (elem: HTMLElement, commandName: string): UIElement | null => {
 	while (elem) {
 		if (elem.dataset[ElemAttributeName]) {
-			const uiElem: UIElement = elem[ElemPropertyName];
+			const uiElem: UIElement = (<any>elem)[ElemPropertyName];
 			if (uiElem.hasCommand(commandName))
 				return uiElem;
 		}
