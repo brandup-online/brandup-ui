@@ -140,6 +140,22 @@ export default class AjaxPage extends Page {
 			});
 		});
 
+		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "response-headers" }, "get response headers")));
+		this.registerCommand("response-headers", () => {
+			this.queue.push({
+				url: "/_ajax/image",
+				disableCache: true,
+				success: (response) => {
+					let headers = "";
+					response.headers.forEach((v, k) => {
+						headers += `${k}: ${v}\n`
+					});
+					alert(headers);
+				},
+				error: (request, reason) => alert(reason)
+			});
+		});
+
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "reset-current" }, "reset queue with current")));
 		this.registerCommand("reset-current", () => this.queue.reset(true));
 

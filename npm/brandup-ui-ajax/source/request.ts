@@ -31,8 +31,15 @@ export interface AjaxResponse<TData = any, TState = any> {
 	url: string | null;
 	type: ResponseTye;
 	contentType: string | null;
+	headers: ResponseHeaders;
 	data: TData | null;
 	state?: TState | null;
+}
+
+export interface ResponseHeaders {
+	get(name: string): string | null;
+	has(name: string): boolean;
+	forEach(callbackfn: (value: string, key: string, parent: ResponseHeaders) => void, thisArg?: any): void;
 }
 
 export const urlEncode = (data: string, rfc3986 = true) => {
@@ -97,12 +104,38 @@ export const ajaxRequest = (options: AjaxRequest) => {
 						}
 					}
 
+					const headers: ResponseHeaders = {
+						get(name: string): string | null {
+							return xhr.getResponseHeader(name);
+						},
+						has(name: string): boolean {
+							return !!xhr.getResponseHeader(name);
+						},
+						forEach(callbackfn: (value: string, key: string, parent: ResponseHeaders) => void, thisArg?: any): void {
+							const headers = xhr.getAllResponseHeaders();
+
+							// Convert the header string into an array
+							// of individual headers
+							const arr = headers.trim().split(/[\r\n]+/);
+
+							// Create a map of header names to values
+							arr.forEach((line) => {
+								const parts = line.split(": ");
+								const header = parts.shift() || "";
+								const value = parts.join(": ");
+
+								callbackfn.call(thisArg, value, header.toLowerCase(), <ResponseHeaders>{});
+							});
+						}
+					}
+
 					options.success({
 						status: xhr.status,
 						url: xhr.responseURL,
 						redirected: false,
 						type: responseType,
 						contentType,
+						headers,
 						data: responseData,
 						state: options.state
 					});
@@ -171,9 +204,13 @@ export const request = async (options: AjaxRequest, abortSignal?: AbortSignal): 
 				let responseData: any = null;
 				let responseType: ResponseTye = "none";
 
-				const contentType = response.headers.get("content-type");
+				let contentType = response.headers.get("content-type");
 				if (!response.redirected && response.body) {
 					if (contentType) {
+						const ctSplitIndex = contentType.indexOf(";");
+						if (ctSplitIndex > 0)
+							contentType = contentType.substring(0, ctSplitIndex);
+
 						if (contentType.includes("json")) {
 							responseType = "json";
 							responseData = await response.json();
@@ -199,6 +236,7 @@ export const request = async (options: AjaxRequest, abortSignal?: AbortSignal): 
 					redirected: response.redirected,
 					type: responseType,
 					contentType,
+					headers: response.headers,
 					data: responseData,
 					state: options.state
 				};
