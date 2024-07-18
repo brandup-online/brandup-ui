@@ -35,6 +35,7 @@ var splitChunks = {
 module.exports = (env) => {
     const isDevBuild = process.env.NODE_ENV !== "production";
     const isModern = process.env.BROWSERS_ENV === "modern";
+	const noBrowsers = !process.env.BROWSERS_ENV;
     const prefix = isModern ? "modern" : "fallback";
 
     console.log(`NODE_ENV: "${process.env.NODE_ENV}"`);
@@ -53,7 +54,7 @@ module.exports = (env) => {
             filename: getFilePath('[name].js'),
             chunkFilename: isDevBuild ? getFilePath('[name].js') : getFilePath('[name].[contenthash].js'),
             iife: true,
-            // clean: true,
+            clean: noBrowsers || process.env.BROWSERS_ENV === "fallback",
             publicPath: './'
         },
         module: {
@@ -122,14 +123,14 @@ module.exports = (env) => {
             new WebpackManifestPlugin({
                 fileName: getFilePath('manifest.json'),
             }),
-            ...(isModern ? [
+            ...((isModern || noBrowsers) ? [
                 new HtmlWebpackPlugin({
                     filename: "index.html",
                     template: path.join(frontDir, "template.html"),
                     publicPath:"./"
                 }),
-                new ModernBuildPlugin(path.join(__dirname, bundleOutputDir, "fallback")),
-            ] : []),
+				...(isModern ? [ new ModernBuildPlugin(path.join(__dirname, bundleOutputDir, "fallback")) ] : [])
+            ] : [])
         ]
     }];
 };

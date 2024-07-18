@@ -4,7 +4,8 @@
 	"private": true,
 	"devDependencies": {
 		"@brandup/autonpm": "^1.0.14",
-		"core-js": "^3.37.1"
+		"core-js": "^3.37.1",
+		"@babel/runtime": "^7.24.8"
 	},
 	"scripts": {
 		"npm:install": "autonpm install",
