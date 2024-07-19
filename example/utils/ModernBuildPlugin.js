@@ -21,18 +21,18 @@ class ModernBuildPlugin {
         
         compiler.hooks.compilation.tap(pluginName, (compilation) => {
             HtmlWebpackPlugin.getHooks(compilation).alterAssetTags.tapAsync(pluginName, (data, cb) => {
+
                 // Добавляем type="module" для modern-файлов
                 data.assetTags.scripts.forEach((tag) => {
-                    if (tag.attributes) {
+                    if (tag.attributes)
                         tag.attributes.type = 'module';
-                    }
                 });
 
                 // Вставляем фикс для Safari
                 data.assetTags.scripts.push({
-                tagName: 'script',
-                closeTag: true,
-                innerHTML: safariFix,
+					tagName: 'script',
+					closeTag: true,
+					innerHTML: safariFix,
                 });
 
                 // Вставляем fallback-файлы с атрибутом nomodule
