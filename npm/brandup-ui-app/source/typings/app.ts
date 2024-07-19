@@ -7,36 +7,32 @@ export interface ApplicationModel {
 	[key: string]: any;
 }
 
-export interface InvokeContext {
-	readonly data: ContextData;
-}
-
 // start? load and stop
 
-export interface StartContext extends InvokeContext {
+export interface StartContext<TData extends ContextData = { [key: string]: any; }> extends InvokeContext<TData> {
 }
 
-export interface StopContext extends InvokeContext {
+export interface StopContext<TData extends ContextData = { [key: string]: any; }> extends InvokeContext<TData> {
 }
 
 // navigation
 
-export interface NavigationOptions {
+export interface NavigationOptions<TData extends ContextData = { [key: string]: any; }> {
 	url?: string | null;
 	query?: QueryParams;
 	replace?: boolean;
-	context?: ContextData;
-	callback?: (result: CallbackResult<NavigateContext>) => void | null;
+	data?: TData;
+	callback?: (result: CallbackResult<NavigateContext<TData>>) => void | null;
 }
 
-export interface CallbackResult<TContext extends InvokeContext> {
+export interface CallbackResult<TContext extends InvokeContext<TData>, TData extends ContextData = { [key: string]: any; }> {
 	status: CallbackStatus;
 	context: TContext;
 }
 
 export type CallbackStatus = "success" | "error";
 
-export interface NavigateContext extends InvokeContext {
+export interface NavigateContext<TData extends ContextData = { [key: string]: any; }> extends InvokeContext<TData> {
 	/** Source navigation event. */
 	readonly source: NavigateSource;
 	/** Full url for navigation. */
@@ -65,15 +61,15 @@ export type NavigateSource = "first" | "nav" | "submit";
 
 // submit
 
-export interface SubmitOptions {
+export interface SubmitOptions<TData extends ContextData = { [key: string]: any; }> {
 	form: HTMLFormElement;
 	button?: HTMLButtonElement | null;
 	query?: QueryParams;
-	context?: ContextData;
-	callback?: (result: CallbackResult<SubmitContext>) => void
+	data?: TData;
+	callback?: (result: CallbackResult<SubmitContext<TData>>) => void
 }
 
-export interface SubmitContext extends NavigateContext {
+export interface SubmitContext<TData extends ContextData = { [key: string]: any; }> extends NavigateContext<TData> {
 	readonly form: HTMLFormElement;
 	readonly button: HTMLButtonElement | null;
 	readonly method: SubmitMethod;
@@ -83,6 +79,10 @@ export interface SubmitContext extends NavigateContext {
 export type SubmitMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | string;
 
 // common
+
+export interface InvokeContext<TData extends ContextData = { [key: string]: any; }> {
+	readonly data: TData;
+}
 
 export interface ContextData {
 	[key: string]: any;

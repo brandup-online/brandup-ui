@@ -3,11 +3,14 @@
 	"name": "brandup-ui-root",
 	"private": true,
 	"devDependencies": {
+		"@babel/runtime": "^7.24.8",
 		"@brandup/autonpm": "^1.0.14",
-		"core-js": "^3.37.1",
-		"@babel/runtime": "^7.24.8"
+		"core-js": "^3.37.1"
 	},
 	"scripts": {
+		"i": "npm i && npm run npm:install",
+		"u": "npm update --save && npm run npm:update",
+		"build": "npm run npm:build",
 		"npm:install": "autonpm install",
 		"npm:update": "autonpm update -save",
 		"npm:build": "autonpm build",

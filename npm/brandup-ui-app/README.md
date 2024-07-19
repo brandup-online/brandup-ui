@@ -53,37 +53,33 @@ Inject to application lifecycle event methods. Middleware methods are called one
 
 ```
 export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
-    start(context: StartContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
+    async(context: StartContext) {
         console.log("start");
 
-        next(); // call next middleware
-		// end(); // end call start hierarhy of next middlewares
-		// error(); // error signal for call hierarhy
+		return true; // or nothing. call next middleware.
+		// return false; // end call next middlewares.
+		// throw new Error('error'); // error signal for call hierarhy.
     }
 
     async loaded(context: StartContext) {
         console.log("loaded");
     }
 
-    navigate(context: NavigateContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
+    async navigate(context: NavigateContext) {
         if (context.replace)
             location.replace(context.url);
         else
             location.assign(context.url);
 
-        end(); // end call navigate tree
+        return false; // end call navigate tree
     }
 
-    submit(context: SubmitContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
+    async submit(context: SubmitContext) {
         console.log("submit");
-
-        next();
     }
 
-    stop(context: StopContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
+    async stop(context: StopContext) {
         console.log("stop");
-
-        next();
     }
 }
 ```

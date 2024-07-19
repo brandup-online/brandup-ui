@@ -30,6 +30,27 @@ export class AjaxQueue {
 			this.__execute();
 	}
 
+	enque(request: AjaxRequest) {
+		const { success, error } = request;
+
+		return new Promise<AjaxResponse>((resolve, reject) => {
+			request.success = (response: AjaxResponse) => {
+				if (success)
+					success(response);
+
+				resolve(response);
+			};
+			request.error = (response: AjaxRequest, reason?: any) => {
+				if (error)
+					error(request, reason);
+
+				reject(reason);
+			};
+
+			this.push(request);
+		});
+	}
+
 	reset(cancelCurrentRequest = false) {
 		this._requests = [];
 

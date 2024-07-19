@@ -1,5 +1,6 @@
 ﻿import { DOM } from "brandup-ui-dom";
 import { Page } from "./base";
+import { PageNavigationData } from "frontend/typings/app";
 
 export default class NavigationPage extends Page {
 	get typeName(): string { return "AboutModel" }
@@ -42,7 +43,7 @@ export default class NavigationPage extends Page {
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "nav5" }, "nav: error")));
 		this.registerCommand("nav5", () => {
-			this.app.nav({ context: { error: true } });
+			this.app.nav<PageNavigationData>({ data: { error: true } });
 		});
 	}
 }

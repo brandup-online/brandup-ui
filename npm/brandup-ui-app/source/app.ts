@@ -42,7 +42,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		this.__submitFunc = (e: SubmitEvent) => this.__onSubmit(e);
 
 		const core = new Middleware();
-		core.bind(this);
+		core.initialize(this);
 		this.__invoker = new MiddlewareInvoker(core);
 	}
 
@@ -60,7 +60,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		this.__isInitialized = true;
 
 		middlewares.forEach((m) => {
-			m.bind(this);
+			m.initialize(this);
 
 			var name = m.constructor.name.toLowerCase();
 			if (name.endsWith("middleware"))
@@ -95,19 +95,19 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	 * @param element HTMLElement of application. Default is document.body.
 	 * @returns Promise of runned result.
 	 */
-	run(contextData?: ContextData | null, element?: HTMLElement): Promise<ContextData> {
+	run<TData extends ContextData>(contextData?: TData | null, element?: HTMLElement): Promise<TData> {
 		if (!contextData)
-			contextData = {};
+			contextData = <TData>{};
 
 		this.setElement(element || document.body);
 		this.beginLoadingIndicator();
 
-		var result = this.__start(contextData)
-			.then(context => this.__load(context))
+		var result = this.__start<TData>(contextData)
+			.then(context => this.__load<TData>(context))
 			.then(context => {
 				const navUrl = urlHelper.parseUrl(null);
 				console.log(`started with url ${navUrl.full}`);
-				return this.__nav(navUrl, "first", context.data, false);
+				return this.__nav<TData>(navUrl, "first", context.data, false);
 			})
 			.then(navContext => navContext.data);
 
@@ -123,14 +123,14 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	 * @param options Navigate options.
 	 * @returns Promise of navigated result.
 	 */
-	nav(options: NavigationOptions): Promise<NavigateContext> {
-		let { url = null, replace = false, context = {}, callback } = options;
+	nav<TData extends ContextData>(options: NavigationOptions<TData>): Promise<NavigateContext> {
+		let { url = null, replace = false, data = <TData>{}, callback } = options;
 
 		const navUrl = urlHelper.parseUrl(url);
 		if (options.query)
 			urlHelper.extendQuery(navUrl, options.query);
 
-		return this.__nav(navUrl, "nav", context, replace, callback);
+		return this.__nav(navUrl, "nav", data, replace, callback);
 	}
 
 	/**
@@ -138,8 +138,8 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	 * @param options Submit options.
 	 * @returns Promise of submitted result.
 	 */
-	submit(options: SubmitOptions): Promise<SubmitContext> {
-		const { form, button = null, context = {}, callback = null } = options;
+	submit<TData extends ContextData>(options: SubmitOptions<TData>): Promise<SubmitContext<TData>> {
+		const { form, button = null, data = <TData>{}, callback = null } = options;
 
 		if (!form.checkValidity)
 			return Promise.reject('Form is invalid.');
@@ -178,9 +178,9 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		if (options.query)
 			urlHelper.extendQuery(navUrl, options.query);
 
-		let submitContext: SubmitContext = {
+		let submitContext: SubmitContext<TData> = {
 			source: "submit",
-			data: context,
+			data,
 			form,
 			button,
 			method: method,
@@ -196,12 +196,12 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 
 		console.info(`submit ${method} begin ${navUrl.full}`);
 
-		let result: Promise<SubmitContext>;
+		let result: Promise<SubmitContext<TData>>;
 		if (method === "GET") {
 			urlHelper.extendQuery(navUrl, new FormData(form));
 
-			result = this.__nav(navUrl, "submit", context, replace)
-				.then(navContext => <SubmitContext>Object.assign(submitContext, navContext));
+			result = this.__nav<TData>(navUrl, "submit", data, replace)
+				.then(navContext => <SubmitContext<TData>>Object.assign(submitContext, navContext));
 		}
 		else
 			result = this.__invoker.invoke("submit", submitContext);
@@ -251,7 +251,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		location.reload();
 	}
 
-	destroy(): Promise<ContextData> {
+	destroy<TData extends ContextData>(contextData?: TData | null): Promise<StopContext<TData>> {
 		if (this.__isDestroy)
 			return Promise.reject('Application already destroyed.');
 		this.__isDestroy = true;
@@ -263,8 +263,8 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		window.removeEventListener("keyup", this.__keyDownUpFunc, false);
 		window.removeEventListener("submit", this.__submitFunc, false);
 
-		const context: StopContext = {
-			data: {}
+		const context: StopContext<TData> = {
+			data: contextData || <TData>{}
 		};
 
 		const stopResult = this.__invoker.invoke("stop", context);
@@ -317,12 +317,12 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	}
 
 	/** Start middlewares. */
-	private __start(contextData: ContextData): Promise<StartContext> {
+	private __start<TData extends ContextData>(contextData: TData): Promise<StartContext<TData>> {
 		if (this.__isStarted)
 			throw 'Application already started.';
 		this.__isStarted = true;
 
-		const context: StartContext = { data: contextData };
+		const context: StartContext<TData> = { data: contextData };
 		const startResult = this.__invoker.invoke("start", context);
 
 		startResult
@@ -340,7 +340,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	}
 
 	/** Loaded middlewares. */
-	private __load(context: StartContext): Promise<StartContext> {
+	private __load<TData extends ContextData>(context: StartContext<TData>): Promise<StartContext<TData>> {
 		if (!this.__isStarted)
 			throw "Before executing the load method, you need to execute the init method.";
 
@@ -357,10 +357,10 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		return loadResult;
 	}
 
-	private __nav(navUrl: ParsedUrl, source: NavigateSource, contextData: ContextData, replace: boolean, callback?: (result: CallbackResult<NavigateContext>) => void | null): Promise<NavigateContext> {
+	private __nav<TData extends ContextData>(navUrl: ParsedUrl, source: NavigateSource, contextData: TData, replace: boolean, callback?: (result: CallbackResult<NavigateContext<TData>>) => void | null): Promise<NavigateContext<TData>> {
 		console.info(`app nav begin ${navUrl.full}`);
 
-		const context: NavigateContext = {
+		const context: NavigateContext<TData> = {
 			source,
 			data: contextData,
 			url: navUrl.full,
@@ -435,7 +435,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 			return;
 		elem.classList.add(LoadingElementClass);
 
-		this.nav({ url, replace: elem.hasAttribute(NavUrlReplaceAttributeName), context: { clickElem: elem } })
+		this.nav({ url, replace: elem.hasAttribute(NavUrlReplaceAttributeName), data: { clickElem: elem } })
 			.finally(() => elem.classList.remove(LoadingElementClass));
 	}
 

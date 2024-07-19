@@ -1,9 +1,9 @@
 ﻿import { Middleware, NavigateContext, StartContext, StopContext, SubmitContext } from "brandup-ui-app";
 import { Page } from "../pages/base";
 import { DOM } from "brandup-ui-dom";
-import { AjaxQueue, AjaxResponse } from "brandup-ui-ajax";
+import { AjaxQueue, } from "brandup-ui-ajax";
 import { ExampleApplication } from "../app";
-import { ExampleApplicationModel } from "../typings/app";
+import { ExampleApplicationModel, PageNavigationData, PageSubmitData } from "../typings/app";
 
 const ROUTES: { [key: string]: PageDefinition } = {
 	'/': { type: () => import("../pages/index") },
@@ -43,7 +43,7 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 		this.app.element?.insertAdjacentElement("beforeend", this._loaderElem = DOM.tag("div", "app-loader"));
 	}
 
-	async navigate(context: NavigateContext) {
+	async navigate(context: NavigateContext<PageNavigationData>) {
 		if (context.external) {
 			const linkElem = <HTMLLinkElement>DOM.tag("a", { href: context.url, target: "_blank" });
 			linkElem.click();
@@ -61,40 +61,30 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 
 		const pageType = await pageDef.type();
 
-		const page: Page = new pageType.default(this.app);
+		const page: Page = new pageType.default(this.app, context);
 
 		this._nav(context, page);
 
 		page.render(this._appContentElem);
-		context.data["page"] = page;
 	}
 
-	submit(context: SubmitContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
-		const data = new FormData(context.form);
+	async submit(context: SubmitContext<PageSubmitData>) {
+		if (!this._page)
+			throw new Error();
 
-		this._ajax.push({
+		const page = context.data.page = this._page;
+
+		const response = context.data.response = await this._ajax.enque({
 			url: context.url,
 			method: context.method,
-			data: data,
-			success: (response: AjaxResponse) => {
-				if (response.redirected) {
-					this.app.nav({
-						url: response.url, callback: () => end()
-					});
-				}
-				else if (response.status === 200) {
-					alert(response.data);
-					next();
-				}
-				else {
-					alert(`error submit ${response.status}`);
-					error(`Submit response status: ${response.status}`);
-				}
-			},
-			error: () => {
-				error("Submit request aborted.");
-			}
+			data: new FormData(context.form)
 		});
+
+		if (response.redirected) {
+			return this.app.nav({ url: response.url, data: context.data });
+		}
+		else
+			await page.formSubmitted(response, context);
 	}
 
 	stop(_context: StopContext, next: VoidFunction) {
