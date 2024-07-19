@@ -123,12 +123,13 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	 * @param options Navigate options.
 	 * @returns Promise of navigated result.
 	 */
-	nav<TData extends ContextData>(options: NavigationOptions<TData>): Promise<NavigateContext> {
-		let { url = null, replace = false, data = <TData>{}, callback } = options;
+	nav<TData extends ContextData>(options?: NavigationOptions<TData> | string | null): Promise<NavigateContext> {
+		const opt: NavigationOptions<TData> = (!options || options instanceof String) ? { url: <string>options } : <NavigationOptions<TData>>options;
+		let { url = null, replace = false, data = <TData>{}, callback } = opt;
 
 		const navUrl = urlHelper.parseUrl(url);
-		if (options.query)
-			urlHelper.extendQuery(navUrl, options.query);
+		if (opt.query)
+			urlHelper.extendQuery(navUrl, opt.query);
 
 		return this.__nav(navUrl, "nav", data, replace, callback);
 	}
@@ -138,8 +139,9 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	 * @param options Submit options.
 	 * @returns Promise of submitted result.
 	 */
-	submit<TData extends ContextData>(options: SubmitOptions<TData>): Promise<SubmitContext<TData>> {
-		const { form, button = null, data = <TData>{}, callback = null } = options;
+	submit<TData extends ContextData>(options: SubmitOptions<TData> | HTMLFormElement): Promise<SubmitContext<TData>> {
+		const opt: SubmitOptions<TData> = options instanceof HTMLFormElement ? { form: <HTMLFormElement>options } : <SubmitOptions<TData>>options;
+		const { form, button = null, query, data = <TData>{}, callback = null } = opt;
 
 		if (!form.checkValidity)
 			return Promise.reject('Form is invalid.');
@@ -175,8 +177,8 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 
 		const navUrl = urlHelper.parseUrl(url);
 
-		if (options.query)
-			urlHelper.extendQuery(navUrl, options.query);
+		if (query)
+			urlHelper.extendQuery(navUrl, query);
 
 		let submitContext: SubmitContext<TData> = {
 			source: "submit",
