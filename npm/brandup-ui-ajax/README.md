@@ -10,35 +10,67 @@ Install NPM package [brandup-ui-ajax](https://www.npmjs.com/package/brandup-ui-a
 npm i brandup-ui-ajax@latest
 ```
 
-## ajaxRequest
+## AJAX request
 
-Методы для простой работы с AJAX запросами.
+Simplify async ajax request method.
 
 ```
-ajaxRequest({
-    url?: string;
-    urlParams?: { [key: string]: string };
-    method?: AJAXMethod;
-    timeout?: number;
-    headers?: { [key: string]: string };
-    type?: AJAXReqestType;
-    data?: string | FormData | object | File;
-    success?: ajaxDelegate;
-    abort?: abortDelegate;
-    disableCache?: boolean;
-    state?: any;
+import { request } from "brandup-ui-ajax";
+
+await request({
+		url?: string | null;
+		query?: QueryData | null;
+		method?: AJAXMethod | null;
+		timeout?: number | null;
+		headers?: { [key: string]: string } | null;
+		type?: AJAXReqestType | null;
+		data?: string | object | Blob | FormData | HTMLFormElement | null;
+		success?: ResponseDelegate | null;
+		error?: ErrorDelegate | null;
+		disableCache?: boolean | null;
+		state?: TState | null;
+	})
+	.then(response => {
+		// response.status: number;
+		// response.redirected: boolean;
+		// response.url: string | null;
+		// response.type: "none" | "json" | "blob" | "text" | "html";
+		// response.contentType: string | null;
+		// response.data: TData | null;
+		// response.state?: TState | null;
+	})
+	.catch(reason => console.error(reason));
+```
+
+### Request cancellation
+
+```
+import { request } from "brandup-ui-ajax";
+
+const cancellation = new AbortController();
+
+await request({ }, cancellation.signal)
+	.catch(reason => console.error(reason));
+```
+
+## Queue requests
+
+Sequential execution of AJAX requests.
+
+```
+import { AjaxQueue } from "brandup-ui-ajax";
+
+const queue = new AjaxQueue({
+	canRequest?: (request: AjaxRequest) => void | boolean;
+	successRequest?: (request: AjaxRequest, response: AjaxResponse) => void;
+	errorRequest?: (response: AjaxRequest, reason?: any) => void;
 });
-```
 
-## Очередь AJAX запросов
-
-```
-const queue = new AjaxQueue();
 queue.push({ request options });
 
-class AjaxQueue {
-    push(options: AjaxRequest): void;
-    reset(abortCurrentRequest = false): void;
-    destroy(): void;
-}
+queue.reset(); // clear queue without abort current request
+
+queue.reset(true); // abort current request and clear queue
+
+queue.destroy();
 ```

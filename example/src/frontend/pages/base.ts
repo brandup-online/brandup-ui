@@ -1,17 +1,23 @@
 ﻿import { UIElement } from "brandup-ui";
-import { AjaxQueue } from "brandup-ui-ajax";
+import { AjaxQueue, AjaxResponse } from "brandup-ui-ajax";
 import { DOM } from "brandup-ui-dom";
 import { ExampleApplication } from "../app";
+import { PageNavigationData, PageSubmitData } from "frontend/typings/app";
+import { NavigateContext, SubmitContext } from "brandup-ui-app";
 
 export abstract class Page extends UIElement {
 	readonly app: ExampleApplication;
+	readonly context: NavigateContext<PageNavigationData>;
 	readonly ajax: AjaxQueue;
 
-	constructor(app: ExampleApplication) {
+	constructor(app: ExampleApplication, context: NavigateContext<PageNavigationData>) {
 		super();
 
 		this.app = app;
+		this.context = context;
 		this.ajax = new AjaxQueue();
+
+		this.context.data.page = this;
 	}
 
 	async render(container: HTMLElement) {
@@ -32,8 +38,15 @@ export abstract class Page extends UIElement {
 		]));
 	}
 
+	formSubmitted(response: AjaxResponse, context: SubmitContext<PageSubmitData>) {
+		console.log(response);
+
+		return this.onFormSubmitted(response, context);
+	}
+
 	abstract get header(): string;
 	protected abstract onRenderContent(container: HTMLElement): Promise<void>;
+	protected async onFormSubmitted(response: AjaxResponse, context: SubmitContext<PageSubmitData>) { }
 
 	destroy() {
 		if (this.element)

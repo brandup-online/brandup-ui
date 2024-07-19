@@ -1,6 +1,6 @@
 import { UIElement } from "brandup-ui";
-import { EnvironmentModel, ApplicationModel, NavigationOptions, SubmitOptions, ContextData } from "./typings/app";
-import { LoadContext, Middleware, NavigateContext, StartContext, StopContext, SubmitContext, NavigateSource, SubmitMethod } from "./middleware";
+import { EnvironmentModel, ApplicationModel, NavigationOptions, SubmitOptions, ContextData, NavigateContext, StartContext, StopContext, SubmitContext, NavigateSource, CallbackResult } from "./typings/app";
+import { Middleware } from "./middleware";
 import { MiddlewareInvoker } from "./invoker";
 import urlHelper, { ParsedUrl } from "./helpers/url";
 
@@ -42,7 +42,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		this.__submitFunc = (e: SubmitEvent) => this.__onSubmit(e);
 
 		const core = new Middleware();
-		core.bind(this);
+		core.initialize(this);
 		this.__invoker = new MiddlewareInvoker(core);
 	}
 
@@ -60,7 +60,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		this.__isInitialized = true;
 
 		middlewares.forEach((m) => {
-			m.bind(this);
+			m.initialize(this);
 
 			var name = m.constructor.name.toLowerCase();
 			if (name.endsWith("middleware"))
@@ -95,19 +95,21 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	 * @param element HTMLElement of application. Default is document.body.
 	 * @returns Promise of runned result.
 	 */
-	run(contextData?: ContextData | null, element?: HTMLElement): Promise<ContextData> {
+	run<TData extends ContextData>(contextData?: TData | null, element?: HTMLElement): Promise<TData> {
 		if (!contextData)
-			contextData = {};
+			contextData = <TData>{};
 
 		this.setElement(element || document.body);
 		this.beginLoadingIndicator();
 
-		var result = this.__start(contextData)
-			.then(data => this.__load(data))
-			.then(data => {
+		var result = this.__start<TData>(contextData)
+			.then(context => this.__load<TData>(context))
+			.then(context => {
 				const navUrl = urlHelper.parseUrl(null);
-				return this.__nav(navUrl, "first", data, false);
-			});
+				console.log(`started with url ${navUrl.full}`);
+				return this.__nav<TData>(navUrl, "first", context.data, false);
+			})
+			.then(navContext => navContext.data);
 
 		result
 			.catch(reason => console.error(`Unable to run application with reason: ${reason}`))
@@ -121,25 +123,14 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	 * @param options Navigate options.
 	 * @returns Promise of navigated result.
 	 */
-	nav(options: NavigationOptions): Promise<ContextData> {
-		let { url = null, replace = false, context = {}, callback = null } = options;
+	nav<TData extends ContextData>(options: NavigationOptions<TData>): Promise<NavigateContext> {
+		let { url = null, replace = false, data = <TData>{}, callback } = options;
 
 		const navUrl = urlHelper.parseUrl(url);
 		if (options.query)
 			urlHelper.extendQuery(navUrl, options.query);
 
-		var result = this.__nav(navUrl, "nav", context, replace);
-		result
-			.then(() => {
-				if (callback)
-					callback({ status: "Success", context });
-			})
-			.catch(() => {
-				if (callback)
-					callback({ status: "Error", context });
-			});
-
-		return result;
+		return this.__nav(navUrl, "nav", data, replace, callback);
 	}
 
 	/**
@@ -147,8 +138,8 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	 * @param options Submit options.
 	 * @returns Promise of submitted result.
 	 */
-	submit(options: SubmitOptions): Promise<ContextData> {
-		const { form, button = null, context = {}, callback = null } = options;
+	submit<TData extends ContextData>(options: SubmitOptions<TData>): Promise<SubmitContext<TData>> {
+		const { form, button = null, data = <TData>{}, callback = null } = options;
 
 		if (!form.checkValidity)
 			return Promise.reject('Form is invalid.');
@@ -187,41 +178,42 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		if (options.query)
 			urlHelper.extendQuery(navUrl, options.query);
 
-		let result: Promise<ContextData>;
+		let submitContext: SubmitContext<TData> = {
+			source: "submit",
+			data,
+			form,
+			button,
+			method: method,
+			enctype,
+			url: navUrl.full,
+			origin: navUrl.origin,
+			path: navUrl.path,
+			query: navUrl.query,
+			hash: navUrl.hash,
+			replace: replace,
+			external: navUrl.external
+		};
 
+		console.info(`submit ${method} begin ${navUrl.full}`);
+
+		let result: Promise<SubmitContext<TData>>;
 		if (method === "GET") {
 			urlHelper.extendQuery(navUrl, new FormData(form));
 
-			result = this.__nav(navUrl, "submit", context, replace);
+			result = this.__nav<TData>(navUrl, "submit", data, replace)
+				.then(navContext => <SubmitContext<TData>>Object.assign(submitContext, navContext));
 		}
-		else {
-			console.info(`submit ${method} begin ${navUrl.full}`);
-
-			let submitContext: SubmitContext = {
-				source: "submit",
-				data: context,
-				form,
-				button,
-				method: <SubmitMethod>method,
-				enctype,
-				url: navUrl.full,
-				origin: navUrl.origin,
-				path: navUrl.path,
-				query: navUrl.query,
-				hash: navUrl.hash,
-				replace: replace,
-				external: navUrl.external
-			};
-
+		else
 			result = this.__invoker.invoke("submit", submitContext);
-		}
+
+		form["_submit_"] = result;
 
 		result
 			.then((data) => {
 				console.info(`submit ${method} success ${navUrl.full}`)
 
 				if (callback)
-					callback({ status: "Success", context });
+					callback({ status: "success", context: submitContext });
 
 				return data;
 			})
@@ -229,7 +221,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 				console.error(`submit ${method} error ${navUrl.full} reason: ${reason}`)
 
 				if (callback)
-					callback({ status: "Error", context });
+					callback({ status: "error", context: submitContext });
 			})
 			.finally(() => {
 				delete form["_submit_"];
@@ -241,8 +233,6 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 
 				this.endLoadingIndicator();
 			});
-
-		form["_submit_"] = result;
 
 		return result;
 	}
@@ -261,7 +251,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		location.reload();
 	}
 
-	destroy(): Promise<ContextData> {
+	destroy<TData extends ContextData>(contextData?: TData | null): Promise<StopContext<TData>> {
 		if (this.__isDestroy)
 			return Promise.reject('Application already destroyed.');
 		this.__isDestroy = true;
@@ -273,8 +263,8 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		window.removeEventListener("keyup", this.__keyDownUpFunc, false);
 		window.removeEventListener("submit", this.__submitFunc, false);
 
-		const context: StopContext = {
-			data: {}
+		const context: StopContext<TData> = {
+			data: contextData || <TData>{}
 		};
 
 		const stopResult = this.__invoker.invoke("stop", context);
@@ -327,12 +317,12 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	}
 
 	/** Start middlewares. */
-	private __start(contextData: ContextData): Promise<ContextData> {
+	private __start<TData extends ContextData>(contextData: TData): Promise<StartContext<TData>> {
 		if (this.__isStarted)
 			throw 'Application already started.';
 		this.__isStarted = true;
 
-		const context: StartContext = { data: contextData };
+		const context: StartContext<TData> = { data: contextData };
 		const startResult = this.__invoker.invoke("start", context);
 
 		startResult
@@ -350,7 +340,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	}
 
 	/** Loaded middlewares. */
-	private __load(contextData: ContextData): Promise<ContextData> {
+	private __load<TData extends ContextData>(context: StartContext<TData>): Promise<StartContext<TData>> {
 		if (!this.__isStarted)
 			throw "Before executing the load method, you need to execute the init method.";
 
@@ -358,7 +348,6 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 			throw 'Application already loaded.';
 		this.__isLoad = true;
 
-		const context: LoadContext = { data: contextData };
 		const loadResult = this.__invoker.invoke("loaded", context);
 
 		loadResult
@@ -368,10 +357,10 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		return loadResult;
 	}
 
-	private __nav(navUrl: ParsedUrl, source: NavigateSource, contextData: ContextData, replace: boolean): Promise<ContextData> {
+	private __nav<TData extends ContextData>(navUrl: ParsedUrl, source: NavigateSource, contextData: TData, replace: boolean, callback?: (result: CallbackResult<NavigateContext<TData>>) => void | null): Promise<NavigateContext<TData>> {
 		console.info(`app nav begin ${navUrl.full}`);
 
-		const context: NavigateContext = {
+		const context: NavigateContext<TData> = {
 			source,
 			data: contextData,
 			url: navUrl.full,
@@ -388,6 +377,16 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		this.beginLoadingIndicator();
 
 		const navResult = this.__invoker.invoke("navigate", context);
+
+		navResult
+			.then(() => {
+				if (callback)
+					callback({ status: "success", context: context });
+			})
+			.catch(() => {
+				if (callback)
+					callback({ status: "error", context: context });
+			});
 
 		navResult
 			.then(() => console.info(`app nav success ${navUrl.full}`))
@@ -436,7 +435,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 			return;
 		elem.classList.add(LoadingElementClass);
 
-		this.nav({ url, replace: elem.hasAttribute(NavUrlReplaceAttributeName), context: { clickElem: elem } })
+		this.nav({ url, replace: elem.hasAttribute(NavUrlReplaceAttributeName), data: { clickElem: elem } })
 			.finally(() => elem.classList.remove(LoadingElementClass));
 	}
 

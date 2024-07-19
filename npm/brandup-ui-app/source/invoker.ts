@@ -1,6 +1,6 @@
 import { Application } from "./app";
-import { Middleware, InvokeContext } from "./middleware";
-import { ApplicationModel, ContextData } from "./typings/app";
+import { Middleware } from "./middleware";
+import { ApplicationModel, InvokeContext } from "./typings/app";
 
 export class MiddlewareInvoker {
 	readonly middleware: Middleware<Application, ApplicationModel>;
@@ -19,10 +19,10 @@ export class MiddlewareInvoker {
 		this.__next = new MiddlewareInvoker(middleware);
 	}
 
-	invoke<TContext extends InvokeContext>(method: string, context: TContext): Promise<ContextData> {
-		return new Promise<ContextData>((resolve, reject) => {
+	invoke<TContext extends InvokeContext>(method: string, context: TContext): Promise<TContext> {
+		return new Promise<TContext>((resolve, reject) => {
 			this.__invoke(method, context,
-				() => resolve(context.data),
+				() => resolve(context),
 				(reason: any) => reject(reason || `Error middleware ${method} method execution.`));
 		});
 	}

@@ -29,20 +29,41 @@ a {
 input, textarea, button {
 	font-size: @Font-Size;
 	font-family: @Font-Family;
+	box-sizing: border-box;
 
 	@media all and (max-width: @Adaptive-1-Width) {
 		font-size: 14px;
 	}
 }
 
-.lazyload,
-.lazyloading {
-	opacity: 0;
+input {
+	height: 36px;
+	padding: 0 10px;
 }
 
-.lazyloaded {
-	opacity: 1;
-	transition: opacity 300ms;
+button {
+	padding: 0 20px;
+	min-height: 36px;
+	margin: 0;
+	position: relative;
+
+	&.loading {
+		&:after {
+			content: '';
+			display: block;
+			border-radius: 50%;
+			width: 20px;
+			height: 20px;
+			border: 2px solid rgba(255, 255, 255, 0.2);
+			border-top-color: @Text-Color;
+			animation: spin 0.5s infinite steps(100);
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			margin-left: -10px;
+			margin-top: -10px;
+		}
+	}
 }
 
 .content-width {
@@ -193,12 +214,4 @@ body.bp-state {
 	}
 }
 
-@keyframes loading {
-	0% {
-		width: 0%;
-	}
-
-	100% {
-		width: 100%;
-	}
-}
+@import "animations.less";
