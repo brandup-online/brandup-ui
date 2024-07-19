@@ -35,9 +35,11 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 		window.addEventListener("popstate", (e: PopStateEvent) => {
 			e.preventDefault();
 
-			console.log("popstate");
+			const url = location.href;
 
-			this.app.nav({ url: null, replace: true });
+			console.log(`popstate: ${url}`);
+
+			this.app.nav({ url, replace: true });
 		});
 
 		this.app.element?.insertAdjacentElement("beforeend", this._loaderElem = DOM.tag("div", "app-loader"));
@@ -52,20 +54,20 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 			return false;
 		}
 
+		// resolve and load new page
+		let pageDef = ROUTES[context.path.toLowerCase()] || ROUTE_NOTFOUND;
+		const pageType = await pageDef.type();
+
 		if (this._page) {
+			// destroy prev page
 			this._page.destroy();
 			this._page = null;
 		}
 
-		let pageDef = ROUTES[context.path.toLowerCase()] || ROUTE_NOTFOUND;
-
-		const pageType = await pageDef.type();
-
+		// create and render new page
 		const page: Page = new pageType.default(this.app, context);
-
 		this._nav(context, page);
-
-		page.render(this._appContentElem);
+		await page.render(this._appContentElem);
 	}
 
 	async submit(context: SubmitContext<PageSubmitData>) {

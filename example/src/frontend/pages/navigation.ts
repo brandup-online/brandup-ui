@@ -9,6 +9,9 @@ export default class NavigationPage extends Page {
 	protected async onRenderContent(container: HTMLElement) {
 		container.appendChild(DOM.tag("p", null, "Working page navigation."));
 
+		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "#test1" }, "hash1")));
+		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "#test2" }, "hash2")));
+
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "/forms" }, "link: direct navigate")));
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "/forms", class: "applink" }, "link: navigate to /forms")));
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "/forms/", class: "applink" }, "link: navigate to /forms/")));
