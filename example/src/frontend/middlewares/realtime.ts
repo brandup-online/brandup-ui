@@ -1,4 +1,4 @@
-﻿import { Middleware, StartContext, NavigateContext, SubmitContext } from "brandup-ui-app";
+﻿import { Middleware, MiddlewareNext, StartContext, NavigateContext, SubmitContext } from "brandup-ui-app";
 import { ExampleApplication } from "../app";
 import { ExampleApplicationModel, PageNavigationData } from "../typings/app";
 
@@ -6,11 +6,11 @@ export class RealtimeMiddleware extends Middleware<ExampleApplication, ExampleAp
 
 	// Middleware members
 
-	start(context: StartContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
-		next();
+	start(context: StartContext, next: MiddlewareNext) {
+		return next();
 	}
 
-	async navigate(context: NavigateContext<PageNavigationData>) {
+	async navigate(context: NavigateContext<PageNavigationData>, next: MiddlewareNext) {
 		if (context.data.error) {
 			alert("error no good");
 
@@ -18,12 +18,14 @@ export class RealtimeMiddleware extends Middleware<ExampleApplication, ExampleAp
 		}
 
 		console.log("realtime navigate: ok");
+
+		return next();
 	}
 
-	submit(context: SubmitContext, next: VoidFunction, end: VoidFunction, error: (reason: any) => void) {
+	submit(context: SubmitContext, next: MiddlewareNext) {
 		console.log("realtime submit: ok");
 
-		next();
+		return next();
 	}
 
 	// RealtimeMiddleware members

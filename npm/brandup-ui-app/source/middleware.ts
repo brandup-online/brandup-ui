@@ -10,3 +10,5 @@ export class Middleware<TApp extends Application<TModel>, TModel extends Applica
 		this._app = app;
 	}
 }
+
+export type MiddlewareNext = () => Promise<void>;

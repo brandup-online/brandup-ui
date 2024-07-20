@@ -53,33 +53,37 @@ Inject to application lifecycle event methods. Middleware methods are called one
 
 ```
 export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
-    async(context: StartContext) {
+    async(context: StartContext, next: MiddlewareNext) {
         console.log("start");
 
-		return true; // or nothing. call next middleware.
-		// return false; // end call next middlewares.
-		// throw new Error('error'); // error signal for call hierarhy.
+		return next();
     }
 
-    async loaded(context: StartContext) {
+    async loaded(context: StartContext, next: MiddlewareNext) {
         console.log("loaded");
+
+		return next();
     }
 
-    async navigate(context: NavigateContext) {
+    async navigate(context: NavigateContext, next: MiddlewareNext) {
         if (context.replace)
             location.replace(context.url);
         else
             location.assign(context.url);
 
-        return false; // end call navigate tree
+		return next();
     }
 
-    async submit(context: SubmitContext) {
+    async submit(context: SubmitContext, next: MiddlewareNext) {
         console.log("submit");
+
+		return next();
     }
 
-    async stop(context: StopContext) {
+    async stop(context: StopContext, next: MiddlewareNext) {
         console.log("stop");
+
+		return next();
     }
 }
 ```
@@ -90,16 +94,12 @@ Example SPA navigation middleware: [example/src/frontend/middlewares/pages.ts](/
 
 ```
 export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
-	async navigate(context: NavigateContext) {
-        await ...
+	async navigate(context: NavigateContext, next: MiddlewareNext) {
+        // Exec before next middleware
 
-		// return false; // end call next middlewares.
-		return true; // or nothing
+		await next();
+
+        // Exec after next middleware
     }
 }
 ```
-
-Middleware method return variants:
-
-- `true`, any value or nothing - call next middleware
-- `false` - end call next middlewares.

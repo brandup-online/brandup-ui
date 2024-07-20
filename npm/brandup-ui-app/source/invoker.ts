@@ -1,59 +1,48 @@
 import { Application } from "./app";
-import { Middleware } from "./middleware";
-import { ApplicationModel, InvokeContext } from "./typings/app";
+import { Middleware, MiddlewareNext } from "./middleware";
+import { InvokeContext } from "./typings/app";
 
 export class MiddlewareInvoker {
-	readonly middleware: Middleware<Application, ApplicationModel>;
+	readonly middleware: Middleware<Application>;
 	private __next: MiddlewareInvoker | null = null;
 
-	constructor(middleware: Middleware<Application, ApplicationModel>) {
+	constructor(middleware: Middleware<Application>) {
 		this.middleware = middleware;
 	}
 
-	next(middleware: Middleware<Application, ApplicationModel>) {
-		if (this.__next) {
+	next(middleware: Middleware<Application>) {
+		if (this.__next)
 			this.__next.next(middleware);
-			return;
+		else
+			this.__next = new MiddlewareInvoker(middleware);
+	}
+
+	async invoke<TContext extends InvokeContext>(method: string, context: TContext): Promise<TContext> {
+		try {
+			await this.__invoke(method, context);
+		}
+		catch (e) {
+			console.error(`Error middleware "${method}" execution: ${e}`);
+
+			throw e;
 		}
 
-		this.__next = new MiddlewareInvoker(middleware);
+		return context;
 	}
 
-	invoke<TContext extends InvokeContext>(method: string, context: TContext): Promise<TContext> {
-		return new Promise<TContext>((resolve, reject) => {
-			this.__invoke(method, context,
-				() => resolve(context),
-				(reason: any) => reject(reason || `Error middleware ${method} method execution.`));
-		});
-	}
+	private async __invoke<TContext extends InvokeContext>(method: string, context: TContext): Promise<void> {
+		const nextFunc: MiddlewareNext = () => { return this.__next ? this.__next.__invoke(method, context) : Promise.resolve(); };
 
-	private __invoke<TContext extends InvokeContext>(method: string, context: TContext, success: VoidFunction, reject: (reason: any) => void) {
-		const nextFunc = this.__next ? () => { this.__next?.__invoke(method, context, success, reject); } : success;
-		const endFunc = () => { success(); };
-
-		const methodFunc: (context: TContext, next?: VoidFunction, end?: VoidFunction, error?: (reason: any) => void) => void | Promise<boolean | any | void> = (<any>this.middleware)[method];
-
+		const methodFunc: (context: TContext, next: MiddlewareNext) => Promise<void> = (<any>this.middleware)[method];
 		if (typeof methodFunc === "function") {
-			let methodResult: boolean | void | Promise<boolean | any | void>;
+			const methodResult: Promise<void> = methodFunc.call(this.middleware, context, nextFunc);
 
-			try {
-				methodResult = methodFunc.call(this.middleware, context, nextFunc, endFunc, reject);
-			}
-			catch (e) {
-				reject(e);
-				return;
-			}
+			if (!methodResult || !(methodResult instanceof Promise))
+				throw new Error(`Middleware method "${method}" is not async.`);
 
-			if (methodResult && methodResult instanceof Promise) {
-				// Middleware method is async
-
-				const resultPromise = <Promise<boolean>>methodResult;
-				resultPromise
-					.then(isNext => (isNext === undefined || isNext) ? nextFunc() : endFunc())
-					.catch(reason => reject(reason));
-			}
+			await methodResult;
 		}
 		else
-			nextFunc();
+			await nextFunc();
 	}
 }

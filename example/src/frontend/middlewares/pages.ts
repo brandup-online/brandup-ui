@@ -1,4 +1,4 @@
-﻿import { Middleware, NavigateContext, StartContext, StopContext, SubmitContext } from "brandup-ui-app";
+﻿import { Middleware, MiddlewareNext, NavigateContext, StartContext, StopContext, SubmitContext } from "brandup-ui-app";
 import { Page } from "../pages/base";
 import { DOM } from "brandup-ui-dom";
 import { AjaxQueue, } from "brandup-ui-ajax";
@@ -31,7 +31,7 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 		this._ajax = new AjaxQueue();
 	}
 
-	async start(_context: StartContext) {
+	async start(_context: StartContext, next: MiddlewareNext) {
 		window.addEventListener("popstate", (e: PopStateEvent) => {
 			e.preventDefault();
 
@@ -39,13 +39,15 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 
 			console.log(`popstate: ${url}`);
 
-			this.app.nav({ url, replace: true });
+			this.app.nav(url);
 		});
 
 		this.app.element?.insertAdjacentElement("beforeend", this._loaderElem = DOM.tag("div", "app-loader"));
+
+		await next();
 	}
 
-	async navigate(context: NavigateContext<PageNavigationData>) {
+	async navigate(context: NavigateContext<PageNavigationData>, next: MiddlewareNext) {
 		if (context.external) {
 			const linkElem = <HTMLLinkElement>DOM.tag("a", { href: context.url, target: "_blank" });
 			linkElem.click();
@@ -68,9 +70,11 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 		const page: Page = new pageType.default(this.app, context);
 		this._nav(context, page);
 		await page.render(this._appContentElem);
+
+		await next();
 	}
 
-	async submit(context: SubmitContext<PageSubmitData>) {
+	async submit(context: SubmitContext<PageSubmitData>, next: MiddlewareNext) {
 		if (!this._page)
 			throw new Error();
 
@@ -87,10 +91,12 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 		}
 		else
 			await page.formSubmitted(response, context);
+
+		await next();
 	}
 
-	stop(_context: StopContext, next: VoidFunction) {
-		next();
+	async stop(_context: StopContext, next: MiddlewareNext) {
+		await next();
 
 		this._ajax.destroy();
 	}
