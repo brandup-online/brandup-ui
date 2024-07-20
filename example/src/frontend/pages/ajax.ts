@@ -2,6 +2,7 @@
 import { Page } from "./base";
 import { AjaxQueue } from "brandup-ui-ajax";
 import { ExampleApplication } from "frontend/app";
+import { NavigateContext } from "brandup-ui-app";
 
 export default class AjaxPage extends Page {
 	get typeName(): string { return "AjaxPage" }
@@ -9,8 +10,8 @@ export default class AjaxPage extends Page {
 
 	readonly queue: AjaxQueue;
 
-	constructor(app: ExampleApplication) {
-		super(app);
+	constructor(app: ExampleApplication, context: NavigateContext) {
+		super(app, context);
 
 		this.queue = new AjaxQueue({
 			canRequest: (request) => {

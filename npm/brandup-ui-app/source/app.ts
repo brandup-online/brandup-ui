@@ -95,27 +95,31 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	 * @param element HTMLElement of application. Default is document.body.
 	 * @returns Promise of runned result.
 	 */
-	run<TData extends ContextData>(contextData?: TData | null, element?: HTMLElement): Promise<TData> {
+	async run<TData extends ContextData>(contextData?: TData | null, element?: HTMLElement): Promise<TData> {
 		if (!contextData)
 			contextData = <TData>{};
 
 		this.setElement(element || document.body);
 		this.beginLoadingIndicator();
 
-		var result = this.__start<TData>(contextData)
-			.then(context => this.__load<TData>(context))
-			.then(context => {
-				const navUrl = urlHelper.parseUrl(null);
-				console.log(`started with url ${navUrl.full}`);
-				return this.__nav<TData>(navUrl, "first", context.data, false);
-			})
-			.then(navContext => navContext.data);
+		try {
+			let startContext = await this.__start<TData>(contextData);
+			startContext = await this.__load<TData>(startContext);
 
-		result
-			.catch(reason => console.error(`Unable to run application with reason: ${reason}`))
-			.finally(() => this.endLoadingIndicator());
+			const navUrl = urlHelper.parseUrl(null);
+			console.log(`started with url ${navUrl.full}`);
+			await this.__nav<TData>(navUrl, "first", startContext.data, false);
 
-		return result;
+			return contextData;
+		}
+		catch (reason) {
+			console.error(`Unable to run application with reason: ${reason}`);
+
+			throw reason;
+		}
+		finally {
+			this.endLoadingIndicator()
+		}
 	}
 
 	/**
@@ -243,7 +247,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	 * Reload page with nav.
 	 */
 	reload() {
-		this.nav({ url: null, replace: true });
+		return this.nav({ replace: true });
 	}
 
 	/**
@@ -253,7 +257,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		location.reload();
 	}
 
-	destroy<TData extends ContextData>(contextData?: TData | null): Promise<StopContext<TData>> {
+	async destroy<TData extends ContextData>(contextData?: TData | null): Promise<StopContext<TData>> {
 		if (this.__isDestroy)
 			return Promise.reject('Application already destroyed.');
 		this.__isDestroy = true;
@@ -269,13 +273,17 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 			data: contextData || <TData>{}
 		};
 
-		const stopResult = this.__invoker.invoke("stop", context);
+		try {
+			await this.__invoker.invoke("stop", context);
 
-		stopResult
-			.then(data => console.info("app destroy success"))
-			.catch(reason => console.error(`app destroy error: ${reason}`));
+			console.info("app destroy success");
 
-		return stopResult;
+			return context;
+		}
+		catch (reason) {
+			console.error(`app destroy error: ${reason}`);
+			throw reason;
+		}
 	}
 
 	/**
@@ -359,7 +367,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		return loadResult;
 	}
 
-	private __nav<TData extends ContextData>(navUrl: ParsedUrl, source: NavigateSource, contextData: TData, replace: boolean, callback?: (result: CallbackResult<NavigateContext<TData>>) => void | null): Promise<NavigateContext<TData>> {
+	private async __nav<TData extends ContextData>(navUrl: ParsedUrl, source: NavigateSource, contextData: TData, replace: boolean, callback?: (result: CallbackResult<NavigateContext<TData>>) => void | null): Promise<NavigateContext<TData>> {
 		console.info(`app nav begin ${navUrl.full}`);
 
 		const context: NavigateContext<TData> = {
@@ -378,24 +386,27 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 
 		this.beginLoadingIndicator();
 
-		const navResult = this.__invoker.invoke("navigate", context);
+		try {
+			await this.__invoker.invoke("navigate", context);
 
-		navResult
-			.then(() => {
-				if (callback)
-					callback({ status: "success", context: context });
-			})
-			.catch(() => {
-				if (callback)
-					callback({ status: "error", context: context });
-			});
+			if (callback)
+				callback({ status: "success", context: context });
 
-		navResult
-			.then(() => console.info(`app nav success ${navUrl.full}`))
-			.catch(reason => console.error(`app nav error ${navUrl.full}: ${reason}`))
-			.finally(() => this.endLoadingIndicator());
+			console.info(`app nav success ${navUrl.full}`);
 
-		return navResult;
+			return context;
+		}
+		catch (reason) {
+			if (callback)
+				callback({ status: "error", context: context });
+
+			console.error(`app nav error ${navUrl.full}: ${reason}`);
+
+			throw reason;
+		}
+		finally {
+			this.endLoadingIndicator()
+		}
 	}
 
 	private __onClick(e: MouseEvent) {

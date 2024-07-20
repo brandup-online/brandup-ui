@@ -19,7 +19,7 @@ export interface StopContext<TData extends ContextData = { [key: string]: any; }
 
 export interface NavigationOptions<TData extends ContextData = { [key: string]: any; }> {
 	url?: string | null;
-	query?: QueryParams;
+	query?: QueryParams | URLSearchParams | FormData;
 	replace?: boolean;
 	data?: TData;
 	callback?: (result: CallbackResult<NavigateContext<TData>>) => void | null;
@@ -64,9 +64,9 @@ export type NavigateSource = "first" | "nav" | "submit";
 export interface SubmitOptions<TData extends ContextData = { [key: string]: any; }> {
 	form: HTMLFormElement;
 	button?: HTMLButtonElement | null;
-	query?: QueryParams;
+	query?: QueryParams | URLSearchParams;
 	data?: TData;
-	callback?: (result: CallbackResult<SubmitContext<TData>>) => void
+	callback?: (result: CallbackResult<SubmitContext<TData>>) => void;
 }
 
 export interface SubmitContext<TData extends ContextData = { [key: string]: any; }> extends NavigateContext<TData> {
