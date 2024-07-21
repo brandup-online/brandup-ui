@@ -1,7 +1,8 @@
 import { UIElement } from "brandup-ui";
 import { EnvironmentModel, ApplicationModel, QueryParams } from "./typings/app";
-import { Middleware, StartContext, StopContext, NavigateContext, SubmitContext, NavigateSource, InvokeContext, ContextData } from "./middlewares/base";
+import { Middleware, StartContext, StopContext, NavigateContext, SubmitContext, InvokeContext, ContextData } from "./middlewares/base";
 import { MiddlewareInvoker } from "./middlewares/invoker";
+import StateMiddleware from "./middlewares/state";
 import HyperLinkMiddleware from "./middlewares/hyperlink";
 import FormMiddleware from "./middlewares/form";
 import urlHelper from "./helpers/url";
@@ -16,7 +17,6 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	private readonly __invoker: MiddlewareInvoker;
 	private __isInitialized = false;
 	private __isDestroy = false;
-	private __loadingCounter = 0;
 	private __middlewares: { [key: string]: Middleware } = {};
 	private __lastNav: NavigateContext | null = null;
 
@@ -58,6 +58,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	}
 
 	protected onInitialize() {
+		this.__invoker.next(StateMiddleware());
 		this.__invoker.next(HyperLinkMiddleware());
 		this.__invoker.next(FormMiddleware());
 	}
@@ -86,7 +87,6 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			contextData = <TData>{};
 
 		this.setElement(element || BROWSER.body);
-		this.beginLoadingIndicator();
 
 		try {
 			const context: StartContext<this, TData> = {
@@ -109,8 +109,6 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			throw reason;
 		}
 		finally {
-			this.endLoadingIndicator();
-
 			console.info("app runned");
 		}
 	}
@@ -146,8 +144,6 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		console.info(context);
 
 		try {
-			this.beginLoadingIndicator();
-
 			console.info(`app nav begin ${navUrl.full}`);
 
 			await this.__invoker.invoke("navigate", context);
@@ -166,9 +162,6 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			console.error(`app nav error ${navUrl.full}: ${reason}`);
 
 			throw reason;
-		}
-		finally {
-			this.endLoadingIndicator()
 		}
 	}
 
@@ -220,8 +213,6 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		};
 
 		try {
-			this.beginLoadingIndicator();
-
 			console.info(`submit ${method} begin ${navUrl.full}`);
 
 			await this.__invoker.invoke("submit", submitContext);
@@ -238,9 +229,6 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 				callback({ status: "error", context: submitContext });
 
 			throw reason;
-		}
-		finally {
-			this.endLoadingIndicator()
 		}
 
 		return submitContext;
@@ -294,24 +282,6 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	 */
 	buildUrl(path?: string, query?: QueryParams | URLSearchParams | FormData, hash?: string): string {
 		return urlHelper.buildUrl(this.env.basePath, path, query, hash);
-	}
-
-	beginLoadingIndicator() {
-		this.__loadingCounter++;
-
-		BROWSER.body.classList.remove("bp-state-loaded");
-		BROWSER.body.classList.add("bp-state-loading");
-	}
-
-	endLoadingIndicator() {
-		this.__loadingCounter--;
-		if (this.__loadingCounter < 0)
-			this.__loadingCounter = 0;
-
-		if (this.__loadingCounter <= 0) {
-			BROWSER.body.classList.remove("bp-state-loading");
-			BROWSER.body.classList.add("bp-state-loaded");
-		}
 	}
 }
 
