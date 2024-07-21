@@ -45,19 +45,20 @@ stages:
                 - task: "Npm@1"
                   displayName: "root npm install"
                   inputs:
-                      command: "install"
-
-                - task: "Npm@1"
-                  displayName: "packages npm install"
-                  inputs:
                       command: "custom"
-                      customCommand: "run npm:install"
+                      customCommand: "run i"
 
                 - task: "Npm@1"
                   displayName: "packages npm build"
                   inputs:
                       command: "custom"
-                      customCommand: "run npm:build"
+                      customCommand: "run build"
+
+                - task: "Npm@1"
+                  displayName: "packages npm test"
+                  inputs:
+                      command: "custom"
+                      customCommand: "run test"
 
                 - task: "Npm@1"
                   displayName: "packages npm version"

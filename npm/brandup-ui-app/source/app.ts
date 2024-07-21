@@ -82,7 +82,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	 * @param element HTMLElement of application. Default is document.body.
 	 * @returns Promise of runned result.
 	 */
-	async run<TData extends ContextData>(contextData?: TData | null, element?: HTMLElement): Promise<TData> {
+	async run<TData extends ContextData>(contextData?: TData | null, element?: HTMLElement): Promise<NavigateContext<this, TData>> {
 		if (!contextData)
 			contextData = <TData>{};
 
@@ -99,9 +99,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			await this.__invoker.invoke("loaded", context);
 			console.info("app load success");
 
-			await this.nav();
-
-			return contextData;
+			return await this.nav({ data: context.data });
 		}
 		catch (reason) {
 			console.error(`Unable to run application with reason: ${reason}`);

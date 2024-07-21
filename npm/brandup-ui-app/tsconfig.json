@@ -13,12 +13,14 @@
 		"noImplicitAny": true,
 		"noEmitOnError": true,
 		"baseUrl": "./source",
+		"outDir": "./out",
 		"declaration": false,
 		"declarationMap": false,
 		"removeComments": false
 	},
 	"include": [
-		"source"
+		"source",
+		"test"
 	],
 	"exclude": [
 		"node_modules",

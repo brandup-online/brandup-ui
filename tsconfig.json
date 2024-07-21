@@ -12,15 +12,10 @@
 		"esModuleInterop": true,
 		"noImplicitAny": true,
 		"noEmitOnError": true,
-		"baseUrl": "./source",
-		"outDir": "./out",
 		"declaration": false,
 		"declarationMap": false,
 		"removeComments": false
 	},
-	"include": [
-		"source"
-	],
 	"exclude": [
 		"node_modules",
 		"dist",
