@@ -30,13 +30,13 @@ export class ExampleApplication extends Application<ExampleApplicationModel> {
 const builder = new ApplicationBuilder<ExampleApplicationModel>();
 builder
 	.useApp(ExampleApplication)
-	.useMiddleware(new PagesMiddleware());
+	.useMiddleware(() => new PagesMiddleware());
 
 const appModel: ExampleApplicationModel = {};
 const app = builder.build<ExampleApplicationModel>({ basePath: "/" }, appModel);
 
 app.run({ ...optional context params })
-	.then(context => { })
+	.then(navContext => { })
 	.catch(reason => { });
 ```
 
@@ -52,20 +52,25 @@ app.run({ ...optional context params }, appElement);
 Inject to application lifecycle event methods. Middleware methods are called one after another in the order in which they were registered in the `ApplicationBuilder`.
 
 ```
-export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
-    async(context: StartContext, next: MiddlewareNext) {
+export class PagesMiddleware implements Middleware {
+	readonly name: string = "pages"; // unique name of current middleware
+
+    start(context: StartContext<ExampleApplication>, next: MiddlewareNext) {
         console.log("start");
+
+		// context.app - access to application members
+		// context.data - get or set context data
 
 		return next();
     }
 
-    async loaded(context: StartContext, next: MiddlewareNext) {
+    async loaded(context: StartContext<ExampleApplication>, next: MiddlewareNext) {
         console.log("loaded");
 
 		return next();
     }
 
-    async navigate(context: NavigateContext, next: MiddlewareNext) {
+    async navigate(context: NavigateContext<ExampleApplication, PageNavigationData>, next: MiddlewareNext) {
         if (context.replace)
             location.replace(context.url);
         else
@@ -74,13 +79,13 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 		return next();
     }
 
-    async submit(context: SubmitContext, next: MiddlewareNext) {
+    async submit(context: SubmitContext<ExampleApplication>, next: MiddlewareNext) {
         console.log("submit");
 
 		return next();
     }
 
-    async stop(context: StopContext, next: MiddlewareNext) {
+    async stop(context: StopContext<ExampleApplication>, next: MiddlewareNext) {
         console.log("stop");
 
 		return next();
@@ -90,10 +95,16 @@ export class PagesMiddleware extends Middleware<ExampleApplication, ExampleAppli
 
 Example SPA navigation middleware: [example/src/frontend/middlewares/pages.ts](/example/src/frontend/middlewares/pages.ts)
 
+Retrivie middleware by unique name:
+
+```
+const middleware = app.middleware<PagesMiddleware>("pages");
+```
+
 ### Async middleware execution
 
 ```
-export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
+export class PagesMiddleware implements Middleware {
 	async navigate(context: NavigateContext, next: MiddlewareNext) {
         // Exec before next middleware
 
