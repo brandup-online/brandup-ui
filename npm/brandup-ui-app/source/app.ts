@@ -20,7 +20,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	private __middlewares: { [key: string]: Middleware } = {};
 	private __lastNav: NavigateContext | null = null;
 
-	constructor(env: EnvironmentModel, model: TModel) {
+	constructor(env: EnvironmentModel, model: TModel, ...args: any[]) {
 		super();
 
 		this.env = env;

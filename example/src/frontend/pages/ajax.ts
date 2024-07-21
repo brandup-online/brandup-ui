@@ -41,122 +41,120 @@ export default class AjaxPage extends Page {
 		container.appendChild(DOM.tag("p", null, "Working application forms."));
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "empty-url" }, "empty url")));
-		this.registerCommand("empty-url", () => {
-			this.queue.push({
-				success: (response) => console.log("success empty-url")
+		this.registerCommand("empty-url", async () => {
+			await this.queue.enque({
+				success: () => console.log("success empty-url")
 			});
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "can-request" }, "can request")));
 		this.registerCommand("can-request", () => {
-			this.queue.push({
+			return this.queue.enque({
 				url: "?can-request",
-				success: (response) => console.log("success can-request")
+				success: () => console.log("success can-request")
 			});
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "send-json" }, "send json")));
 		this.registerCommand("send-json", () => {
-			this.queue.push({
+			return this.queue.enque({
 				method: "POST",
 				url: "/_ajax/send-json",
 				data: { test: "test" },
 				disableCache: true,
-				success: (response) => console.log("success send-json")
+				success: () => console.log("success send-json")
 			});
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "redirect-internal" }, "redirect")));
 		this.registerCommand("redirect-internal", () => {
-			this.queue.push({
+			return this.queue.enque({
 				url: "/_ajax/redirect",
 				disableCache: true,
-				success: (response) => console.log("success redirect-internal")
+				success: () => console.log("success redirect-internal")
 			});
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "redirect-external" }, "redirect external")));
 		this.registerCommand("redirect-external", () => {
-			this.queue.push({
+			return this.queue.enque({
 				url: "https://wsender.ru",
 				disableCache: true,
-				success: (response) => console.log("success redirect-external")
+				success: () => console.log("success redirect-external")
 			});
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "ajax-json" }, "response json")));
 		this.registerCommand("ajax-json", () => {
-			this.queue.push({
+			return this.queue.enque({
 				url: "/_ajax/json",
 				disableCache: true,
-				success: (response) => console.log("success ajax-json")
+				success: () => console.log("success ajax-json")
 			});
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "ajax-html" }, "response html")));
-		this.registerCommand("ajax-html", () => {
-			this.queue.push({
-				url: "/_ajax/html",
-				disableCache: true,
-				success: (response) => console.log("success ajax-html")
-			});
+		this.registerCommand("ajax-html", async () => {
+			await this.queue.enque({ url: "/_ajax/html", disableCache: true });
+
+			console.log("success ajax-html");
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "ajax-text" }, "response text")));
 		this.registerCommand("ajax-text", () => {
-			this.queue.push({
+			return this.queue.enque({
 				url: "/_ajax/text",
 				disableCache: true,
-				success: (response) => console.log("success ajax-text")
+				success: () => console.log("success ajax-text")
 			});
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "ajax-image" }, "response image")));
 		this.registerCommand("ajax-image", () => {
-			this.queue.push({
+			return this.queue.enque({
 				url: "/_ajax/image",
 				disableCache: true,
-				success: (response) => console.log("success ajax-image")
+				success: () => console.log("success ajax-image")
 			});
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "ajax-delay" }, "response delay")));
 		this.registerCommand("ajax-delay", () => {
-			this.queue.push({
+			return this.queue.enque({
 				url: "/_ajax/delay",
 				disableCache: true,
-				success: (response) => console.log("success ajax-delay"),
+				success: () => console.log("success ajax-delay"),
 				error: (request, reason) => alert(reason)
 			});
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "ajax-timeout" }, "response timeout")));
 		this.registerCommand("ajax-timeout", () => {
-			this.queue.push({
+			return this.queue.enque({
 				url: "/_ajax/delay",
 				disableCache: true,
 				timeout: 1000,
-				success: (response) => console.log("success ajax-timeout"),
+				success: () => console.log("success ajax-timeout"),
 				error: (request, reason) => alert(reason)
 			});
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "send-headers" }, "send headers")));
 		this.registerCommand("send-headers", () => {
-			this.queue.push({
+			return this.queue.enque({
 				method: "POST",
 				url: "/_ajax/send-json",
 				headers: { aaa: "aaa" },
 				data: { test: "test" },
 				disableCache: true,
-				success: (response) => console.log("success send-headers"),
+				success: () => console.log("success send-headers"),
 				error: (request, reason) => alert(reason)
 			});
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "response-headers" }, "get response headers")));
 		this.registerCommand("response-headers", () => {
-			this.queue.push({
+			return this.queue.enque({
 				url: "/_ajax/image",
 				disableCache: true,
 				success: (response) => {

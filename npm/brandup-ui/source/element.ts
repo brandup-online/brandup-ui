@@ -3,9 +3,8 @@ export const ElemPropertyName = "brandupUiElement";
 export const CommandAttributeName = "command";
 export const CommandExecutingCssClassName = "executing";
 
-export type CommandDelegate = (elem: HTMLElement, context: CommandContext) => void;
-export type CommandCanExecuteDelegate = (elem: HTMLElement, context: CommandContext) => boolean;
-export type CommandAsyncDelegate = (context: CommandAsyncContext) => void | Promise<void | any>;
+export type CommandDelegate = (context: CommandContext) => void | Promise<void | any>;
+export type CommandCanExecuteDelegate = (context: CommandContext) => boolean;
 
 export abstract class UIElement {
 	private __element: HTMLElement | null = null;
@@ -97,17 +96,6 @@ export abstract class UIElement {
 		};
 	}
 
-	registerAsyncCommand(name: string, delegate: CommandAsyncDelegate, canExecute?: CommandCanExecuteDelegate) {
-		name = this.verifyCommandName(name);
-
-		this.__commandHandlers[name] = {
-			name: name,
-			delegate,
-			canExecute,
-			isExecuting: false
-		};
-	}
-
 	hasCommand(name: string) {
 		return name.toLowerCase() in this.__commandHandlers;
 	}
@@ -117,7 +105,8 @@ export abstract class UIElement {
 			throw new Error("UIElement is not set HTMLElement.");
 
 		const key = name.toLowerCase();
-		if (!(key in this.__commandHandlers))
+		const handler = this.__commandHandlers[key];
+		if (!handler)
 			throw new Error(`Command "${name}" is not registered.`);
 
 		const context: CommandContext = {
@@ -126,20 +115,18 @@ export abstract class UIElement {
 			transparent: false
 		};
 
-		const handler = this.__commandHandlers[key];
-
 		if (handler.isExecuting)
-			return { result: CommandsExecStatus.AlreadyExecuting, context };
+			return { status: "already", context };
 		handler.isExecuting = true;
 
 		if (!this._onCanExecCommand(name, elem)) {
 			handler.isExecuting = false;
-			return { result: CommandsExecStatus.NotAllow, context };
+			return { status: "disallow", context };
 		}
 
-		if (handler.canExecute && !handler.canExecute(elem, context)) {
+		if (handler.canExecute && !handler.canExecute(context)) {
 			handler.isExecuting = false;
-			return { result: CommandsExecStatus.NotAllow, context };
+			return { status: "disallow", context };
 		}
 
 		this.raiseEvent<CommandEventArgs>("command", {
@@ -148,56 +135,27 @@ export abstract class UIElement {
 			elem: this.__element
 		});
 
-		if (handler.execute) {
-			// Если команда синхронная.
+		let isAsync: boolean | undefined;
+		try {
+			const handlerResult = handler.execute(context);
 
-			try {
-				handler.execute(elem, context);
-			}
-			finally {
-				handler.isExecuting = false;
+			if (handlerResult && handlerResult instanceof Promise) {
+				isAsync = true;
+
+				elem.classList.add(CommandExecutingCssClassName);
+				handlerResult
+					.finally(() => {
+						elem.classList.remove(CommandExecutingCssClassName);
+						handler.isExecuting = false;
+					});
 			}
 		}
-		else if (handler.delegate) {
-			// Если команда асинхронная.
-
-			elem.classList.add(CommandExecutingCssClassName);
-
-			let timeoutId: number = 0;
-
-			const endFunc = () => {
+		finally {
+			if (!isAsync)
 				handler.isExecuting = false;
-				elem.classList.remove(CommandExecutingCssClassName);
-			};
-
-			const asyncContext: CommandAsyncContext = {
-				target: elem,
-				uiElem: this,
-				transparent: context.transparent,
-				complate: () => {
-					clearTimeout(timeoutId);
-					endFunc();
-				}
-			};
-
-			const handlerResult = handler.delegate(asyncContext);
-			if (handlerResult && handlerResult instanceof Promise)
-				handlerResult.finally(() => asyncContext.complate());
-
-			if (handler.isExecuting && asyncContext.timeout) {
-				timeoutId = window.setTimeout(() => {
-					if (asyncContext.timeoutCallback)
-						asyncContext.timeoutCallback();
-					endFunc();
-				}, asyncContext.timeout);
-			}
-
-			context.transparent = asyncContext.transparent;
 		}
-		else
-			throw new Error("Not set command execute flow.");
 
-		return { result: CommandsExecStatus.Success, context: context };
+		return { status: "success", context: context };
 	}
 
 	private verifyCommandName(name: string) {
@@ -229,9 +187,8 @@ export abstract class UIElement {
 interface CommandHandler {
 	name: string;
 	isExecuting: boolean;
-	execute?: CommandDelegate;
+	execute: CommandDelegate;
 	canExecute?: CommandCanExecuteDelegate;
-	delegate?: CommandAsyncDelegate;
 }
 
 export interface EventOptions {
@@ -254,7 +211,7 @@ export interface CommandContext {
 }
 
 export interface CommandExecutionResult {
-	result: CommandsExecStatus;
+	status: CommandExecStatus;
 	context: CommandContext;
 }
 
@@ -264,11 +221,7 @@ export interface CommandAsyncContext extends CommandContext {
 	timeoutCallback?: VoidFunction;
 }
 
-export enum CommandsExecStatus {
-	NotAllow = 1,
-	AlreadyExecuting = 2,
-	Success = 3
-}
+export type CommandExecStatus = "disallow" | "already" | "success";
 
 const fundUiElementByCommand = (elem: HTMLElement, commandName: string): UIElement | null => {
 	while (elem) {
@@ -309,14 +262,13 @@ const commandClickHandler = (e: MouseEvent) => {
 		throw new Error("Command data attribute is not have value.");
 
 	const uiElem = fundUiElementByCommand(commandElem, commandName);
-	if (uiElem === null) {
-		console.warn(`Not find handler for command "${commandName}".`);
-	}
-	else {
-		const commandResult = uiElem.execCommand(commandName, commandElem);
-		if (commandResult.context.transparent)
+	if (uiElem) {
+		const result = uiElem.execCommand(commandName, commandElem);
+		if (result.status == "success" && result.context.transparent)
 			return;
 	}
+	else
+		console.warn(`Not find handler for command "${commandName}".`);
 
 	e.preventDefault();
 	e.stopPropagation();

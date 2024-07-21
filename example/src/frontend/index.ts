@@ -6,7 +6,7 @@ import ErrorMiddleware from "./middlewares/error";
 import RealtimeMiddleware from "./middlewares/realtime";
 import "./styles/styles.less";
 
-const builder = new ApplicationBuilder<ExampleApplicationModel>();
+const builder = new ApplicationBuilder<ExampleApplicationModel>({});
 
 builder
 	.useApp(ExampleApplication)
@@ -23,6 +23,6 @@ builder
 	.useMiddleware(ErrorMiddleware)
 	.useMiddleware(RealtimeMiddleware);
 
-const app = builder.build({ basePath: "/" }, {});
+const app = builder.build({ basePath: "/" });
 
 app.run();

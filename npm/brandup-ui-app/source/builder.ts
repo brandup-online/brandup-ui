@@ -3,8 +3,13 @@ import { Middleware } from "./middlewares/base";
 import { ApplicationModel, EnvironmentModel } from "./typings/app";
 
 export class ApplicationBuilder<TModel extends ApplicationModel> {
+	private __model: TModel;
 	private __appType = Application<TModel>;
 	private __middlewares: Middleware[] = [];
+
+	constructor(model: TModel) {
+		this.__model = model;
+	}
 
 	useApp(appType: typeof Application<TModel>) {
 		this.__appType = appType;
@@ -27,16 +32,14 @@ export class ApplicationBuilder<TModel extends ApplicationModel> {
 		return this;
 	}
 
-	build(env: EnvironmentModel, model: TModel) {
+	build(env: EnvironmentModel, ...args: any[]) {
 		if (!env)
 			throw new Error("Parameter env is required.");
-		if (!model)
-			throw new Error("Parameter model is required.");
 
 		if (!env.basePath)
 			env.basePath = "/";
 
-		const app = new this.__appType(env, model);
+		const app = new this.__appType(env, this.__model, ...args);
 		app.initialize(this.__middlewares);
 		return app;
 	}

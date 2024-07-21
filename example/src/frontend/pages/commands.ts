@@ -11,33 +11,29 @@ export default class NavigationPage extends Page {
 		const html = await import("./templates/commands.html");
 		container.insertAdjacentHTML("beforeend", html.default);
 
-		this.registerCommand("command1", (elem: HTMLElement) => { elem.innerHTML = "ok"; });
-		this.registerCommand("command1-cant", (elem: HTMLElement) => { elem.innerHTML = "ok"; }, () => { return false; });
-		this.registerCommand("command2", (elem: HTMLElement, context: CommandContext) => { context.transparent = true; elem.innerHTML = "ok"; });
-		this.registerCommand("command2-cant", (elem: HTMLElement) => { elem.innerHTML = "ok"; }, () => { return false; });
-		this.registerCommand("command-svg", (elem: HTMLElement) => { elem.innerHTML = "ok"; });
+		this.registerCommand("command1", (context) => { context.target.innerHTML = "ok"; });
+		this.registerCommand("command1-cant", (context) => { context.target.innerHTML = "ok"; }, () => { return false; });
+		this.registerCommand("command2", (context) => { context.transparent = true; context.target.innerHTML = "ok"; });
+		this.registerCommand("command2-cant", (context) => { context.target.innerHTML = "ok"; }, () => { return false; });
+		this.registerCommand("command-svg", (context) => { context.target.innerHTML = "ok"; });
 
-		this.registerAsyncCommand("command1-async", (context) => {
-			context.timeout = 3000;
-
+		this.registerCommand("command1-async", (context) => {
 			return new Promise<void>(resolve => {
 				context.target.innerHTML = "Loading...";
 
-				const t = window.setTimeout(() => {
+				window.setTimeout(() => {
 					context.target.innerHTML = "Ok";
 					resolve();
 				}, 2000);
-
-				context.timeoutCallback = () => window.clearTimeout(t);
 			});
 		});
 
-		this.registerAsyncCommand("command-dom1", (context) => {
+		this.registerCommand("command-dom1", (context) => {
 			context.target.insertAdjacentElement("afterend", DOM.tag("div", "test", "test"));
-			context.complate();
+			return Promise.resolve();
 		});
 
-		this.registerAsyncCommand("command-dom2", (context) => {
+		this.registerCommand("command-dom2", (context) => {
 			const elem = DOM.tag("div", {
 				class: ["test1", "test2"],
 				dataset: { test: "test" },
@@ -48,43 +44,43 @@ export default class NavigationPage extends Page {
 			}, "test");
 
 			context.target.insertAdjacentElement("afterend", elem);
-			context.complate();
+			return Promise.resolve();
 		});
 
 		this.registerCommand("test1000", () => {
 			this.destroy();
 		});
 
-		this.registerAsyncCommand("command-dom3", async (context) => {
+		this.registerCommand("command-dom3", async (context) => {
 			const module = await import('./modules/test');
 			module.Test(context.target);
 		});
 
-		this.registerAsyncCommand("upload-file", (context) => {
-			context.timeout = 0;
+		this.registerCommand("upload-file", (context) => {
+			return new Promise<void>(resolve => {
+				const input = <HTMLInputElement>DOM.tag("input", { type: "file" });
+				input.click();
 
-			const input = <HTMLInputElement>DOM.tag("input", { type: "file" });
-			input.click();
+				input.addEventListener("change", () => {
+					if (!input.files || input.files.length !== 1) {
+						resolve();
+						return;
+					}
 
-			input.addEventListener("change", () => {
-				if (!input.files || input.files.length !== 1) {
-					context.complate();
-					return;
-				}
+					request({
+						query: { handler: "UploadFile" },
+						method: "POST",
+						data: input.files.item(0)
+					}).then(response => {
+						if (response.status == 200)
+							alert(JSON.stringify(response.data));
+						else
+							alert(response.status);
+					}).finally(() => resolve());
+				});
 
-				request({
-					query: { handler: "UploadFile" },
-					method: "POST",
-					data: input.files.item(0)
-				}).then(response => {
-					if (response.status == 200)
-						alert(JSON.stringify(response.data));
-					else
-						alert(response.status);
-				}).finally(() => context.complate());
+				input.addEventListener("cancel", () => resolve());
 			});
-
-			input.addEventListener("cancel", () => context.complate());
 		});
 
 		this.registerCommand("upload-form", () => {

@@ -26,27 +26,27 @@ export default class NavigationPage extends Page {
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "nav1" }, "nav: with add query param")));
 		this.registerCommand("nav1", () => {
-			this.app.nav({ url: "?test=test", query: { test: ["test1", "test2"] } });
+			return this.app.nav({ url: "?test=test", query: { test: ["test1", "test2"] } });
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "nav2" }, "nav: empty")));
 		this.registerCommand("nav2", () => {
-			this.app.nav({});
+			return this.app.nav({});
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "nav3" }, "nav: callback")));
 		this.registerCommand("nav3", () => {
-			this.app.nav({ url: "/forms", callback: (result) => { alert(result.status); } });
+			return this.app.nav({ url: "/forms", callback: (result) => { alert(result.status); } });
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "nav4" }, "nav: with replace")));
 		this.registerCommand("nav4", () => {
-			this.app.nav({ query: { test: "test" }, replace: true });
+			return this.app.nav({ query: { test: "test" }, replace: true });
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "nav5" }, "nav: error")));
 		this.registerCommand("nav5", () => {
-			this.app.nav<PageNavigationData>({ data: { error: true } });
+			return this.app.nav<PageNavigationData>({ data: { error: true } });
 		});
 	}
 }
