@@ -27,15 +27,14 @@ stages:
       displayName: "Build"
       jobs:
           - job: "BuildNpm"
-            displayName: "Build NPM"
+            displayName: "Build, test and pack"
             pool:
                 vmImage: $(vmImageName)
                 workspace:
                     clean: all
             steps:
                 - script: |
-                      echo "Begin build!"
-                      echo "build number - $(Build.BuildNumber)"
+                      echo "Begin build $(Build.BuildNumber)!"
                   displayName: "print variables"
 
                 - checkout: self
@@ -43,7 +42,7 @@ stages:
                   persistCredentials: "true"
 
                 - task: "Npm@1"
-                  displayName: "root npm install"
+                  displayName: "npm install"
                   inputs:
                       command: "custom"
                       customCommand: "run i"
@@ -65,6 +64,12 @@ stages:
                   inputs:
                       command: "custom"
                       customCommand: "run npm:version $(Build.BuildNumber)"
+
+                - task: "Npm@1"
+                  displayName: "packages npm cleanup"
+                  inputs:
+                      command: "custom"
+                      customCommand: "run npm:cleanup"
 
                 - task: "Npm@1"
                   displayName: "packages npm pack"
