@@ -10,23 +10,19 @@ export class Utility {
 	}
 
 	static objectToArray(obj: any): Array<{ Key: string; Value: any }> | null {
-		if (obj) {
-			const result = new Array<{ Key: string; Value: any }>();
-			for (const key in obj) {
-				if (obj.hasOwnProperty(key)) {
-					result.push({ Key: key, Value: obj[key] });
-				}
-			}
-			return result;
-		}
-		return null;
+		if (!obj)
+			return null;
+
+		const result = new Array<{ Key: string; Value: any }>();
+		for (const key in obj)
+			result.push({ Key: key, Value: obj[key] });
+		return result;
 	}
 
 	static getWordEnd(count: number, word: string, one?: string, two?: string, five?: string): string {
 		const tt = count % 100;
-		if (tt >= 5 && tt <= 20) {
+		if (tt >= 5 && tt <= 20)
 			return word + (Utility.isString(five) ? five : "");
-		}
 
 		const t = count % 10;
 
@@ -35,8 +31,7 @@ export class Utility {
 			(
 				(t >= 2 && t <= 4) ?
 					(word + (Utility.isString(two) ? two : "")) :
-					(word + (Utility.isString(five) ? five : "")
-					)
+					(word + (Utility.isString(five) ? five : ""))
 			)
 		);
 	}
@@ -56,6 +51,7 @@ export class Utility {
 	static isFunction(value: any) {
 		return (typeof value === "function");
 	}
+
 	static isPlainObject(obj: any): boolean {
 		if (!obj || toString.call(obj) !== "[object Object]" || obj.nodeType || obj.setInterval) {
 			return false;
@@ -87,21 +83,19 @@ export class Utility {
 	}
 
 	static hasProperty(obj: any, property: string): boolean {
-		if (obj === null || Utility.isUndefined(obj) || !Utility.isString(property)) {
+		if (!obj)
 			return false;
-		}
 
 		const props: Array<string> = (property.indexOf(".") >= 0 ? property.split(".") : [property]);
 
 		let t = obj;
 		for (let i = 0; i < props.length; i++) {
-			if (!t) {
+			if (!t)
 				return false;
-			}
+
 			const pName = props[i];
-			if (!t.hasOwnProperty(pName)) {
+			if (!t.hasOwnProperty(pName))
 				return false;
-			}
 
 			t = t[pName];
 		}
@@ -110,18 +104,16 @@ export class Utility {
 	}
 
 	static getProperty(obj: any, property: string): any {
-		if (obj === null || Utility.isUndefined(obj) || !Utility.isString(property)) {
+		if (!obj)
 			return null;
-		}
 
 		const props: Array<string> = (property.indexOf(".") >= 0 ? property.split(".") : [property]);
 
 		let t = obj;
 		for (let i = 0; i < props.length; i++) {
 			const pName = props[i];
-			if (!t.hasOwnProperty(pName)) {
+			if (!t.hasOwnProperty(pName))
 				return null;
-			}
 
 			t = t[pName];
 		}
@@ -136,9 +128,8 @@ export class Utility {
 			length = params.length,
 			deep = true;
 
-		if (typeof target !== "object" && !Utility.isFunction(target)) {
+		if (typeof target !== "object" && !Utility.isFunction(target))
 			target = {};
-		}
 
 		if (length === i) {
 			//target = this;
@@ -151,23 +142,21 @@ export class Utility {
 					src = target[name];
 					copy = options[name];
 
-					if (target === copy) {
+					if (target === copy)
 						continue;
-					}
 
 					if (deep && copy && (Utility.isPlainObject(copy) || (copyIsArray = Utility.isArray(copy)))) {
 						if (copyIsArray) {
 							copyIsArray = false;
 							clone = src && Utility.isArray(src) ? src : [];
 
-						} else {
+						} else
 							clone = src && Utility.isPlainObject(src) ? src : {};
-						}
 
 						target[name] = Utility.extend(clone, copy);
-					} else if (copy !== undefined) {
-						target[name] = copy;
 					}
+					else if (copy !== undefined)
+						target[name] = copy;
 				}
 			}
 		}
@@ -178,6 +167,7 @@ export class Utility {
 	static createDelegate(context: any, func: (...params: Array<any>) => void) {
 		return (...params: Array<any>) => func.apply(context, params);
 	}
+
 	static createDelegate2(context: any, func: (...params: Array<any>) => void, args?: Array<any>) {
 		return (...params: Array<any>) => {
 			const args2 = new Array<any>();
@@ -194,6 +184,7 @@ export class Utility {
 			return func.apply(context, args2);
 		};
 	}
+
 	static createDelegate3(context: any, func: (...params: Array<any>) => void, args?: Array<any>) {
 		return (...params: Array<any>) => {
 			const args2 = new Array<any>();

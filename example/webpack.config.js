@@ -100,11 +100,11 @@ module.exports = (env) => {
                 new TerserPlugin({
                     terserOptions: {
                         compress: true,
-                        keep_classnames: true,
-                        keep_fnames: true,
+                        keep_classnames: false,
+                        keep_fnames: false,
                         format: {
                             comments: false
-                        },
+                        }
                     },
                     extractComments: false
                 })

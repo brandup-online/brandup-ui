@@ -1,15 +1,14 @@
 ﻿import { Middleware, MiddlewareNext, NavigateContext } from "brandup-ui-app";
 import { ExampleApplication } from "../app";
-import { ExampleApplicationModel, PageNavigationData } from "../typings/app";
+import { PageNavigationData } from "../typings/app";
 
-export class ErrorMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
+const ErrorMiddlewareFactory = (): Middleware => {
+	return {
+		name: "error",
+		navigate: async (context: NavigateContext<ExampleApplication, PageNavigationData>, next: MiddlewareNext) => {
+			await next();
+		}
+	};
+};
 
-	// Middleware members
-
-	async navigate(context: NavigateContext<PageNavigationData>, next: MiddlewareNext) {
-		if (context.data.error)
-			throw "Custom error";
-
-		await next();
-	}
-}
+export default ErrorMiddlewareFactory;

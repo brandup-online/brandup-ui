@@ -7,13 +7,13 @@ import { NavigateContext, SubmitContext } from "brandup-ui-app";
 
 export abstract class Page extends UIElement {
 	readonly app: ExampleApplication;
-	readonly context: NavigateContext<PageNavigationData>;
+	readonly context: NavigateContext<ExampleApplication, PageNavigationData>;
 	readonly ajax: AjaxQueue;
 
-	constructor(app: ExampleApplication, context: NavigateContext<PageNavigationData>) {
+	constructor(context: NavigateContext<ExampleApplication, PageNavigationData>) {
 		super();
 
-		this.app = app;
+		this.app = context.app;
 		this.context = context;
 		this.ajax = new AjaxQueue();
 
@@ -38,7 +38,7 @@ export abstract class Page extends UIElement {
 		]));
 	}
 
-	formSubmitted(response: AjaxResponse, context: SubmitContext<PageSubmitData>) {
+	formSubmitted(response: AjaxResponse, context: SubmitContext<ExampleApplication, PageSubmitData>) {
 		console.log(response);
 
 		return this.onFormSubmitted(response, context);
@@ -46,7 +46,7 @@ export abstract class Page extends UIElement {
 
 	abstract get header(): string;
 	protected abstract onRenderContent(container: HTMLElement): Promise<void>;
-	protected async onFormSubmitted(response: AjaxResponse, context: SubmitContext<PageSubmitData>) { }
+	protected async onFormSubmitted(response: AjaxResponse, context: SubmitContext<ExampleApplication, PageSubmitData>) { }
 
 	destroy() {
 		if (this.element)

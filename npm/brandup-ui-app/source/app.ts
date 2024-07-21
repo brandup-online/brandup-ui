@@ -1,35 +1,24 @@
 import { UIElement } from "brandup-ui";
-import { EnvironmentModel, ApplicationModel, NavigationOptions, SubmitOptions, ContextData, NavigateContext, StartContext, StopContext, SubmitContext, NavigateSource, CallbackResult } from "./typings/app";
-import { Middleware } from "./middleware";
-import { MiddlewareInvoker } from "./invoker";
-import urlHelper, { ParsedUrl } from "./helpers/url";
-
-export const FormClassName = "appform";
-export const LoadingElementClass = "loading";
-export const NavUrlClassName = "applink";
-export const NavUrlAttributeName = "data-nav-url";
-export const NavUrlReplaceAttributeName = "data-nav-replace";
-export const NavIgnoreAttributeName = "data-nav-ignore";
+import { EnvironmentModel, ApplicationModel, QueryParams } from "./typings/app";
+import { Middleware, StartContext, StopContext, NavigateContext, SubmitContext, NavigateSource, InvokeContext, ContextData } from "./middlewares/base";
+import { MiddlewareInvoker } from "./middlewares/invoker";
+import HyperLinkMiddleware from "./middlewares/hyperlink";
+import FormMiddleware from "./middlewares/form";
+import urlHelper from "./helpers/url";
+import BROWSER from "./browser";
 
 /**
  * Base application class.
  */
-export class Application<TModel extends ApplicationModel = {}> extends UIElement {
+export class Application<TModel extends ApplicationModel = ApplicationModel> extends UIElement {
 	readonly env: EnvironmentModel;
 	readonly model: TModel;
 	private readonly __invoker: MiddlewareInvoker;
-	private readonly __clickFunc: (e: MouseEvent) => void;
-	private readonly __keyDownUpFunc: (e: KeyboardEvent) => void;
-	private readonly __submitFunc: (e: SubmitEvent) => void;
 	private __isInitialized = false;
-	private __isStarted = false;
-	private __isLoad = false;
 	private __isDestroy = false;
-	private __ctrlPressed = false;
 	private __loadingCounter = 0;
-
-	private __middlewares: { [key: string]: Middleware<Application<TModel>, TModel> } = {};
-	private __middlewaresNames: { [key: string]: string } = {};
+	private __middlewares: { [key: string]: Middleware } = {};
+	private __lastNav: NavigateContext | null = null;
 
 	constructor(env: EnvironmentModel, model: TModel) {
 		super();
@@ -37,12 +26,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		this.env = env;
 		this.model = model;
 
-		this.__clickFunc = (e: MouseEvent) => this.__onClick(e);
-		this.__keyDownUpFunc = (e: KeyboardEvent) => this.__onKeyDownUp(e);
-		this.__submitFunc = (e: SubmitEvent) => this.__onSubmit(e);
-
-		const core = new Middleware();
-		core.initialize(this);
+		const core: Middleware = { name: "app-root" };
 		this.__invoker = new MiddlewareInvoker(core);
 	}
 
@@ -54,26 +38,28 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	/**
 	 * @param middlewares Initialize application with middlewares. Using in ApplicationBuilder.
 	 */
-	initialize(middlewares: Array<Middleware<Application<TModel>, TModel>>) {
+	initialize(middlewares: Array<Middleware>) {
 		if (this.__isInitialized)
 			throw 'Application already initialized.';
 		this.__isInitialized = true;
 
-		middlewares.forEach((m) => {
-			m.initialize(this);
+		this.onInitialize();
 
-			var name = m.constructor.name.toLowerCase();
-			if (name.endsWith("middleware"))
-				name = name.substring(0, name.length - "middleware".length);
+		middlewares.forEach(middleware => {
+			var name = middleware.name;
 
 			if (this.__middlewares.hasOwnProperty(name))
 				throw `Middleware "${name}" already registered.`;
 
-			this.__middlewares[name] = m;
-			this.__middlewaresNames[m.constructor.name] = name;
+			this.__middlewares[name] = middleware;
 
-			this.__invoker.next(m);
+			this.__invoker.next(middleware);
 		});
+	}
+
+	protected onInitialize() {
+		this.__invoker.next(HyperLinkMiddleware());
+		this.__invoker.next(FormMiddleware());
 	}
 
 	/**
@@ -81,12 +67,12 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	 * @param type Type of middleware.
 	 * @returns Middleware instance.
 	 */
-	middleware<T extends Middleware<Application<TModel>, TModel>>(type: new () => T): T {
-		const name = this.__middlewaresNames[type.name];
-		if (!name)
-			throw `Middleware ${type.name} is not registered.`;
+	middleware<T extends Middleware>(name: string): T {
+		const middleware: any = this.__middlewares[name];
+		if (!middleware)
+			throw `Middleware ${name} is not registered.`;
 
-		return <T>this.__middlewares[name];
+		return <T>middleware;
 	}
 
 	/**
@@ -99,16 +85,21 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		if (!contextData)
 			contextData = <TData>{};
 
-		this.setElement(element || document.body);
+		this.setElement(element || BROWSER.body);
 		this.beginLoadingIndicator();
 
 		try {
-			let startContext = await this.__start<TData>(contextData);
-			startContext = await this.__load<TData>(startContext);
+			const context: StartContext<this, TData> = {
+				app: this,
+				data: contextData
+			};
+			await this.__invoker.invoke("start", context);
+			console.info("app start success");
 
-			const navUrl = urlHelper.parseUrl(null);
-			console.log(`started with url ${navUrl.full}`);
-			await this.__nav<TData>(navUrl, "first", startContext.data, false);
+			await this.__invoker.invoke("loaded", context);
+			console.info("app load success");
+
+			await this.nav();
 
 			return contextData;
 		}
@@ -118,7 +109,9 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 			throw reason;
 		}
 		finally {
-			this.endLoadingIndicator()
+			this.endLoadingIndicator();
+
+			console.info("app runned");
 		}
 	}
 
@@ -127,7 +120,7 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 	 * @param options Navigate options.
 	 * @returns Promise of navigated result.
 	 */
-	nav<TData extends ContextData>(options?: NavigationOptions<TData> | string | null): Promise<NavigateContext> {
+	async nav<TData extends ContextData>(options?: NavigationOptions<TData> | string | null): Promise<NavigateContext<this, TData>> {
 		const opt: NavigationOptions<TData> = (!options || options instanceof String) ? { url: <string>options } : <NavigationOptions<TData>>options;
 		let { url = null, replace = false, data = <TData>{}, callback } = opt;
 
@@ -135,244 +128,12 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		if (opt.query)
 			urlHelper.extendQuery(navUrl, opt.query);
 
-		return this.__nav(navUrl, "nav", data, replace, callback);
-	}
+		const isFirst = !this.__lastNav;
 
-	/**
-	 * Submit application form.
-	 * @param options Submit options.
-	 * @returns Promise of submitted result.
-	 */
-	submit<TData extends ContextData>(options: SubmitOptions<TData> | HTMLFormElement): Promise<SubmitContext<TData>> {
-		const opt: SubmitOptions<TData> = options instanceof HTMLFormElement ? { form: <HTMLFormElement>options } : <SubmitOptions<TData>>options;
-		const { form, button = null, query, data = <TData>{}, callback = null } = opt;
-
-		if (!form.checkValidity)
-			return Promise.reject('Form is invalid.');
-
-		if (form.classList.contains(LoadingElementClass))
-			return form["_submit_"];
-		form.classList.add(LoadingElementClass);
-
-		if (button)
-			button.classList.add(LoadingElementClass);
-
-		this.beginLoadingIndicator();
-
-		let method = form.method;
-		let enctype = form.enctype;
-		let url = form.action;
-		let replace = form.hasAttribute(NavUrlReplaceAttributeName);
-
-		if (button) {
-			// Get button patameters for request
-			if (button.hasAttribute("formmethod"))
-				method = button.formMethod;
-			if (button.hasAttribute("formenctype"))
-				enctype = button.formEnctype;
-			if (button.hasAttribute("formaction"))
-				url = button.formAction;
-
-			if (button.hasAttribute(NavUrlReplaceAttributeName))
-				replace = true;
-		}
-
-		method = method.toUpperCase();
-
-		const navUrl = urlHelper.parseUrl(url);
-
-		if (query)
-			urlHelper.extendQuery(navUrl, query);
-
-		let submitContext: SubmitContext<TData> = {
-			source: "submit",
+		const context: NavigateContext<this, TData> = this.__lastNav = {
+			app: this,
+			source: isFirst ? "first" : "nav",
 			data,
-			form,
-			button,
-			method: method,
-			enctype,
-			url: navUrl.full,
-			origin: navUrl.origin,
-			path: navUrl.path,
-			query: navUrl.query,
-			hash: navUrl.hash,
-			replace: replace,
-			external: navUrl.external
-		};
-
-		console.info(`submit ${method} begin ${navUrl.full}`);
-
-		let result: Promise<SubmitContext<TData>>;
-		if (method === "GET") {
-			urlHelper.extendQuery(navUrl, new FormData(form));
-
-			result = this.__nav<TData>(navUrl, "submit", data, replace)
-				.then(navContext => <SubmitContext<TData>>Object.assign(submitContext, navContext));
-		}
-		else
-			result = this.__invoker.invoke("submit", submitContext);
-
-		form["_submit_"] = result;
-
-		result
-			.then((data) => {
-				console.info(`submit ${method} success ${navUrl.full}`)
-
-				if (callback)
-					callback({ status: "success", context: submitContext });
-
-				return data;
-			})
-			.catch(reason => {
-				console.error(`submit ${method} error ${navUrl.full} reason: ${reason}`)
-
-				if (callback)
-					callback({ status: "error", context: submitContext });
-			})
-			.finally(() => {
-				delete form["_submit_"];
-
-				form.classList.remove(LoadingElementClass);
-
-				if (button)
-					button.classList.remove(LoadingElementClass);
-
-				this.endLoadingIndicator();
-			});
-
-		return result;
-	}
-
-	/**
-	 * Reload page with nav.
-	 */
-	reload() {
-		return this.nav({ replace: true });
-	}
-
-	/**
-	 * Global reload page in browser.
-	 */
-	restart() {
-		location.reload();
-	}
-
-	async destroy<TData extends ContextData>(contextData?: TData | null): Promise<StopContext<TData>> {
-		if (this.__isDestroy)
-			return Promise.reject('Application already destroyed.');
-		this.__isDestroy = true;
-
-		console.info("app destroy begin");
-
-		window.removeEventListener("click", this.__clickFunc, false);
-		window.removeEventListener("keydown", this.__keyDownUpFunc, false);
-		window.removeEventListener("keyup", this.__keyDownUpFunc, false);
-		window.removeEventListener("submit", this.__submitFunc, false);
-
-		const context: StopContext<TData> = {
-			data: contextData || <TData>{}
-		};
-
-		try {
-			await this.__invoker.invoke("stop", context);
-
-			console.info("app destroy success");
-
-			return context;
-		}
-		catch (reason) {
-			console.error(`app destroy error: ${reason}`);
-			throw reason;
-		}
-	}
-
-	/**
-	 * Generate url of application base url.
-	 * @param path Add optional path of base url.
-	 * @param queryParams Add optional query params.
-	 * @param hash Add optional hash.
-	 * @returns Relative url with base path.
-	 */
-	uri(path?: string, queryParams?: { [key: string]: string }, hash?: string): string {
-		let url = this.env.basePath;
-		if (path) {
-			if (path.startsWith("/"))
-				path = path.substring(1);
-			url += path;
-		}
-
-		if (queryParams) {
-			const query = new URLSearchParams();
-			for (const key in queryParams) {
-				const value = queryParams[key];
-				if (value === null || typeof value === "undefined")
-					continue;
-
-				query.set(key, value);
-			}
-
-			if (query.size)
-				url += "?" + query.toString();
-		}
-
-		if (hash) {
-			if (!hash.startsWith("#"))
-				hash = "#" + hash;
-
-			if (hash != "#")
-				url += hash;
-		}
-
-		return url;
-	}
-
-	/** Start middlewares. */
-	private __start<TData extends ContextData>(contextData: TData): Promise<StartContext<TData>> {
-		if (this.__isStarted)
-			throw 'Application already started.';
-		this.__isStarted = true;
-
-		const context: StartContext<TData> = { data: contextData };
-		const startResult = this.__invoker.invoke("start", context);
-
-		startResult
-			.then(() => {
-				console.info("app start success");
-
-				window.addEventListener("click", this.__clickFunc, false);
-				window.addEventListener("keydown", this.__keyDownUpFunc, false);
-				window.addEventListener("keyup", this.__keyDownUpFunc, false);
-				window.addEventListener("submit", this.__submitFunc, false);
-			})
-			.catch(reason => console.error(`app start error: ${reason}`));
-
-		return startResult;
-	}
-
-	/** Loaded middlewares. */
-	private __load<TData extends ContextData>(context: StartContext<TData>): Promise<StartContext<TData>> {
-		if (!this.__isStarted)
-			throw "Before executing the load method, you need to execute the init method.";
-
-		if (this.__isLoad)
-			throw 'Application already loaded.';
-		this.__isLoad = true;
-
-		const loadResult = this.__invoker.invoke("loaded", context);
-
-		loadResult
-			.then(() => console.info("app load success"))
-			.catch(reason => console.error(`app load error: ${reason}`));
-
-		return loadResult;
-	}
-
-	private async __nav<TData extends ContextData>(navUrl: ParsedUrl, source: NavigateSource, contextData: TData, replace: boolean, callback?: (result: CallbackResult<NavigateContext<TData>>) => void | null): Promise<NavigateContext<TData>> {
-		console.info(`app nav begin ${navUrl.full}`);
-
-		const context: NavigateContext<TData> = {
-			source,
-			data: contextData,
 			url: navUrl.full,
 			origin: navUrl.origin,
 			path: navUrl.path,
@@ -384,9 +145,11 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 
 		console.info(context);
 
-		this.beginLoadingIndicator();
-
 		try {
+			this.beginLoadingIndicator();
+
+			console.info(`app nav begin ${navUrl.full}`);
+
 			await this.__invoker.invoke("navigate", context);
 
 			if (callback)
@@ -409,68 +172,135 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 		}
 	}
 
-	private __onClick(e: MouseEvent) {
-		let elem: HTMLElement | null = e.target as HTMLElement;
-		let ignore = false;
-		while (elem) {
-			if (elem.hasAttribute(NavIgnoreAttributeName)) {
-				ignore = true;
-				break;
-			}
+	/**
+	 * Submit application form.
+	 * @param options Submit options.
+	 * @returns Promise of submitted result.
+	 */
+	async submit<TData extends ContextData>(options: SubmitOptions<TData> | HTMLFormElement): Promise<SubmitContext<this, TData>> {
+		const opt: SubmitOptions<TData> = options instanceof HTMLFormElement ? { form: <HTMLFormElement>options } : <SubmitOptions<TData>>options;
+		const { form, button = null, query, data = <TData>{}, callback = null } = opt;
 
-			if (elem.classList && elem.classList.contains(NavUrlClassName))
-				break;
+		let method = form.method;
+		let enctype = form.enctype;
+		let url = form.action;
 
-			if (elem === e.currentTarget)
-				return;
-
-			elem = elem.parentElement;
+		if (button) {
+			// Get button patameters for request
+			if (button.hasAttribute("formmethod"))
+				method = button.formMethod;
+			if (button.hasAttribute("formenctype"))
+				enctype = button.formEnctype;
+			if (button.hasAttribute("formaction"))
+				url = button.formAction;
 		}
 
-		if (!elem || this.__ctrlPressed || elem.getAttribute("target") === "_blank")
-			return;
+		method = method.toUpperCase();
 
-		e.preventDefault();
-		e.stopPropagation();
+		const navUrl = urlHelper.parseUrl(url);
 
-		if (ignore)
-			return;
+		if (query)
+			urlHelper.extendQuery(navUrl, query);
 
-		let url: string | null;
-		if (elem.tagName === "A")
-			url = elem.getAttribute("href");
-		else if (elem.hasAttribute(NavUrlAttributeName))
-			url = elem.getAttribute(NavUrlAttributeName);
-		else
-			throw "Not found url for navigation.";
+		let submitContext: SubmitContext<this, TData> = {
+			app: this,
+			source: "submit",
+			data,
+			form,
+			button,
+			method,
+			enctype,
+			url: navUrl.full,
+			origin: navUrl.origin,
+			path: navUrl.path,
+			query: navUrl.query,
+			hash: navUrl.hash,
+			replace: false,
+			external: navUrl.external
+		};
 
-		if (elem.classList.contains(LoadingElementClass))
-			return;
-		elem.classList.add(LoadingElementClass);
+		try {
+			this.beginLoadingIndicator();
 
-		this.nav({ url, replace: elem.hasAttribute(NavUrlReplaceAttributeName), data: { clickElem: elem } })
-			.finally(() => elem.classList.remove(LoadingElementClass));
+			console.info(`submit ${method} begin ${navUrl.full}`);
+
+			await this.__invoker.invoke("submit", submitContext);
+
+			console.info(`submit ${method} success ${navUrl.full}`);
+
+			if (callback)
+				callback({ status: "success", context: submitContext });
+		}
+		catch (reason) {
+			console.error(`submit ${method} error ${navUrl.full} reason: ${reason}`)
+
+			if (callback)
+				callback({ status: "error", context: submitContext });
+
+			throw reason;
+		}
+		finally {
+			this.endLoadingIndicator()
+		}
+
+		return submitContext;
 	}
 
-	private __onKeyDownUp(e: KeyboardEvent) {
-		this.__ctrlPressed = e.ctrlKey;
+	/**
+	 * Reload page with nav.
+	 */
+	reload() {
+		return this.nav({ replace: true });
 	}
 
-	private __onSubmit(e: SubmitEvent) {
-		const form = e.target as HTMLFormElement;
-		if (!form.classList.contains(FormClassName))
-			return;
+	/**
+	 * Global reload page in browser.
+	 */
+	restart() {
+		BROWSER.reload();
+	}
 
-		e.preventDefault();
+	async destroy<TData extends ContextData = ContextData>(contextData?: TData | null): Promise<StopContext<Application, TData>> {
+		if (this.__isDestroy)
+			return Promise.reject('Application already destroyed.');
+		this.__isDestroy = true;
 
-		this.submit({ form, button: e.submitter instanceof HTMLButtonElement ? <HTMLButtonElement>e.submitter : null });
+		console.info("app destroy begin");
+
+		const context: StopContext<Application, TData> = {
+			app: this,
+			data: contextData || <TData>{}
+		};
+
+		try {
+			await this.__invoker.invoke("stop", context);
+
+			console.info("app destroy success");
+
+			return context;
+		}
+		catch (reason) {
+			console.error(`app destroy error: ${reason}`);
+			throw reason;
+		}
+	}
+
+	/**
+	 * Generate url of application base url.
+	 * @param path Add optional path of base url.
+	 * @param query Add optional query params.
+	 * @param hash Add optional hash.
+	 * @returns Relative url with base path.
+	 */
+	buildUrl(path?: string, query?: QueryParams | URLSearchParams | FormData, hash?: string): string {
+		return urlHelper.buildUrl(this.env.basePath, path, query, hash);
 	}
 
 	beginLoadingIndicator() {
 		this.__loadingCounter++;
 
-		document.body.classList.remove("bp-state-loaded");
-		document.body.classList.add("bp-state-loading");
+		BROWSER.body.classList.remove("bp-state-loaded");
+		BROWSER.body.classList.add("bp-state-loading");
 	}
 
 	endLoadingIndicator() {
@@ -479,8 +309,31 @@ export class Application<TModel extends ApplicationModel = {}> extends UIElement
 			this.__loadingCounter = 0;
 
 		if (this.__loadingCounter <= 0) {
-			document.body.classList.remove("bp-state-loading");
-			document.body.classList.add("bp-state-loaded");
+			BROWSER.body.classList.remove("bp-state-loading");
+			BROWSER.body.classList.add("bp-state-loaded");
 		}
 	}
 }
+
+export interface NavigationOptions<TData extends ContextData = ContextData> {
+	url?: string | null;
+	query?: QueryParams | URLSearchParams | FormData;
+	replace?: boolean;
+	data?: TData;
+	callback?: (result: CallbackResult<NavigateContext<Application, TData>>) => void | null;
+}
+
+export interface SubmitOptions<TData extends ContextData = ContextData> {
+	form: HTMLFormElement;
+	button?: HTMLButtonElement | null;
+	query?: QueryParams | URLSearchParams;
+	data?: TData;
+	callback?: (result: CallbackResult<SubmitContext<Application, TData>>) => void;
+}
+
+export interface CallbackResult<TContext extends InvokeContext> {
+	status: CallbackStatus;
+	context: TContext;
+}
+
+export type CallbackStatus = "success" | "error";

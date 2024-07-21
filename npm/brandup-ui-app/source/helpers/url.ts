@@ -1,25 +1,27 @@
 import { QueryParams } from "../typings/app";
+import BROWSER from "../browser";
 
 const parseUrl = (url: string | null): ParsedUrl => {
-	let origin: string = location.origin;
+	const loc = BROWSER.location;
+	let origin: string = loc.origin;
 	let path: string;
 	let query: URLSearchParams | null = null;
 	let hash: string | null = null;
 	let isExternal = false;
 
 	if (!url) {
-		path = location.pathname;
+		path = loc.pathname;
 
-		if (location.search)
-			query = new URLSearchParams(location.search);
+		if (loc.search)
+			query = new URLSearchParams(loc.search);
 
-		if (location.hash)
-			hash = location.hash;
+		if (loc.hash)
+			hash = loc.hash;
 	}
 	else {
 		if (url.startsWith("#")) {
-			path = location.pathname;
-			query = new URLSearchParams(location.search);
+			path = loc.pathname;
+			query = new URLSearchParams(loc.search);
 			hash = url;
 		}
 		else if (url.startsWith("?")) {
@@ -29,7 +31,7 @@ const parseUrl = (url: string | null): ParsedUrl => {
 				url = url.substring(0, hastIndex);
 			}
 
-			path = location.pathname;
+			path = loc.pathname;
 			query = new URLSearchParams(url);
 		}
 		else if (url.startsWith("http")) {
@@ -59,7 +61,7 @@ const parseUrl = (url: string | null): ParsedUrl => {
 			path = url;
 
 			if (!path.startsWith("/")) {
-				let curPath = location.pathname;
+				let curPath = loc.pathname;
 				if (curPath.endsWith("/"))
 					curPath = curPath.substring(0, curPath.length - 1);
 				path = curPath + "/" + path;
@@ -90,7 +92,7 @@ const parseUrl = (url: string | null): ParsedUrl => {
 		external: isExternal
 	};
 
-	buildUrl(result);
+	rebuildUrl(result);
 
 	return result;
 };
@@ -122,10 +124,10 @@ const extendQuery = (url: ParsedUrl, query: QueryParams | URLSearchParams | Form
 		}
 	}
 
-	buildUrl(url);
+	rebuildUrl(url);
 };
 
-const buildUrl = (url: ParsedUrl) => {
+const rebuildUrl = (url: ParsedUrl) => {
 	let relativeUrl = url.path;
 
 	if (url.query.size)
@@ -136,6 +138,52 @@ const buildUrl = (url: ParsedUrl) => {
 
 	url.full = url.origin + relativeUrl;
 	url.relative = relativeUrl;
+};
+
+const buildUrl = (basePath: string, path?: string, query?: QueryParams | URLSearchParams | FormData, hash?: string) => {
+	let url = basePath;
+	if (path) {
+		if (path.startsWith("/"))
+			path = path.substring(1);
+		url += path;
+	}
+
+	if (query) {
+		let params: URLSearchParams;
+		if (query instanceof URLSearchParams)
+			params = query;
+		else if (query instanceof FormData) {
+			params = new URLSearchParams();
+			query.forEach((value, key) => params.append(key, value.toString()))
+		}
+		else {
+			params = new URLSearchParams();
+
+			for (const key in query) {
+				const value = query[key];
+				if (value === null || typeof value === "undefined")
+					continue;
+
+				if (Array.isArray(value))
+					value.forEach(v => params.append(key, v));
+				else
+					params.append(key, value);
+			}
+		}
+
+		if (params.size)
+			url += "?" + params.toString();
+	}
+
+	if (hash) {
+		if (!hash.startsWith("#"))
+			hash = "#" + hash;
+
+		if (hash != "#")
+			url += hash;
+	}
+
+	return url;
 };
 
 export interface ParsedUrl {
@@ -150,5 +198,6 @@ export interface ParsedUrl {
 
 export default {
 	parseUrl,
-	extendQuery
+	extendQuery,
+	buildUrl
 };

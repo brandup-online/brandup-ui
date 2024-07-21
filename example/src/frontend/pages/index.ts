@@ -1,5 +1,5 @@
 import { DOM } from "brandup-ui-dom";
-import { RealtimeMiddleware } from "../middlewares/realtime";
+import { REALTIME_NAME, RealtimeMiddleware } from "../middlewares/realtime";
 import { Page } from "./base";
 import { CommandContext } from "brandup-ui";
 import { ajaxRequest } from "brandup-ui-ajax";
@@ -33,7 +33,7 @@ export default class IndexModel extends Page {
 				<div class="item"><a href="" data-command="upload-form"><b>upload form</b></a></div>
 			</div>`));
 
-		this.app.middleware(RealtimeMiddleware).subscribe("main");
+		this.app.middleware<RealtimeMiddleware>(REALTIME_NAME).subscribe("main");
 
 		this.registerCommand("command1", (elem: HTMLElement) => { elem.innerHTML = "ok"; });
 		this.registerCommand("command1-cant", (elem: HTMLElement) => { elem.innerHTML = "ok"; }, () => { return false; });
@@ -99,8 +99,7 @@ export default class IndexModel extends Page {
 					return;
 
 				ajaxRequest({
-					url: "",
-					urlParams: { handler: "UploadFile" },
+					query: { handler: "UploadFile" },
 					method: "POST",
 					data: input.files.item(0),
 					success: (response) => {
@@ -121,8 +120,7 @@ export default class IndexModel extends Page {
 
 			input.addEventListener("change", () => {
 				ajaxRequest({
-					url: "",
-					urlParams: { handler: "UploadForm" },
+					query: { handler: "UploadForm" },
 					method: "POST",
 					data: form,
 					success: (response) => {

@@ -10,7 +10,7 @@ export default class FormsPage extends Page {
 
 		container.appendChild(DOM.tag("div", null, [
 			DOM.tag("p", null, "Submit form as multipart/form-data"),
-			DOM.tag("form", { class: "appform", method: "post", enctype: "multipart/form-data", action: this.app.uri("/_form/send") }, [
+			DOM.tag("form", { class: "appform", method: "post", enctype: "multipart/form-data", action: this.app.buildUrl("/_form/send") }, [
 				DOM.tag("input", { type: "text", name: "value" }),
 				DOM.tag("button", { type: "submit" }, "Send")
 			])
@@ -18,7 +18,7 @@ export default class FormsPage extends Page {
 
 		container.appendChild(DOM.tag("div", null, [
 			DOM.tag("p", null, "Submit form with post method"),
-			DOM.tag("form", { class: "appform", method: "post", action: this.app.uri("/_form/send") }, [
+			DOM.tag("form", { class: "appform", method: "post", action: this.app.buildUrl("/_form/send") }, [
 				DOM.tag("input", { type: "text", name: "value" }),
 				DOM.tag("button", { type: "submit" }, "Send")
 			])
@@ -36,13 +36,13 @@ export default class FormsPage extends Page {
 			DOM.tag("p", null, "Submit post with button formaction"),
 			DOM.tag("form", { class: "appform", method: "post", action: "/forms" }, [
 				DOM.tag("input", { type: "text", name: "value" }),
-				DOM.tag("button", { type: "submit", formaction: this.app.uri("/_form/send") }, "Send")
+				DOM.tag("button", { type: "submit", formaction: this.app.buildUrl("/_form/send") }, "Send")
 			])
 		]));
 
 		container.appendChild(DOM.tag("div", null, [
 			DOM.tag("p", null, "Submit form and redirect"),
-			DOM.tag("form", { class: "appform", method: "post", action: this.app.uri("/_form/redirect") }, [
+			DOM.tag("form", { class: "appform", method: "post", action: this.app.buildUrl("/_form/redirect") }, [
 				DOM.tag("input", { type: "text", name: "value" }),
 				DOM.tag("button", { type: "submit" }, "Send")
 			])
@@ -50,7 +50,7 @@ export default class FormsPage extends Page {
 
 		container.appendChild(DOM.tag("div", null, [
 			DOM.tag("p", null, "Submit form and external redirect"),
-			DOM.tag("form", { class: "appform", method: "post", action: this.app.uri("/_form/redirect-external") }, [
+			DOM.tag("form", { class: "appform", method: "post", action: this.app.buildUrl("/_form/redirect-external") }, [
 				DOM.tag("input", { type: "text", name: "value" }),
 				DOM.tag("button", { type: "submit" }, "Send")
 			])

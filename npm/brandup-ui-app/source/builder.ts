@@ -1,10 +1,10 @@
 import { Application } from "./app";
-import { Middleware } from "./middleware";
+import { Middleware } from "./middlewares/base";
 import { ApplicationModel, EnvironmentModel } from "./typings/app";
 
 export class ApplicationBuilder<TModel extends ApplicationModel> {
 	private __appType = Application<TModel>;
-	private __middlewares: Array<Middleware<Application<TModel>, TModel>> = [];
+	private __middlewares: Middleware[] = [];
 
 	useApp(appType: typeof Application<TModel>) {
 		this.__appType = appType;
@@ -12,11 +12,17 @@ export class ApplicationBuilder<TModel extends ApplicationModel> {
 		return this;
 	}
 
-	useMiddleware(middleware: Middleware<Application<TModel>, TModel>) {
+	useMiddleware(middleware: (() => Middleware) | Middleware) {
 		if (!middleware)
 			throw `Middleware propery is required.`;
 
-		this.__middlewares.push(middleware);
+		let midl: Middleware;
+		if (typeof middleware === "function")
+			midl = middleware();
+		else
+			midl = middleware;
+
+		this.__middlewares.push(midl);
 
 		return this;
 	}

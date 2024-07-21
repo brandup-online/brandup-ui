@@ -1,23 +1,21 @@
-import { Application } from "./app";
-import { Middleware, MiddlewareNext } from "./middleware";
-import { InvokeContext } from "./typings/app";
+import { Middleware, MiddlewareMethod, MiddlewareNext, InvokeContext } from "./base";
 
 export class MiddlewareInvoker {
-	readonly middleware: Middleware<Application>;
+	readonly middleware: Middleware;
 	private __next: MiddlewareInvoker | null = null;
 
-	constructor(middleware: Middleware<Application>) {
+	constructor(middleware: Middleware) {
 		this.middleware = middleware;
 	}
 
-	next(middleware: Middleware<Application>) {
+	next(middleware: Middleware) {
 		if (this.__next)
 			this.__next.next(middleware);
 		else
 			this.__next = new MiddlewareInvoker(middleware);
 	}
 
-	async invoke<TContext extends InvokeContext>(method: string, context: TContext): Promise<TContext> {
+	async invoke<TContext extends InvokeContext>(method: string, context: TContext): Promise<void> {
 		try {
 			await this.__invoke(method, context);
 		}
@@ -26,14 +24,12 @@ export class MiddlewareInvoker {
 
 			throw e;
 		}
-
-		return context;
 	}
 
 	private async __invoke<TContext extends InvokeContext>(method: string, context: TContext): Promise<void> {
 		const nextFunc: MiddlewareNext = () => { return this.__next ? this.__next.__invoke(method, context) : Promise.resolve(); };
 
-		const methodFunc: (context: TContext, next: MiddlewareNext) => Promise<void> = (<any>this.middleware)[method];
+		const methodFunc: MiddlewareMethod = this.middleware[method];
 		if (typeof methodFunc === "function") {
 			const methodResult: Promise<void> = methodFunc.call(this.middleware, context, nextFunc);
 
