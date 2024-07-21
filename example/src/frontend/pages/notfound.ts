@@ -6,6 +6,6 @@ export default class NotFoundPage extends Page {
 	get header(): string { return "Not found" }
 
 	protected async onRenderContent(container: HTMLElement) {
-		container.appendChild(DOM.tag("p", null, "Not found page."));
+		container.appendChild(DOM.tag("p", null, [`Not found page by url `, DOM.tag("b", null, this.context.url)]));
 	}
 }

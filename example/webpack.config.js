@@ -75,6 +75,11 @@ module.exports = (env) => {
                     ]
                 },
                 {
+                    test: /\.html$/,
+					include: /pages/,
+                    use: [ { loader: "raw-loader" } ]
+                },
+                {
                     test: /\.svg$/,
                     use: [
                         { loader: "raw-loader" },
