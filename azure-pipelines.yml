@@ -13,9 +13,9 @@ variables:
     - name: envName
       value: "brandup-ui"
     - name: version-major
-      value: "3"
+      value: "1"
     - name: version-minor
-      value: "2"
+      value: "0"
 
 name: $(version-major).$(version-minor).$(rev:r)
 

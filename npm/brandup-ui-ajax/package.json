@@ -1,5 +1,5 @@
 {
-	"name": "brandup-ui-ajax",
+	"name": "@brandup/ui-ajax",
 	"description": "Basic AJAX framework.",
 	"keywords": [
 		"brandup",

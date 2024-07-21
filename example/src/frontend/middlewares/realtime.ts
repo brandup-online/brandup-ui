@@ -1,4 +1,4 @@
-﻿import { Middleware, MiddlewareNext, StartContext, NavigateContext, SubmitContext } from "brandup-ui-app";
+﻿import { Middleware, MiddlewareNext, StartContext, NavigateContext, SubmitContext } from "@brandup/ui-app";
 import { ExampleApplication } from "../app";
 import { PageNavigationData } from "../typings/app";
 

@@ -1,7 +1,7 @@
-﻿import { DOM } from "brandup-ui-dom";
+﻿import { DOM } from "@brandup/ui-dom";
 import { Page } from "./base";
-import { CommandContext } from "brandup-ui";
-import { ajaxRequest, request } from "brandup-ui-ajax";
+import { CommandContext } from "@brandup/ui";
+import { ajaxRequest, request } from "@brandup/ui-ajax";
 
 export default class NavigationPage extends Page {
 	get typeName(): string { return "AboutModel" }

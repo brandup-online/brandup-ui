@@ -4,10 +4,10 @@
 
 ## Installation
 
-Install NPM package [brandup-ui-app](https://www.npmjs.com/package/brandup-ui-app).
+Install NPM package [@brandup/ui-app](https://www.npmjs.com/package/@brandup/ui-app).
 
 ```
-npm i brandup-ui-app@latest
+npm i @brandup/ui-app@latest
 ```
 
 ## Configure and run application
@@ -15,7 +15,7 @@ npm i brandup-ui-app@latest
 Configure your application with middlewares and run.
 
 ```
-import { ApplicationBuilder } from "brandup-ui-app";
+import { ApplicationBuilder } from "@brandup/ui-app";
 import { PagesMiddleware } from "./middlewares/pages";
 import "./styles.less";
 

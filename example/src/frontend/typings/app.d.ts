@@ -1,5 +1,5 @@
-import { AjaxResponse } from "brandup-ui-ajax";
-import { ApplicationModel, ContextData } from "brandup-ui-app";
+import { AjaxResponse } from "@brandup/ui-ajax";
+import { ApplicationModel, ContextData } from "@brandup/ui-app";
 
 export interface ExampleApplicationModel extends ApplicationModel {
 

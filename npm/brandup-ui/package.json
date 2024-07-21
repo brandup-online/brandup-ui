@@ -1,5 +1,5 @@
 {
-	"name": "brandup-ui",
+	"name": "@brandup/ui",
 	"description": "Lightweight UI framework on top of the DOM.",
 	"keywords": [
 		"brandup",

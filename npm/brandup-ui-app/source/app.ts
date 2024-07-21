@@ -1,4 +1,4 @@
-import { UIElement } from "brandup-ui";
+import { UIElement } from "@brandup/ui";
 import { EnvironmentModel, ApplicationModel, QueryParams } from "./typings/app";
 import { Middleware, StartContext, StopContext, NavigateContext, SubmitContext, InvokeContext, ContextData } from "./middlewares/base";
 import { MiddlewareInvoker } from "./middlewares/invoker";

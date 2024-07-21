@@ -4,10 +4,10 @@
 
 ## Installation
 
-Install NPM package [brandup-ui-dom](https://www.npmjs.com/package/brandup-ui-dom).
+Install NPM package [@brandup/ui-dom](https://www.npmjs.com/package/@brandup/ui-dom).
 
 ```
-npm i brandup-ui-dom@latest
+npm i @brandup/ui-dom@latest
 ```
 
 ## DOM helper

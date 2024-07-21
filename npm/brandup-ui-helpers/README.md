@@ -4,8 +4,8 @@
 
 ## Installation
 
-Install NPM package [brandup-ui-helpers](https://www.npmjs.com/package/brandup-ui-helpers).
+Install NPM package [@brandup/ui-helpers](https://www.npmjs.com/package/@brandup/ui-helpers).
 
 ```
-npm i brandup-ui-helpers@latest
+npm i @brandup/ui-helpers@latest
 ```

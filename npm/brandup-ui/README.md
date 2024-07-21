@@ -4,10 +4,10 @@
 
 ## Installation
 
-Install NPM package [brandup-ui](https://www.npmjs.com/package/brandup-ui).
+Install NPM package [@brandup/ui](https://www.npmjs.com/package/@brandup/ui).
 
 ```
-npm i brandup-ui@latest
+npm i @brandup/ui@latest
 ```
 
 ## UIElement

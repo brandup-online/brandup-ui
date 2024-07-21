@@ -1,6 +1,6 @@
-﻿import { DOM } from "brandup-ui-dom";
-import { AjaxQueue, } from "brandup-ui-ajax";
-import { Middleware, MiddlewareNext, NavigateContext, StartContext, StopContext, SubmitContext } from "brandup-ui-app";
+﻿import { DOM } from "@brandup/ui-dom";
+import { AjaxQueue, } from "@brandup/ui-ajax";
+import { Middleware, MiddlewareNext, NavigateContext, StartContext, StopContext, SubmitContext } from "@brandup/ui-app";
 import { Page } from "../pages/base";
 import { ExampleApplication } from "../app";
 import { PageNavigationData, PageSubmitData } from "../typings/app";

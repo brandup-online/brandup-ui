@@ -3,11 +3,11 @@
 	"name": "brandup-ui-example",
 	"private": true,
 	"dependencies": {
-		"brandup-ui": "file:../npm/brandup-ui",
-		"brandup-ui-ajax": "file:../npm/brandup-ui-ajax",
-		"brandup-ui-app": "file:../npm/brandup-ui-app",
-		"brandup-ui-dom": "file:../npm/brandup-ui-dom",
-		"brandup-ui-helpers": "file:../npm/brandup-ui-helpers",
+		"@brandup/ui": "file:../npm/brandup-ui",
+		"@brandup/ui-ajax": "file:../npm/brandup-ui-ajax",
+		"@brandup/ui-app": "file:../npm/brandup-ui-app",
+		"@brandup/ui-dom": "file:../npm/brandup-ui-dom",
+		"@brandup/ui-helpers": "file:../npm/brandup-ui-helpers",
 		"cors": "^2.8.5",
 		"express": "^4.19.2"
 	},

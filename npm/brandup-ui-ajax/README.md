@@ -4,10 +4,10 @@
 
 ## Installation
 
-Install NPM package [brandup-ui-ajax](https://www.npmjs.com/package/brandup-ui-ajax).
+Install NPM package [@brandup/ui-ajax](https://www.npmjs.com/package/@brandup/ui-ajax).
 
 ```
-npm i brandup-ui-ajax@latest
+npm i @brandup/ui-ajax@latest
 ```
 
 ## AJAX request
@@ -15,7 +15,7 @@ npm i brandup-ui-ajax@latest
 Simplify async ajax request method.
 
 ```
-import { request } from "brandup-ui-ajax";
+import { request } from "@brandup/ui-ajax";
 
 await request({
 		url?: string | null;
@@ -45,7 +45,7 @@ await request({
 ### Request cancellation
 
 ```
-import { request } from "brandup-ui-ajax";
+import { request } from "@brandup/ui-ajax";
 
 const cancellation = new AbortController();
 
@@ -58,7 +58,7 @@ await request({ }, cancellation.signal)
 Sequential execution of AJAX requests.
 
 ```
-import { AjaxQueue } from "brandup-ui-ajax";
+import { AjaxQueue } from "@brandup/ui-ajax";
 
 const queue = new AjaxQueue({
 	canRequest?: (request: AjaxRequest) => void | boolean;
