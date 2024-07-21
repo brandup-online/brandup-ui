@@ -45,7 +45,6 @@
 	],
 	"scripts": {
 		"build": "rollup -c --bundleConfigAsCjs",
-		"watch": "rollup -c -w --bundleConfigAsCjs",
-		"test": "jest --config=../../jest.config.ts"
+		"watch": "rollup -c -w --bundleConfigAsCjs"
 	}
 }
