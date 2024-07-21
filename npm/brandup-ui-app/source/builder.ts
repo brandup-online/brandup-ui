@@ -12,13 +12,13 @@ export class ApplicationBuilder<TModel extends ApplicationModel> {
 		return this;
 	}
 
-	useMiddleware(middleware: (() => Middleware) | Middleware) {
+	useMiddleware(middleware: ((...params: Array<any>) => Middleware) | Middleware, ...params: Array<any>) {
 		if (!middleware)
 			throw `Middleware propery is required.`;
 
 		let midl: Middleware;
 		if (typeof middleware === "function")
-			midl = middleware();
+			midl = middleware(...params);
 		else
 			midl = middleware;
 

@@ -5,7 +5,7 @@ export const CommandExecutingCssClassName = "executing";
 
 export type CommandDelegate = (elem: HTMLElement, context: CommandContext) => void;
 export type CommandCanExecuteDelegate = (elem: HTMLElement, context: CommandContext) => boolean;
-export type CommandAsyncDelegate = (context: CommandAsyncContext) => void;
+export type CommandAsyncDelegate = (context: CommandAsyncContext) => void | Promise<void>;
 
 export abstract class UIElement {
 	private __element: HTMLElement | null = null;
@@ -49,7 +49,7 @@ export abstract class UIElement {
 
 	protected raiseEvent<T = {}>(eventName: string, eventArgs?: T): boolean {
 		if (!(eventName in this.__events))
-			throw `Not found event "${eventName}".`;
+			throw new Error(`Not found event "${eventName}".`);
 
 		const eventOptions = this.__events[eventName];
 
@@ -79,7 +79,7 @@ export abstract class UIElement {
 
 	dispatchEvent(event: Event): boolean {
 		if (!this.__element)
-			throw "HTMLElement is not defined.";
+			throw new Error("HTMLElement is not defined.");
 
 		return this.__element.dispatchEvent(event);
 	}
@@ -114,11 +114,11 @@ export abstract class UIElement {
 
 	execCommand(name: string, elem: HTMLElement): CommandExecutionResult {
 		if (!this.__element)
-			throw "UIElement is not set HTMLElement.";
+			throw new Error("UIElement is not set HTMLElement.");
 
 		const key = name.toLowerCase();
 		if (!(key in this.__commandHandlers))
-			throw `Command "${name}" is not registered.`;
+			throw new Error(`Command "${name}" is not registered.`);
 
 		const context: CommandContext = {
 			target: elem,
@@ -177,14 +177,14 @@ export abstract class UIElement {
 				complate: () => {
 					clearTimeout(timeoutId);
 					endFunc();
-				},
-				timeout: 30000,
-				timeoutCallback: () => { }
+				}
 			};
 
-			handler.delegate(asyncContext);
+			const handlerResult = handler.delegate(asyncContext);
+			if (handlerResult && handlerResult instanceof Promise)
+				handlerResult.finally(() => asyncContext.complate());
 
-			if (handler.isExecuting) {
+			if (handler.isExecuting && asyncContext.timeout) {
 				timeoutId = window.setTimeout(() => {
 					if (asyncContext.timeoutCallback)
 						asyncContext.timeoutCallback();
@@ -195,7 +195,7 @@ export abstract class UIElement {
 			context.transparent = asyncContext.transparent;
 		}
 		else
-			throw "";
+			throw new Error("Not set command execute flow.");
 
 		return { result: CommandsExecStatus.Success, context: context };
 	}
@@ -203,7 +203,7 @@ export abstract class UIElement {
 	private verifyCommandName(name: string) {
 		const key = name.toLowerCase();
 		if (key in this.__commandHandlers)
-			throw `Command "${name}" already registered.`;
+			throw new Error(`Command "${name}" already registered.`);
 		return key;
 	}
 
@@ -216,12 +216,13 @@ export abstract class UIElement {
 	}
 
 	destroy() {
-		if (this.__element) {
-			delete this.__element.dataset[ElemAttributeName];
-			delete (<any>this.__element)[ElemPropertyName];
+		const elem = this.__element;
+		if (!elem)
+			return;
+		this.__element = null;
 
-			this.__element = null;
-		}
+		delete elem.dataset[ElemAttributeName];
+		delete (<any>elem)[ElemPropertyName];
 	}
 }
 
@@ -258,9 +259,9 @@ export interface CommandExecutionResult {
 }
 
 export interface CommandAsyncContext extends CommandContext {
-	timeout: number;
+	timeout?: number;
 	complate: VoidFunction;
-	timeoutCallback: VoidFunction;
+	timeoutCallback?: VoidFunction;
 }
 
 export enum CommandsExecStatus {
@@ -287,6 +288,7 @@ const fundUiElementByCommand = (elem: HTMLElement, commandName: string): UIEleme
 
 	return null;
 };
+
 const commandClickHandler = (e: MouseEvent) => {
 	let commandElem: HTMLElement | null = e.target as HTMLElement;
 	while (commandElem) {
@@ -304,7 +306,7 @@ const commandClickHandler = (e: MouseEvent) => {
 
 	const commandName = commandElem.dataset[CommandAttributeName];
 	if (!commandName)
-		throw "Command data attribute is not have value.";
+		throw new Error("Command data attribute is not have value.");
 
 	const uiElem = fundUiElementByCommand(commandElem, commandName);
 	if (uiElem === null) {

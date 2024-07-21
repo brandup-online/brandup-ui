@@ -2,7 +2,7 @@ import { DOM } from "brandup-ui-dom";
 import { REALTIME_NAME, RealtimeMiddleware } from "../middlewares/realtime";
 import { Page } from "./base";
 import { CommandContext } from "brandup-ui";
-import { ajaxRequest } from "brandup-ui-ajax";
+import { ajaxRequest, request } from "brandup-ui-ajax";
 
 export default class IndexModel extends Page {
 	get typeName(): string { return "IndexModel" }
@@ -78,39 +78,36 @@ export default class IndexModel extends Page {
 			this.destroy();
 		});
 
-		this.registerAsyncCommand("command-dom3", (context) => {
-			import('./modules/test')
-				.then((m) => {
-					m.Test(context.target);
-					context.complate();
-				})
-				.catch(() => {
-					context.target.innerText = "error";
-					context.complate();
-				});
+		this.registerAsyncCommand("command-dom3", async (context) => {
+			const module = await import('./modules/test');
+			module.Test(context.target);
 		});
 
-		this.registerCommand("upload-file", () => {
+		this.registerAsyncCommand("upload-file", (context) => {
+			context.timeout = 0;
+
 			const input = <HTMLInputElement>DOM.tag("input", { type: "file" });
 			input.click();
 
 			input.addEventListener("change", () => {
-				if (!input.files || !input.files.length)
+				if (!input.files || input.files.length !== 1) {
+					context.complate();
 					return;
+				}
 
-				ajaxRequest({
+				request({
 					query: { handler: "UploadFile" },
 					method: "POST",
-					data: input.files.item(0),
-					success: (response) => {
-						if (response.status == 200) {
-							alert(JSON.stringify(response.data));
-						}
-						else
-							alert(response.state);
-					}
-				});
+					data: input.files.item(0)
+				}).then(response => {
+					if (response.status == 200)
+						alert(JSON.stringify(response.data));
+					else
+						alert(response.status);
+				}).finally(() => context.complate());
 			});
+
+			input.addEventListener("cancel", () => context.complate());
 		});
 
 		this.registerCommand("upload-form", () => {
