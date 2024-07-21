@@ -5,7 +5,7 @@ export const CommandExecutingCssClassName = "executing";
 
 export type CommandDelegate = (elem: HTMLElement, context: CommandContext) => void;
 export type CommandCanExecuteDelegate = (elem: HTMLElement, context: CommandContext) => boolean;
-export type CommandAsyncDelegate = (context: CommandAsyncContext) => void | Promise<void>;
+export type CommandAsyncDelegate = (context: CommandAsyncContext) => void | Promise<void | any>;
 
 export abstract class UIElement {
 	private __element: HTMLElement | null = null;
