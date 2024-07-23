@@ -1,15 +1,12 @@
-export const ElemAttributeName = "uiElement";
-export const ElemPropertyName = "brandupUiElement";
-export const CommandAttributeName = "command";
-export const CommandExecutingCssClassName = "executing";
+import UICONSTANTS from "./constants";
 
 export type CommandExecuteFunction = (context: CommandContext) => void | Promise<void | any>;
 export type CommandCanExecuteFunction = (context: CommandContext) => boolean;
 
 export abstract class UIElement {
 	private __element?: HTMLElement;
-	private __events?: { [key: string]: EventOptions | null };
-	private __commands?: { [key: string]: CommandDefinition };
+	private __events?: { [key: string]: EventInit | null };
+	private __commands?: { [key: string]: CommandInit };
 
 	abstract typeName: string;
 
@@ -26,10 +23,10 @@ export abstract class UIElement {
 
 		this.__element = elem;
 
-		(<any>this.__element)[ElemPropertyName] = this;
-		this.__element.dataset[ElemAttributeName] = this.typeName;
+		(<any>elem)[UICONSTANTS.ElemPropertyName] = this;
+		elem.dataset[UICONSTANTS.ElemAttributeName] = this.typeName;
 
-		this.defineEvent("command", { cancelable: false, bubbles: true });
+		this.defineEvent(UICONSTANTS.CommandEventName, { cancelable: false, bubbles: true });
 
 		this._onRenderElement(elem);
 	}
@@ -37,12 +34,12 @@ export abstract class UIElement {
 	// static members
 
 	static hasElement(elem: HTMLElement) {
-		return !!elem.dataset[ElemAttributeName];
+		return !!elem.dataset[UICONSTANTS.ElemAttributeName];
 	}
 
 	// HTMLElement event members
 
-	protected defineEvent(eventName: string, eventOptions?: EventOptions) {
+	protected defineEvent(eventName: string, eventOptions?: EventInit) {
 		if (!this.__events)
 			this.__events = {};
 		this.__events[eventName] = eventOptions ? eventOptions : null;
@@ -56,18 +53,13 @@ export abstract class UIElement {
 
 		const eventInit: CustomEventInit<T> = {};
 		if (eventOptions) {
-			if (eventOptions.bubbles)
-				eventInit.bubbles = eventOptions.bubbles;
-			if (eventOptions.cancelable)
-				eventInit.cancelable = eventOptions.cancelable;
-			if (eventOptions.composed)
-				eventInit.composed = eventOptions.composed;
+			eventInit.bubbles = eventOptions.bubbles;
+			eventInit.cancelable = eventOptions.cancelable;
+			eventInit.composed = eventOptions.composed;
 		}
-		eventInit.detail = eventArgs ? eventArgs : <T>{};
+		eventInit.detail = eventArgs;
 
-		const event = new CustomEvent<T>(eventName, eventInit);
-
-		return this.dispatchEvent(event);
+		return this.dispatchEvent(new CustomEvent<T>(eventName, eventInit));
 	}
 
 	addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) {
@@ -135,7 +127,7 @@ export abstract class UIElement {
 			return { status: "disallow", context };
 		}
 
-		this.raiseEvent<CommandEventArgs>("command", {
+		this.raiseEvent<CommandEventArgs>(UICONSTANTS.CommandEventName, {
 			name: command.name,
 			uiElem: this,
 			elem: this.__element
@@ -148,10 +140,10 @@ export abstract class UIElement {
 			if (commandResult && commandResult instanceof Promise) {
 				isAsync = true;
 
-				target.classList.add(CommandExecutingCssClassName);
+				target.classList.add(UICONSTANTS.CommandExecutingCssClassName);
 				commandResult
 					.finally(() => {
-						target.classList.remove(CommandExecutingCssClassName);
+						target.classList.remove(UICONSTANTS.CommandExecutingCssClassName);
 						delete command.isExecuting;
 					});
 			}
@@ -170,30 +162,29 @@ export abstract class UIElement {
 		return true;
 	}
 
+	toString(): string {
+		return this.typeName;
+	}
+
 	destroy() {
 		const elem = this.__element;
 		if (!elem)
 			return;
+
+		delete elem.dataset[UICONSTANTS.ElemAttributeName];
+		delete (<any>elem)[UICONSTANTS.ElemPropertyName];
+
 		delete this.__element;
 		delete this.__events;
 		delete this.__commands;
-
-		delete elem.dataset[ElemAttributeName];
-		delete (<any>elem)[ElemPropertyName];
 	}
 }
 
-interface CommandDefinition {
+interface CommandInit {
 	name: string;
 	execute: CommandExecuteFunction;
 	canExecute?: CommandCanExecuteFunction;
 	isExecuting?: boolean;
-}
-
-export interface EventOptions {
-	bubbles?: boolean;
-	cancelable?: boolean;
-	composed?: boolean;
 }
 
 export interface CommandEventArgs {
@@ -220,8 +211,8 @@ export type CommandExecStatus = "disallow" | "already" | "success";
 
 const fundUiElementByCommand = (elem: HTMLElement, commandName: string): UIElement | null => {
 	while (elem) {
-		if (elem.dataset[ElemAttributeName]) {
-			const uiElem: UIElement = (<any>elem)[ElemPropertyName];
+		if (elem.dataset[UICONSTANTS.ElemAttributeName]) {
+			const uiElem: UIElement = (<any>elem)[UICONSTANTS.ElemPropertyName];
 			if (uiElem.hasCommand(commandName))
 				return uiElem;
 		}
@@ -240,7 +231,7 @@ const fundUiElementByCommand = (elem: HTMLElement, commandName: string): UIEleme
 const commandClickHandler = (e: MouseEvent) => {
 	let commandElem: HTMLElement | null = e.target as HTMLElement;
 	while (commandElem) {
-		if (commandElem.dataset[CommandAttributeName])
+		if (commandElem.dataset[UICONSTANTS.CommandAttributeName])
 			break;
 
 		if (commandElem === e.currentTarget)
@@ -252,7 +243,7 @@ const commandClickHandler = (e: MouseEvent) => {
 	if (!commandElem)
 		return;
 
-	const commandName = commandElem.dataset[CommandAttributeName];
+	const commandName = commandElem.dataset[UICONSTANTS.CommandAttributeName];
 	if (!commandName)
 		throw new Error("Command data attribute is not have value.");
 

@@ -1,34 +1,43 @@
 export class DOM {
+	private constructor() { }
+
 	static getElementById(id: string): HTMLElement | null {
 		return document.getElementById(id);
 	}
+
 	static getElementByClass(parentElement: Element, className: string): HTMLElement | null {
 		const elements = parentElement.getElementsByClassName(className);
 		if (elements.length === 0)
 			return null;
 		return elements.item(0) as HTMLElement;
 	}
+
 	static getElementByName(name: string): HTMLElement | null {
 		const elements = document.getElementsByName(name);
 		if (elements.length === 0)
 			return null;
 		return elements.item(0) as HTMLElement;
 	}
+
 	static getElementByTagName(parentElement: Element, tagName: string): HTMLElement | null {
 		const elements = parentElement.getElementsByTagName(tagName);
 		if (elements.length === 0)
 			return null;
 		return elements.item(0) as HTMLElement;
 	}
+
 	static getElementsByTagName(parentElement: Element, tagName: string) {
 		return parentElement.getElementsByTagName(tagName);
 	}
+
 	static queryElement(parentElement: Element, query: string): HTMLElement | null {
 		return parentElement.querySelector(query);
 	}
+
 	static queryElements(parentElement: Element, query: string): NodeListOf<HTMLElement> {
 		return parentElement.querySelectorAll(query);
 	}
+
 	static nextElementByClass(currentElement: Element, className: string): HTMLElement | null {
 		let n = currentElement.nextSibling;
 		while (n) {
@@ -41,6 +50,7 @@ export class DOM {
 		}
 		return null;
 	}
+
 	static prevElementByClass(currentElement: Element, className: string): HTMLElement | null {
 		let n = currentElement.previousSibling;
 		while (n) {
@@ -53,6 +63,7 @@ export class DOM {
 		}
 		return null;
 	}
+
 	static prevElement(currentElement: Element): HTMLElement | null {
 		let n = currentElement.previousSibling;
 		while (n) {
@@ -64,6 +75,7 @@ export class DOM {
 		}
 		return null;
 	}
+
 	static nextElement(currentElement: Element): HTMLElement | null {
 		let n = currentElement.nextSibling;
 		while (n) {

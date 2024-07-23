@@ -10,6 +10,8 @@ export default class NavigationPage extends Page {
 		const html = await import("./templates/commands.html");
 		container.insertAdjacentHTML("beforeend", html.default);
 
+		this.element?.addEventListener("uicommand", (e) => console.log(e));
+
 		this.registerCommand("command1", (context) => { context.target.innerHTML = "ok"; });
 		this.registerCommand("command1-cant", (context) => { context.target.innerHTML = "ok"; }, () => { return false; });
 		this.registerCommand("command2", (context) => { context.transparent = true; context.target.innerHTML = "ok"; });

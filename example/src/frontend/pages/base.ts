@@ -49,10 +49,8 @@ export abstract class Page extends UIElement {
 	protected async onFormSubmitted(response: AjaxResponse, context: SubmitContext<ExampleApplication, PageSubmitData>) { }
 
 	destroy() {
-		if (this.element)
-			DOM.empty(this.element);
-
 		this.ajax.destroy();
+		this.element?.remove();
 
 		super.destroy();
 	}
