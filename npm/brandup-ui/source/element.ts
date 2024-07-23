@@ -7,6 +7,7 @@ export abstract class UIElement {
 	private __element?: HTMLElement;
 	private __events?: { [key: string]: EventInit | null };
 	private __commands?: { [key: string]: CommandInit };
+	private __destroyCallbacks: Array<() => void> | undefined;
 
 	abstract typeName: string;
 
@@ -162,6 +163,21 @@ export abstract class UIElement {
 		return true;
 	}
 
+	onDestroy(callback: VoidFunction | UIElement | Element) {
+		if (!this.__element)
+			return;
+
+		if (!this.__destroyCallbacks)
+			this.__destroyCallbacks = [];
+
+		if (callback instanceof UIElement)
+			this.__destroyCallbacks.push(() => callback.destroy());
+		else if (callback instanceof Element)
+			this.__destroyCallbacks.push(() => callback.remove());
+		else
+			this.__destroyCallbacks.push(callback);
+	}
+
 	toString(): string {
 		return this.typeName;
 	}
@@ -177,6 +193,18 @@ export abstract class UIElement {
 		delete this.__element;
 		delete this.__events;
 		delete this.__commands;
+
+		if (this.__destroyCallbacks) {
+			this.__destroyCallbacks.map(callback => {
+				try {
+					callback();
+				}
+				catch (reason) {
+					console.error(`Error in call "${this.typeName}" destroy callback.`);
+				}
+			});
+			delete this.__destroyCallbacks;
+		}
 	}
 }
 

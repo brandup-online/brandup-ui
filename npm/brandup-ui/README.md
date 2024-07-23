@@ -21,11 +21,11 @@ npm i @brandup/ui@latest
 ```
 abstract class UIElement {
     abstract typeName: string;
-    readonly element: HTMLElement;
+    readonly element: HTMLElement | undefined;
 
     protected setElement(elem: HTMLElement): void;
 
-    protected defineEvent(eventName: string, eventOptions?: IEventOptions): void;
+    protected defineEvent(eventName: string, eventOptions?: EventInit): void;
     protected raiseEvent(eventName: string, eventArgs?: any): boolean;
 
     addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
@@ -38,6 +38,7 @@ abstract class UIElement {
     protected _onRenderElement(_elem: HTMLElement);
     protected _onCanExecCommand(_name: string, _elem: HTMLElement): boolean;
 
+	onDestroy(callback: VoidFunction | UIElement | Element);
     destroy(): void;
 }
 ```
@@ -49,27 +50,23 @@ abstract class UIElement {
 ```
 <button data-command="send">Send</button>
 
-this.registerCommand("send", (elem: HTMLElement, context: CommandContext) => { elem.innerHTML = "ok"; });
+this.registerCommand("send", (context: CommandContext) => { context.target.innerHTML = "ok"; });
 ```
 
 Так же можно регистрировать асинхронные команды:
 
 ```
-this.registerAsyncCommand("command1-async", (context: CommandAsyncContext) => {
-    context.timeout = 3000;
-
-    context.target.innerHTML = "Loading...";
-    const t = window.setTimeout(() => {
-        context.target.innerHTML = "Ok";
-        context.complate();
-    }, 2000);
-
-    context.timeoutCallback = () => {
-        clearTimeout(t);
-    };
+this.registerCommand("command1-async", (context: CommandContext) => {
+	return Promise<void>(resolve => {
+		context.target.innerHTML = "Loading...";
+		const t = window.setTimeout(() => {
+			context.target.innerHTML = "Ok";
+			resolve();
+		}, 2000);
+	});
 });
 ```
 
-Команды вызываются по событию click.
+Команды срабатывают по событию `click`.
 
 Во время выполнения команды, у элемента добавляется стиль **executing**.
