@@ -56,6 +56,10 @@ export default class NavigationPage extends Page {
 		this.registerCommand("command-dom3", async (context) => {
 			const module = await import('./modules/test');
 			module.Test(context.target);
+
+			const test = await import('./../components/test');
+			const component = new test.default(context.target);
+			this.onDestroy(component);
 		});
 
 		this.registerCommand("upload-file", (context) => {

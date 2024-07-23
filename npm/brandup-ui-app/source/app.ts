@@ -130,13 +130,14 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			app: this,
 			source: isFirst ? "first" : "nav",
 			data,
-			url: navUrl.full,
+			url: navUrl.url,
 			origin: navUrl.origin,
+			pathAndQuery: navUrl.relative,
 			path: navUrl.path,
 			query: navUrl.query,
 			hash: navUrl.hash,
-			replace,
-			external: navUrl.external
+			external: navUrl.external,
+			replace
 		};
 
 		console.info(context);
@@ -201,13 +202,14 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			button,
 			method,
 			enctype,
-			url: navUrl.full,
+			url: navUrl.url,
 			origin: navUrl.origin,
+			pathAndQuery: navUrl.relative,
 			path: navUrl.path,
 			query: navUrl.query,
 			hash: navUrl.hash,
-			replace: false,
-			external: navUrl.external
+			external: navUrl.external,
+			replace: false
 		};
 
 		try {

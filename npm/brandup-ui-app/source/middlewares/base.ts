@@ -44,19 +44,21 @@ export interface NavigateContext<TApplication extends Application = Application,
 	readonly data: TData;
 	/** Source navigation event. */
 	readonly source: NavigateSource;
-	/** Full url for navigation. */
+	/** Origin, path and query, but without hash. */
 	readonly url: string;
 	/** Scheme, host and port. */
 	readonly origin: string;
+	/** Path and query, but without hash. */
+	readonly pathAndQuery: string;
 	/** Path of navigation url. */
 	readonly path: string;
 	/** Query parameters of navigation url. */
 	readonly query: URLSearchParams;
 	/** Hash of navigation url. */
 	readonly hash: string | null;
-	/** Replace current navigation entry. */
 	/** Navigation origin is different of current page origin. */
 	readonly external: boolean;
+	/** Replace current navigation entry. */
 	replace: boolean;
 }
 

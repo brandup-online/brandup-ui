@@ -84,6 +84,7 @@ const parseUrl = (url: string | null): ParsedUrl => {
 
 	var result = {
 		full: "",
+		url: "",
 		relative: "",
 		origin,
 		path,
@@ -127,17 +128,16 @@ const extendQuery = (url: ParsedUrl, query: QueryParams | URLSearchParams | Form
 	rebuildUrl(url);
 };
 
-const rebuildUrl = (url: ParsedUrl) => {
-	let relativeUrl = url.path;
+const rebuildUrl = (parsedUrl: ParsedUrl) => {
+	let relativeUrl = parsedUrl.path;
 
-	if (url.query.size)
-		relativeUrl += "?" + url.query.toString();
+	if (parsedUrl.query.size)
+		relativeUrl += "?" + parsedUrl.query.toString();
 
-	if (url.hash)
-		relativeUrl += "#" + url.hash;
+	parsedUrl.url = parsedUrl.origin + relativeUrl;
+	parsedUrl.relative = relativeUrl;
 
-	url.full = url.origin + relativeUrl;
-	url.relative = relativeUrl;
+	parsedUrl.full = parsedUrl.hash ? `${parsedUrl.url}#${parsedUrl.hash}` : parsedUrl.url;
 };
 
 const buildUrl = (basePath: string, path?: string, query?: QueryParams | URLSearchParams | FormData, hash?: string) => {
@@ -187,13 +187,14 @@ const buildUrl = (basePath: string, path?: string, query?: QueryParams | URLSear
 };
 
 export interface ParsedUrl {
-	full: string;
-	relative: string;
+	full: string; // origin, path, query and hash
+	url: string; // origin, path and query, but without hash
+	relative: string; // path and query, but without hash
 	origin: string;
 	path: string;
 	query: URLSearchParams;
 	hash: string | null;
-	external: boolean;
+	external: boolean; // origin is different of location.href
 }
 
 export default {

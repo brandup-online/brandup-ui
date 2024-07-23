@@ -161,7 +161,7 @@ export abstract class UIElement {
 	}
 
 	onDestroy(callback: VoidFunction | UIElement | Element) {
-		if (!this.__element)
+		if (!this.__element || !callback)
 			return;
 
 		if (!this.__destroyCallbacks)
@@ -171,8 +171,10 @@ export abstract class UIElement {
 			this.__destroyCallbacks.push(() => callback.destroy());
 		else if (callback instanceof Element)
 			this.__destroyCallbacks.push(() => callback.remove());
-		else
+		else if (typeof callback === "function")
 			this.__destroyCallbacks.push(callback);
+		else
+			throw new Error("Unsupported callback type.");
 	}
 
 	toString(): string {
@@ -200,6 +202,7 @@ export abstract class UIElement {
 					console.error(`Error in call "${this.typeName}" destroy callback.`);
 				}
 			});
+
 			delete this.__destroyCallbacks;
 		}
 	}

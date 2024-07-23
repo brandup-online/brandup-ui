@@ -113,10 +113,14 @@ class PagesMiddleware implements Middleware {
 		const title = page.header;
 
 		if (context.source != "first") {
+			let url = context.url;
+			if (context.hash)
+				url += "#" + context.hash;
+
 			if (context.replace)
-				window.history.replaceState(window.history.state, title, context.url);
+				window.history.replaceState(window.history.state, title, url);
 			else
-				window.history.pushState(window.history.state, title, context.url);
+				window.history.pushState(window.history.state, title, url);
 		}
 
 		document.title = title;
