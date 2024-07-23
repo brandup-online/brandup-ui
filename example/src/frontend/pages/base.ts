@@ -20,7 +20,7 @@ export abstract class Page extends UIElement {
 		this.context.data.page = this;
 	}
 
-	async render(container: HTMLElement) {
+	async render(): Promise<DocumentFragment> {
 		const content = document.createDocumentFragment();
 		const pageElem = DOM.tag("div", "page");
 		content.appendChild(pageElem);
@@ -29,7 +29,7 @@ export abstract class Page extends UIElement {
 
 		await this.onRenderContent(pageElem);
 
-		container.appendChild(content);
+		return content;
 	}
 
 	protected _onRenderElement(element: HTMLElement) {

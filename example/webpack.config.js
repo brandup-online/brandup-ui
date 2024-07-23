@@ -109,7 +109,8 @@ module.exports = (env) => {
                         keep_fnames: false,
                         format: {
                             comments: false
-                        }
+                        },
+						sourceMap: false
                     },
                     extractComments: false
                 })
@@ -117,7 +118,7 @@ module.exports = (env) => {
             removeAvailableModules: true,
             removeEmptyChunks: true,
             providedExports: false,
-            usedExports: false
+            usedExports: true
         },
         plugins: [
             new MiniCssExtractPlugin({

@@ -1,2 +1,5 @@
 export * from "./request"
+export * from "./ajax-request"
 export * from "./ajax-queue"
+export * from "./types"
+export * as RequestHelper from "./helpers"

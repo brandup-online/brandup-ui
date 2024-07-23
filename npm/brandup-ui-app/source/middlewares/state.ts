@@ -2,15 +2,24 @@ import { InvokeContext, Middleware, MiddlewareNext, NavigateContext, StartContex
 import CONSTANTS from "../constants";
 
 export const STATE_MIDDLEWARE_NAME = "app-state";
+const minLoadTime = 500;
 
 const StateMiddlewareFactory = (): Middleware => {
 	let counter: number = 0;
+	let timer: number;
+	let beginTime: number;
 
 	const begin = (context: InvokeContext) => {
-		counter++;
+		const prev = counter++;
+		console.log(prev);
+		window.clearTimeout(timer);
 
-		context.app.element?.classList.remove(CONSTANTS.STATE_CLASS.LOADED);
-		context.app.element?.classList.add(CONSTANTS.STATE_CLASS.LOADING);
+		if (prev === 0) {
+			beginTime = Date.now();
+
+			context.app.element?.classList.remove(CONSTANTS.STATE_CLASS.LOADED);
+			context.app.element?.classList.add(CONSTANTS.STATE_CLASS.LOADING);
+		}
 	}
 
 	const end = (context: InvokeContext) => {
@@ -19,8 +28,20 @@ const StateMiddlewareFactory = (): Middleware => {
 		if (counter <= 0) {
 			counter = 0;
 
-			context.app.element?.classList.remove(CONSTANTS.STATE_CLASS.LOADING);
-			context.app.element?.classList.add(CONSTANTS.STATE_CLASS.LOADED);
+			const finishTime = Date.now();
+			const diffTime = minLoadTime - (finishTime - beginTime);
+
+			if (diffTime > minLoadTime * 0.1) {
+				timer = window.setTimeout(() => {
+					context.app.element?.classList.add(CONSTANTS.STATE_CLASS.LOADED);
+
+					context.app.element?.classList.remove(CONSTANTS.STATE_CLASS.LOADING);
+				}, diffTime);
+			}
+			else {
+				context.app.element?.classList.add(CONSTANTS.STATE_CLASS.LOADED);
+				context.app.element?.classList.remove(CONSTANTS.STATE_CLASS.LOADING);
+			}
 		}
 	}
 

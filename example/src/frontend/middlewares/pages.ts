@@ -4,6 +4,7 @@ import { Middleware, MiddlewareNext, NavigateContext, StartContext, StopContext,
 import { Page } from "../pages/base";
 import { ExampleApplication } from "../app";
 import { PageNavigationData, PageSubmitData } from "../typings/app";
+import { FuncHelper } from "@brandup/ui-helpers";
 
 class PagesMiddleware implements Middleware {
 	readonly name: string = "pages";
@@ -28,11 +29,9 @@ class PagesMiddleware implements Middleware {
 		window.addEventListener("popstate", (e: PopStateEvent) => {
 			e.preventDefault();
 
-			const url = location.href;
+			console.log(`popstate`);
 
-			console.log(`popstate: ${url}`);
-
-			context.app.nav(url);
+			context.app.nav();
 		});
 
 		context.app.element?.insertAdjacentElement("beforeend", this._loaderElem = DOM.tag("div", "app-loader"));
@@ -58,20 +57,25 @@ class PagesMiddleware implements Middleware {
 			return;
 		}
 
-		// resolve and load new page
-		let pageDef = this._options.routes[context.path.toLowerCase()] || this._options.notfound;
-		const pageType = await pageDef.page();
+		const result = await FuncHelper.minWaitAsync<{ page: Page, content: DocumentFragment }>(async () => {
+			// resolve and load new page
+			let pageDef = this._options.routes[context.path.toLowerCase()] || this._options.notfound;
+			const pageType = await pageDef.page();
 
-		if (this._page) {
-			// destroy prev page
-			this._page.destroy();
-			this._page = null;
-		}
+			// create and render new page
+			const page: Page = new pageType.default(context);
+			const content = await page.render();
 
-		// create and render new page
-		const page: Page = new pageType.default(context);
-		this._nav(context, page);
-		await page.render(this._appContentElem);
+			return { page, content };
+		}, 300);
+
+		const prevPage = this._page;
+
+		this._nav(context, result.page);
+
+		// destroy current page
+		prevPage?.destroy();
+		this._appContentElem.appendChild(result.content);
 
 		await next();
 	}

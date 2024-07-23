@@ -1,8 +1,5 @@
 import UICONSTANTS from "./constants";
 
-export type CommandExecuteFunction = (context: CommandContext) => void | Promise<void | any>;
-export type CommandCanExecuteFunction = (context: CommandContext) => boolean;
-
 export abstract class UIElement {
 	private __element?: HTMLElement;
 	private __events?: { [key: string]: EventInit | null };
@@ -208,35 +205,6 @@ export abstract class UIElement {
 	}
 }
 
-interface CommandInit {
-	name: string;
-	execute: CommandExecuteFunction;
-	canExecute?: CommandCanExecuteFunction;
-	isExecuting?: boolean;
-}
-
-export interface CommandEventArgs {
-	name: string;
-	uiElem: UIElement;
-	elem: HTMLElement;
-}
-
-export interface CommandContext {
-	/** HTMLElement on which the command is executed */
-	target: HTMLElement;
-	/** UIElement in which the command handler is registered. */
-	uiElem: UIElement;
-	/** Don't stop the click event chain of target. */
-	transparent?: boolean;
-}
-
-export interface CommandResult {
-	status: CommandExecStatus;
-	context: CommandContext;
-}
-
-export type CommandExecStatus = "disallow" | "already" | "success";
-
 const fundUiElementByCommand = (elem: HTMLElement, commandName: string): UIElement | null => {
 	while (elem) {
 		if (elem.dataset[UICONSTANTS.ElemAttributeName]) {
@@ -290,3 +258,35 @@ const commandClickHandler = (e: MouseEvent) => {
 }
 
 window.addEventListener("click", commandClickHandler, false);
+
+interface CommandInit {
+	name: string;
+	execute: CommandExecuteFunction;
+	canExecute?: CommandCanExecuteFunction;
+	isExecuting?: boolean;
+}
+
+export type CommandExecuteFunction = (context: CommandContext) => void | Promise<void | any>;
+export type CommandCanExecuteFunction = (context: CommandContext) => boolean;
+
+export interface CommandEventArgs {
+	name: string;
+	uiElem: UIElement;
+	elem: HTMLElement;
+}
+
+export interface CommandContext {
+	/** HTMLElement on which the command is executed */
+	target: HTMLElement;
+	/** UIElement in which the command handler is registered. */
+	uiElem: UIElement;
+	/** Don't stop the click event chain of target. */
+	transparent?: boolean;
+}
+
+export interface CommandResult {
+	status: CommandExecStatus;
+	context: CommandContext;
+}
+
+export type CommandExecStatus = "disallow" | "already" | "success";

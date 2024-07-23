@@ -90,7 +90,7 @@ button {
 	position: absolute;
 	top: 0;
 	left: 0;
-	width: 100%;
+	width: 0;
 	height: 2px;
 	background: #fff;
 }
@@ -217,14 +217,17 @@ body.bp-state {
 	&-loading {
 		& .app-loader {
 			display: block;
-			animation: loading 10s 0.5;
+			animation: loading 3s linear infinite;
+			animation-play-state: running;
+			opacity: 0.8;
 		}
 	}
 
 	&-loaded {
 		& .app-loader {
-			transition: opacity ease 2s;
-			animation: loading 3s 1;
+			animation-duration: 2s;
+			transition: opacity ease 2s, width ease 2s;
+			width: 100%;
 			opacity: 0;
 		}
 	}

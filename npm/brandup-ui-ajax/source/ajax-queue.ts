@@ -1,10 +1,5 @@
-import { AjaxRequest, AjaxResponse, request } from "./request";
-
-export interface AjaxQueueOptions {
-	canRequest?: (request: AjaxRequest) => void | boolean;
-	successRequest?: (request: AjaxRequest, response: AjaxResponse) => void;
-	errorRequest?: (response: AjaxRequest, reason?: any) => void;
-}
+import { AjaxRequest, AjaxResponse } from "./types";
+import { request } from "./request";
 
 export class AjaxQueue {
 	private _options: AjaxQueueOptions;
@@ -118,6 +113,12 @@ export class AjaxQueue {
 		this._curent = null;
 		this.__execute();
 	}
+}
+
+export interface AjaxQueueOptions {
+	canRequest?: (request: AjaxRequest) => void | boolean;
+	successRequest?: (request: AjaxRequest, response: AjaxResponse) => void;
+	errorRequest?: (response: AjaxRequest, reason?: any) => void;
 }
 
 interface RequestTask {

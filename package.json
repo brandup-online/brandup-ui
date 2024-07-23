@@ -23,6 +23,7 @@
 		"i": "npm i && npm run npm:install",
 		"u": "npm update --save && npm run npm:update",
 		"build": "npm run npm:build",
+		"watch": "npm run npm:watch",
 		"npm:install": "autonpm install",
 		"npm:update": "autonpm update -save",
 		"npm:build": "autonpm build",
