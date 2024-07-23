@@ -67,7 +67,7 @@ class PagesMiddleware implements Middleware {
 			const content = await page.render();
 
 			return { page, content };
-		}, 300);
+		}); // 300
 
 		const prevPage = this._page;
 
