@@ -16,7 +16,8 @@
 		"outDir": "./out",
 		"declaration": false,
 		"declarationMap": false,
-		"removeComments": false
+		"removeComments": false,
+		"stripInternal": true
 	},
 	"include": [
 		"source",

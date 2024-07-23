@@ -35,9 +35,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	/** Middleware methods invoker. */
 	get invoker(): MiddlewareInvoker { return this.__invoker; }
 
-	/**
-	 * @param middlewares Initialize application with middlewares. Using in ApplicationBuilder.
-	 */
+	/** @internal */
 	initialize(middlewares: Array<Middleware>) {
 		if (this.__isInitialized)
 			throw 'Application already initialized.';
