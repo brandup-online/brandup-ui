@@ -17,7 +17,6 @@ module.exports = {
 			corejs: "3.37.1",
 			debug: false,
 			modules: "commonjs",
-			targets: { node: 'current'}
     	}
 	],
 	"@babel/preset-typescript"

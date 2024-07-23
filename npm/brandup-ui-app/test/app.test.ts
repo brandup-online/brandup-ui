@@ -15,8 +15,7 @@ it("Success run app", async () => {
 	expect(resultContext.url).toEqual("http://localhost/");
 	expect(resultContext.origin).toEqual("http://localhost");
 	expect(resultContext.path).toEqual("/");
-	expect(resultContext.query.toString()).toEqual("");
-	//expect(resultContext.query.size).toEqual(0);
+	expect(resultContext.query.size).toEqual(0);
 	expect(resultContext.hash).toBeNull();
 	expect(resultContext.replace).toEqual(false);
 	expect(resultContext.external).toEqual(false);
