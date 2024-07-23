@@ -32,10 +32,8 @@ abstract class UIElement {
     removeEventListener(type: string, listener?: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
     dispatchEvent(event: Event): boolean;
 
-    registerCommand(name: string, execute: CommandDelegate, canExecute: CommandCanExecuteDelegate = null): void;
-    registerAsyncCommand(name: string, delegate: CommandAsyncDelegate): void;
+    registerCommand(name: string, execute: CommandDelegate, canExecute?: CommandCanExecuteDelegate): void;
     hasCommand(name: string): boolean;
-    execCommand(name: string, elem: HTMLElement): CommandExecutionResult;
     
     protected _onRenderElement(_elem: HTMLElement);
     protected _onCanExecCommand(_name: string, _elem: HTMLElement): boolean;

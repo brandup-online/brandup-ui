@@ -3,19 +3,19 @@ export const ElemPropertyName = "brandupUiElement";
 export const CommandAttributeName = "command";
 export const CommandExecutingCssClassName = "executing";
 
-export type CommandDelegate = (context: CommandContext) => void | Promise<void | any>;
-export type CommandCanExecuteDelegate = (context: CommandContext) => boolean;
+export type CommandExecuteFunction = (context: CommandContext) => void | Promise<void | any>;
+export type CommandCanExecuteFunction = (context: CommandContext) => boolean;
 
 export abstract class UIElement {
-	private __element: HTMLElement | null = null;
-	private __events: { [key: string]: EventOptions | null } = {};
-	private __commandHandlers: { [key: string]: CommandHandler } = {};
+	private __element?: HTMLElement;
+	private __events?: { [key: string]: EventOptions | null };
+	private __commands?: { [key: string]: CommandDefinition };
 
 	abstract typeName: string;
 
 	// Element members
 
-	get element(): HTMLElement | null { return this.__element; }
+	get element(): HTMLElement | undefined { return this.__element; }
 
 	protected setElement(elem: HTMLElement) {
 		if (!elem)
@@ -43,11 +43,13 @@ export abstract class UIElement {
 	// HTMLElement event members
 
 	protected defineEvent(eventName: string, eventOptions?: EventOptions) {
+		if (!this.__events)
+			this.__events = {};
 		this.__events[eventName] = eventOptions ? eventOptions : null;
 	}
 
 	protected raiseEvent<T = {}>(eventName: string, eventArgs?: T): boolean {
-		if (!(eventName in this.__events))
+		if (!this.__events || !(eventName in this.__events))
 			throw new Error(`Not found event "${eventName}".`);
 
 		const eventOptions = this.__events[eventName];
@@ -85,89 +87,84 @@ export abstract class UIElement {
 
 	// Command members
 
-	registerCommand(name: string, execute: CommandDelegate, canExecute?: CommandCanExecuteDelegate) {
-		name = this.verifyCommandName(name);
+	registerCommand(name: string, execute: CommandExecuteFunction, canExecute?: CommandCanExecuteFunction) {
+		if (!this.__commands)
+			this.__commands = {};
 
-		this.__commandHandlers[name] = {
+		const nornalizedName = name.toLowerCase();
+		if (nornalizedName in this.__commands)
+			throw new Error(`Command "${name}" already registered.`);
+
+		this.__commands[nornalizedName] = {
 			name: name,
 			execute,
-			canExecute,
-			isExecuting: false
+			canExecute
 		};
 	}
 
 	hasCommand(name: string) {
-		return name.toLowerCase() in this.__commandHandlers;
+		return this.__commands && name.toLowerCase() in this.__commands;
 	}
 
-	execCommand(name: string, elem: HTMLElement): CommandExecutionResult {
-		if (!this.__element)
+	/** @internal */
+	__execCommand(name: string, target: HTMLElement): CommandResult {
+		if (!this.__element || !this.__commands)
 			throw new Error("UIElement is not set HTMLElement.");
 
 		const key = name.toLowerCase();
-		const handler = this.__commandHandlers[key];
-		if (!handler)
+		const command = this.__commands[key];
+		if (!command)
 			throw new Error(`Command "${name}" is not registered.`);
 
 		const context: CommandContext = {
-			target: elem,
-			uiElem: this,
-			transparent: false
+			target,
+			uiElem: this
 		};
 
-		if (handler.isExecuting)
+		if (command.isExecuting)
 			return { status: "already", context };
-		handler.isExecuting = true;
+		command.isExecuting = true;
 
-		if (!this._onCanExecCommand(name, elem)) {
-			handler.isExecuting = false;
+		if (!this._onCanExecCommand(name, target)) {
+			delete command.isExecuting;
 			return { status: "disallow", context };
 		}
 
-		if (handler.canExecute && !handler.canExecute(context)) {
-			handler.isExecuting = false;
+		if (command.canExecute && !command.canExecute(context)) {
+			delete command.isExecuting;
 			return { status: "disallow", context };
 		}
 
 		this.raiseEvent<CommandEventArgs>("command", {
-			name: handler.name,
+			name: command.name,
 			uiElem: this,
 			elem: this.__element
 		});
 
 		let isAsync: boolean | undefined;
 		try {
-			const handlerResult = handler.execute(context);
+			const commandResult = command.execute(context);
 
-			if (handlerResult && handlerResult instanceof Promise) {
+			if (commandResult && commandResult instanceof Promise) {
 				isAsync = true;
 
-				elem.classList.add(CommandExecutingCssClassName);
-				handlerResult
+				target.classList.add(CommandExecutingCssClassName);
+				commandResult
 					.finally(() => {
-						elem.classList.remove(CommandExecutingCssClassName);
-						handler.isExecuting = false;
+						target.classList.remove(CommandExecutingCssClassName);
+						delete command.isExecuting;
 					});
 			}
 		}
 		finally {
 			if (!isAsync)
-				handler.isExecuting = false;
+				delete command.isExecuting;
 		}
 
 		return { status: "success", context: context };
 	}
 
-	private verifyCommandName(name: string) {
-		const key = name.toLowerCase();
-		if (key in this.__commandHandlers)
-			throw new Error(`Command "${name}" already registered.`);
-		return key;
-	}
-
-	protected _onRenderElement(_elem: HTMLElement) {
-		return;
-	}
+	protected _onRenderElement(_elem: HTMLElement) { }
 
 	protected _onCanExecCommand(_name: string, _elem: HTMLElement): boolean {
 		return true;
@@ -177,18 +174,20 @@ export abstract class UIElement {
 		const elem = this.__element;
 		if (!elem)
 			return;
-		this.__element = null;
+		delete this.__element;
+		delete this.__events;
+		delete this.__commands;
 
 		delete elem.dataset[ElemAttributeName];
 		delete (<any>elem)[ElemPropertyName];
 	}
 }
 
-interface CommandHandler {
+interface CommandDefinition {
 	name: string;
-	isExecuting: boolean;
-	execute: CommandDelegate;
-	canExecute?: CommandCanExecuteDelegate;
+	execute: CommandExecuteFunction;
+	canExecute?: CommandCanExecuteFunction;
+	isExecuting?: boolean;
 }
 
 export interface EventOptions {
@@ -204,21 +203,17 @@ export interface CommandEventArgs {
 }
 
 export interface CommandContext {
-	/** Елемент, который принял команду. */
+	/** HTMLElement on which the command is executed */
 	target: HTMLElement;
+	/** UIElement in which the command handler is registered. */
 	uiElem: UIElement;
-	transparent: boolean;
+	/** Don't stop the click event chain of target. */
+	transparent?: boolean;
 }
 
-export interface CommandExecutionResult {
+export interface CommandResult {
 	status: CommandExecStatus;
 	context: CommandContext;
-}
-
-export interface CommandAsyncContext extends CommandContext {
-	timeout?: number;
-	complate: VoidFunction;
-	timeoutCallback?: VoidFunction;
 }
 
 export type CommandExecStatus = "disallow" | "already" | "success";
@@ -263,7 +258,7 @@ const commandClickHandler = (e: MouseEvent) => {
 
 	const uiElem = fundUiElementByCommand(commandElem, commandName);
 	if (uiElem) {
-		const result = uiElem.execCommand(commandName, commandElem);
+		const result = uiElem.__execCommand(commandName, commandElem);
 		if (result.status == "success" && result.context.transparent)
 			return;
 	}

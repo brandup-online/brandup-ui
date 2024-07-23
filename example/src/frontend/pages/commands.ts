@@ -1,7 +1,6 @@
 ﻿import { DOM } from "@brandup/ui-dom";
+import { request } from "@brandup/ui-ajax";
 import { Page } from "./base";
-import { CommandContext } from "@brandup/ui";
-import { ajaxRequest, request } from "@brandup/ui-ajax";
 
 export default class NavigationPage extends Page {
 	get typeName(): string { return "AboutModel" }
@@ -71,12 +70,14 @@ export default class NavigationPage extends Page {
 						query: { handler: "UploadFile" },
 						method: "POST",
 						data: input.files.item(0)
-					}).then(response => {
-						if (response.status == 200)
-							alert(JSON.stringify(response.data));
-						else
-							alert(response.status);
-					}).finally(() => resolve());
+					})
+						.then(response => {
+							if (response.status == 200)
+								alert(JSON.stringify(response.data));
+							else
+								alert(response.status);
+						})
+						.finally(() => resolve());
 				});
 
 				input.addEventListener("cancel", () => resolve());
@@ -84,23 +85,33 @@ export default class NavigationPage extends Page {
 		});
 
 		this.registerCommand("upload-form", () => {
-			const input = <HTMLInputElement>DOM.tag("input", { type: "file", name: "file" });
-			const form = <HTMLFormElement>DOM.tag("form", { enctype: "multipart/form-data" }, input);
-			input.click();
+			return new Promise<void>(resolve => {
+				const input = <HTMLInputElement>DOM.tag("input", { type: "file", name: "file" });
+				const form = <HTMLFormElement>DOM.tag("form", { enctype: "multipart/form-data" }, input);
+				input.click();
 
-			input.addEventListener("change", () => {
-				ajaxRequest({
-					query: { handler: "UploadForm" },
-					method: "POST",
-					data: form,
-					success: (response) => {
-						if (response.status == 200) {
-							alert(JSON.stringify(response.data));
-						}
-						else
-							alert(response.state);
+				input.addEventListener("change", () => {
+					if (!input.files || input.files.length !== 1) {
+						resolve();
+						return;
 					}
+
+					request({
+						query: { handler: "UploadForm" },
+						method: "POST",
+						data: form
+					})
+						.then((response) => {
+							if (response.status == 200) {
+								alert(JSON.stringify(response.data));
+							}
+							else
+								alert(response.state);
+						})
+						.finally(() => resolve());
 				});
+
+				input.addEventListener("cancel", () => resolve());
 			});
 		});
 	}
