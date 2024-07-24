@@ -269,6 +269,9 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			console.error(`app destroy error: ${reason}`);
 			throw reason;
 		}
+		finally {
+			super.destroy();
+		}
 	}
 
 	/**
