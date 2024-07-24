@@ -38,11 +38,11 @@ const getRightTime = (start: number, minTime: number) => {
 	return w > minTime * 0.1 ? w : 0;
 }
 
-function delay(time: number, abort: AbortSignal): Promise<void> {
+function delay(time: number, abort?: AbortSignal): Promise<void> {
 	return new Promise<void>(resolve => {
 		const timer = window.setTimeout(() => resolve(), time);
 
-		abort.addEventListener("abort", () => {
+		abort?.addEventListener("abort", () => {
 			window.clearTimeout(timer);
 			resolve();
 		});
