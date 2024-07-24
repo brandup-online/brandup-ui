@@ -1,4 +1,4 @@
-import { ElementOptions, CssClass, TagChildrenLike, TagChildrenPrimitive } from "./types";
+import { ElementOptions, CssClass, TagChildrenLike, TagChildrenPrimitive, ElementEvents } from "./types";
 import helpers from "./helpers";
 
 function tag<TElement extends keyof HTMLElementTagNameMap>(tagName: TElement, options?: ElementOptions | CssClass | null, children?: TagChildrenLike | Array<TagChildrenLike>): HTMLElementTagNameMap[TElement] {
@@ -54,8 +54,10 @@ const applyOptions = (elem: HTMLElement, options?: ElementOptions | CssClass | n
 				}
 				case "events": {
 					if (value) {
-						for (const eventName in value as object)
+						for (const eventName in value as ElementEvents)
 							elem.addEventListener(eventName, (<any>value)[eventName]);
+
+						elem.style
 					}
 					break;
 				}

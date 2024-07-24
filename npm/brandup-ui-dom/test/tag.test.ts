@@ -24,6 +24,7 @@ it('DOM.tag with options', () => {
 		class: "class",
 		dataset: { "param": "value" },
 		events: { "click": () => isClicked = true },
+		styles: { fontSize: "10px" },
 		command: "go",
 		custom: "value"
 	});
@@ -33,6 +34,7 @@ it('DOM.tag with options', () => {
 	expect(true).toEqual(elem.classList.contains("class"));
 	expect("value").toEqual(elem.dataset.param);
 	expect("value").toEqual(elem.getAttribute("data-param"));
+	expect("10px").toEqual(elem.style.fontSize);
 	expect("go").toEqual(elem.getAttribute("data-command"));
 	expect("value").toEqual(elem.getAttribute("custom"));
 
