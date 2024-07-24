@@ -1,13 +1,13 @@
 {
 	"compilerOptions": {
-		"module": "ES2020",
+		"module": "ESNext",
 		"moduleResolution": "node",
 		"target": "ESNext",
-		"sourceMap": false,
+		"sourceMap": true,
 		"strict": true,
 		"lib": [
 			"DOM",
-			"ES2020"
+			"ESNext"
 		],
 		"esModuleInterop": true,
 		"noImplicitAny": true,
@@ -17,10 +17,12 @@
 		"declaration": false,
 		"declarationMap": false,
 		"removeComments": false,
-		"stripInternal": true
+		"stripInternal": true,
+		"allowSyntheticDefaultImports": true
 	},
 	"include": [
-		"source"
+		"source",
+		"test"
 	],
 	"exclude": [
 		"node_modules",
@@ -28,8 +30,5 @@
 		".vs",
 		".vscode"
 	],
-	"compileOnSave": false,
-	"typeAcquisition": {
-		"enable": true
-	}
+	"compileOnSave": false
 }

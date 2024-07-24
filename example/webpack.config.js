@@ -50,7 +50,7 @@ module.exports = (env) => {
         },
         resolve: { 
 			extensions: ['.js', '.jsx', '.ts', '.tsx', '.less'],
-            modules: [path.resolve(__dirname, 'node_modules'), '../node_modules']
+            //modules: [path.resolve(__dirname, 'node_modules')]
 		},
         output: {
             path: path.join(__dirname, bundleOutputDir),
@@ -118,7 +118,7 @@ module.exports = (env) => {
                     extractComments: false
                 })
             ],
-            removeAvailableModules: true,
+            removeAvailableModules: false,
             removeEmptyChunks: true,
             providedExports: false,
             usedExports: true
