@@ -5,7 +5,7 @@ const addCssClass = (elem: Element, cssClass: CssClass) => {
 		return;
 
 	if (!Array.isArray(cssClass))
-		cssClass = [cssClass];
+		cssClass = cssClass.split(' ');
 
 	elem.classList.add(...cssClass);
 };
@@ -15,7 +15,7 @@ const removeCssClass = (elem: Element, cssClass: CssClass) => {
 		return;
 
 	if (!Array.isArray(cssClass))
-		cssClass = [cssClass];
+		cssClass = cssClass.split(' ');
 
 	elem.classList.remove(...cssClass);
 };
