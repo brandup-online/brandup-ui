@@ -48,7 +48,10 @@ module.exports = (env) => {
         entry: {
             app: path.resolve(__dirname, 'src', 'frontend', 'index.ts')
         },
-        resolve: { extensions: ['.js', '.jsx', '.ts', '.tsx', '.less'] },
+        resolve: { 
+			extensions: ['.js', '.jsx', '.ts', '.tsx', '.less'],
+            //modules: [path.resolve(__dirname, 'node_modules')]
+		},
         output: {
             path: path.join(__dirname, bundleOutputDir),
             filename: getFilePath('[name].js'),
@@ -115,7 +118,7 @@ module.exports = (env) => {
                     extractComments: false
                 })
             ],
-            removeAvailableModules: true,
+            removeAvailableModules: false,
             removeEmptyChunks: true,
             providedExports: false,
             usedExports: true
