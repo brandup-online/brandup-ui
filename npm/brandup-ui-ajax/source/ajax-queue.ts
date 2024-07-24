@@ -15,17 +15,17 @@ export class AjaxQueue {
 	get isFree(): boolean { return !this._requests.length && !this._curent; }
 	get isEmpty(): boolean { return !this._requests.length; }
 
-	push(request: AjaxRequest) {
+	push(request: AjaxRequest, abortSignal?: AbortSignal) {
 		if (this._destroyed)
 			throw new Error("AjaxQueue is destroyed.");
 
-		this._requests.push({ request, abort: new AbortController() });
+		this._requests.push({ request, cancel: abortSignal, abort: new AbortController() });
 
 		if (!this._curent)
 			this.__execute();
 	}
 
-	enque(request: AjaxRequest) {
+	enque(request: AjaxRequest, abortSignal?: AbortSignal) {
 		const { success, error } = request;
 
 		return new Promise<AjaxResponse>((resolve, reject) => {
@@ -35,14 +35,14 @@ export class AjaxQueue {
 
 				resolve(response);
 			};
-			request.error = (response: AjaxRequest, reason?: any) => {
+			request.error = (request: AjaxRequest, reason?: any) => {
 				if (error)
 					error(request, reason);
 
 				reject(reason);
 			};
 
-			this.push(request);
+			this.push(request, abortSignal);
 		});
 	}
 
@@ -84,10 +84,14 @@ export class AjaxQueue {
 				return;
 			}
 
-			task.abort = new AbortController();
+			if (task.request.abort?.aborted || task.cancel?.aborted)
+				task.result = Promise.reject("cancelled");
+			else {
+				task.abort = new AbortController();
+				task.result = request(task.request, task.cancel ? AbortSignal.any([task.abort.signal, task.cancel]) : task.abort.signal);
+			}
 
-			task.xhr = request(task.request, task.abort.signal);
-			task.xhr
+			task.result
 				.then(response => {
 					if (this._destroyed)
 						return;
@@ -123,6 +127,7 @@ export interface AjaxQueueOptions {
 
 interface RequestTask {
 	readonly request: AjaxRequest;
+	cancel?: AbortSignal;
 	abort?: AbortController;
-	xhr?: Promise<AjaxResponse>;
+	result?: Promise<AjaxResponse>;
 }

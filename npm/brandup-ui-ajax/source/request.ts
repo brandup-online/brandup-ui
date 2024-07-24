@@ -17,6 +17,8 @@ export const request = async (options: AjaxRequest, abortSignal?: AbortSignal): 
 	const prepared = internals.prepareRequest(options, body);
 
 	const abortSignals = [AbortSignal.timeout(options.timeout ?? internals.DEFAULT_TIMEOUT)];
+	if (options.abort)
+		abortSignals.push(options.abort);
 	if (abortSignal)
 		abortSignals.push(abortSignal);
 

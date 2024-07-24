@@ -15,20 +15,18 @@ const minWait = (func: (...args: any[]) => void, minTime?: number) => {
 	return ret;
 };
 
-function minWaitAsync<TResult>(func: () => Promise<TResult>, minTime?: number): Promise<TResult> {
+async function minWaitAsync<TResult>(func: () => Promise<TResult>, minTime?: number, abort?: AbortSignal): Promise<TResult> {
 	if (!minTime)
 		return func();
 
 	const beginTime = Date.now();
+	const result = await func();
 
-	return func()
-		.then(data => {
-			const rightTime = getRightTime(beginTime, minTime);
-			if (rightTime)
-				return new Promise<any>(resolve => window.setTimeout(() => resolve(data), rightTime));
-			else
-				return data;
-		});
+	const rightTime = getRightTime(beginTime, minTime);
+	if (rightTime)
+		await delay(rightTime, abort);
+
+	return result;
 };
 
 const getRightTime = (start: number, minTime: number) => {
@@ -39,12 +37,19 @@ const getRightTime = (start: number, minTime: number) => {
 }
 
 function delay(time: number, abort?: AbortSignal): Promise<void> {
-	return new Promise<void>(resolve => {
-		const timer = window.setTimeout(() => resolve(), time);
+	return new Promise<void>((resolve, reject) => {
+		const timer = window.setTimeout(() => {
+			if (abort && abort.aborted) {
+				reject("cancelled");
+				return;
+			}
+
+			resolve();
+		}, time);
 
 		abort?.addEventListener("abort", () => {
 			window.clearTimeout(timer);
-			resolve();
+			reject("cancelled");
 		});
 	});
 }

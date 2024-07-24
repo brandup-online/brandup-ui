@@ -15,6 +15,7 @@ export interface AjaxRequest<TState = any> {
 	headers?: { [key: string]: string } | null;
 	type?: AJAXReqestType | null;
 	data?: string | object | Blob | FormData | HTMLFormElement | null;
+	abort?: AbortSignal;
 	success?: ResponseDelegate | null;
 	error?: ErrorDelegate | null;
 	disableCache?: boolean | null;

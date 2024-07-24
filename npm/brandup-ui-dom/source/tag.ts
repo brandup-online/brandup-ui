@@ -1,7 +1,7 @@
 import { ElementOptions, CssClass, TagChildrenLike, TagChildrenPrimitive } from "./types";
 import helpers from "./helpers";
 
-function tag(tagName: string, options?: ElementOptions | CssClass | null, children?: TagChildrenLike | Array<TagChildrenLike>): HTMLElement {
+function tag<TElement extends keyof HTMLElementTagNameMap>(tagName: TElement, options?: ElementOptions | CssClass | null, children?: TagChildrenLike | Array<TagChildrenLike>): HTMLElementTagNameMap[TElement] {
 	const elem = document.createElement(tagName);
 
 	applyOptions(elem, options);
@@ -11,7 +11,7 @@ function tag(tagName: string, options?: ElementOptions | CssClass | null, childr
 	else
 		appendChild(elem, "beforeend", children);
 
-	return elem;
+	return elem as HTMLElementTagNameMap[TElement];
 }
 
 const applyOptions = (elem: HTMLElement, options?: ElementOptions | CssClass | null) => {
