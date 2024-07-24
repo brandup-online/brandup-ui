@@ -36,7 +36,8 @@ export const request = async (options: AjaxRequest, abortSignal?: AbortSignal): 
 
 		switch (response.type) {
 			case "basic":
-			case "default": {
+			case "default":
+			case "cors": {
 				let responseData: any = null;
 				let responseType: ResponseType = "none";
 
@@ -80,13 +81,10 @@ export const request = async (options: AjaxRequest, abortSignal?: AbortSignal): 
 				break;
 			}
 			case "opaqueredirect":
-				throw new Error("Not supported opaqueredirect.")
+			case "opaque":
+				throw new Error(`Not supported response type: ${response.type}`);
 			case "error":
 				throw new Error("Response error.");
-			case "cors":
-				throw new Error("Response type cors is not supported.");
-			case "opaque":
-				throw new Error("Response type opaque is not supported.");
 			default:
 				throw new Error(`Unknown response type: ${response.type}`);
 		}
