@@ -115,7 +115,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	 * @returns Promise of navigated result.
 	 */
 	async nav<TData extends ContextData>(options?: NavigationOptions<TData> | string | null): Promise<NavigateContext<this, TData>> {
-		const opt: NavigationOptions<TData> = (!options || options instanceof String) ? { url: <string>options } : <NavigationOptions<TData>>options;
+		const opt: NavigationOptions<TData> = (!options || typeof options === "string") ? { url: <string>options } : <NavigationOptions<TData>>options;
 		let { url = null, replace = false, data = <TData>{}, callback } = opt;
 
 		const navUrl = urlHelper.parseUrl(url);
@@ -138,10 +138,8 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			replace
 		};
 
-		console.info(context);
-
 		try {
-			console.info(`app nav begin ${navUrl.full}`);
+			console.info(`app nav begin ${navUrl.full}`, context);
 
 			await this.__invoker.invoke("navigate", context);
 

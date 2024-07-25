@@ -1,26 +1,63 @@
 import { Application } from "../source/app";
 import { ContextData } from "../source/middlewares/base";
+import { DOM } from "@brandup/ui-dom";
 
 const app = new Application({ basePath: "/" }, {});
 
-it("Success run app", async () => {
+it("Application.run success", async () => {
 	const app = new Application({ basePath: "/" }, {});
 
-	const resultContext = await app.run<TestContextData>({
-		test: "test"
-	});
+	const appEleme = DOM.tag("div");
+	const navContext = await app.run<TestContextData>({
+		test: "value"
+	}, appEleme);
 
-	expect(resultContext.app).toEqual(app);
-	expect(resultContext.source).toEqual("first");
-	expect(resultContext.url).toEqual("http://localhost/");
-	expect(resultContext.origin).toEqual("http://localhost");
-	expect(resultContext.path).toEqual("/");
-	expect(resultContext.query.size).toEqual(0);
-	expect(resultContext.hash).toBeNull();
-	expect(resultContext.replace).toEqual(false);
-	expect(resultContext.external).toEqual(false);
+	expect(navContext.app).toEqual(app);
+	expect(navContext.source).toEqual("first");
+	expect(navContext.url).toEqual("http://localhost/");
+	expect(navContext.origin).toEqual("http://localhost");
+	expect(navContext.pathAndQuery).toEqual("/");
+	expect(navContext.path).toEqual("/");
+	expect(navContext.query.size).toEqual(0);
+	expect(navContext.hash).toBeNull();
+	expect(navContext.replace).toEqual(false);
+	expect(navContext.external).toEqual(false);
 
-	expect(resultContext.data.test).toEqual("test");
+	expect(navContext.data.test).toEqual("value");
+});
+
+it("Application.nav success", async () => {
+	const app = new Application({ basePath: "/" }, {});
+	const appEleme = DOM.tag("div");
+	await app.run({}, appEleme);
+
+	let navContext = await app.nav("/about");
+	expect(navContext.source).toEqual("nav");
+	expect(navContext.url).toEqual("http://localhost/about");
+	expect(navContext.origin).toEqual("http://localhost");
+	expect(navContext.pathAndQuery).toEqual("/about");
+	expect(navContext.path).toEqual("/about");
+	expect(navContext.query.size).toEqual(0);
+	expect(navContext.hash).toBeNull();
+	expect(navContext.replace).toEqual(false);
+	expect(navContext.external).toEqual(false);
+
+	// nav with callback and data
+	let isSuccess = false;
+	navContext = await app.nav<TestContextData>({ url: "/company", data: { test: "value" }, callback: () => { isSuccess = true; } });
+	expect(navContext.path).toEqual("/company");
+	expect(isSuccess).toEqual(true);
+	expect(navContext.data.test).toEqual("value");
+
+	// nav with extend query
+	navContext = await app.nav({ url: "/company", query: { test: "value" } });
+	expect(navContext.pathAndQuery).toEqual("/company?test=value");
+	expect(navContext.query.get("test")).toEqual("value");
+
+	// overide exist query param in url
+	navContext = await app.nav({ url: "/company?test=value2", query: { test: "value" } });
+	expect(navContext.pathAndQuery).toEqual("/company?test=value");
+	expect(navContext.query.get("test")).toEqual("value");
 });
 
 interface TestContextData extends ContextData {

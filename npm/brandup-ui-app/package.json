@@ -26,7 +26,8 @@
 	"license": "Apache-2.0",
 	"version": "1.0.0",
 	"dependencies": {
-		"@brandup/ui": "file:../brandup-ui"
+		"@brandup/ui": "file:../brandup-ui",
+		"@brandup/ui-dom": "file:../brandup-ui-dom"
 	},
 	"devDependencies": {
 		"@rollup/plugin-node-resolve": "^15.2.3",
