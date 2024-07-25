@@ -39,17 +39,15 @@ const getRightTime = (start: number, minTime: number) => {
 function delay(time: number, abort?: AbortSignal): Promise<void> {
 	return new Promise<void>((resolve, reject) => {
 		const timer = window.setTimeout(() => {
-			if (abort && abort.aborted) {
-				reject("cancelled");
-				return;
-			}
-
-			resolve();
+			if (abort && abort.aborted)
+				reject(abort.reason);
+			else
+				resolve();
 		}, time);
 
 		abort?.addEventListener("abort", () => {
 			window.clearTimeout(timer);
-			reject("cancelled");
+			reject(abort.reason);
 		});
 	});
 }

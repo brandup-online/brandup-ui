@@ -15,26 +15,21 @@ export class MiddlewareInvoker {
 			this.__next = new MiddlewareInvoker(middleware);
 	}
 
-	async invoke<TContext extends InvokeContext>(method: string, context: TContext): Promise<void> {
-		try {
-			await this.__exec(method, context);
-		}
-		catch (e) {
-			console.error(`Error middleware "${method}" execution: ${e}`);
-
-			throw e;
-		}
+	invoke<TContext extends InvokeContext>(method: string, context: TContext): Promise<void> {
+		return this.__exec(method, context);
 	}
 
 	private async __exec(method: string, context: InvokeContext): Promise<void> {
 		const nextFunc: MiddlewareNext = () => this.__next ? this.__next.__exec(method, context) : Promise.resolve();
+
+		context.abort.throwIfAborted();
 
 		const methodFunc: MiddlewareMethod = this.middleware[method];
 		if (typeof methodFunc === "function") {
 			const methodResult: Promise<void> = methodFunc.call(this.middleware, context, nextFunc);
 
 			if (!methodResult || !(methodResult instanceof Promise))
-				throw new Error(`Middleware method "${method}" is not async.`);
+				throw new Error(`Middleware "${this.middleware.name}" method "${method}" is not async.`);
 
 			await methodResult;
 		}

@@ -6,11 +6,7 @@ export const HYPERLINK_MIDDLEWARE_NAME = "app-hyperlink";
 
 const HyperLinkMiddlewareFactory = (): Middleware => {
 	let __ctrlPressed = false;
-
-	const onKeyDownUp = (e: KeyboardEvent) => {
-		__ctrlPressed = e.ctrlKey;
-	}
-
+	const onKeyDownUp = (e: KeyboardEvent) => __ctrlPressed = e.ctrlKey;
 	let onClick: (e: MouseEvent) => void | undefined;
 
 	return {
@@ -61,6 +57,7 @@ const HyperLinkMiddlewareFactory = (): Middleware => {
 
 				context.app
 					.nav({ url, replace: elem.hasAttribute(CONSTANTS.NavUrlReplaceAttributeName), data: { clickElem: elem } })
+					.catch(() => { })
 					.finally(() => elem.classList.remove(CONSTANTS.LoadingElementClass));
 			}, false);
 

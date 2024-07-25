@@ -18,7 +18,8 @@ builder
 			'/forms': { page: () => import("./pages/forms"), preload: true },
 			'/ajax': { page: () => import("./pages/ajax") }
 		},
-		notfound: { page: () => import("./pages/notfound") }
+		notfound: { page: () => import("./pages/error/notfound") },
+		error: { page: () => import("./pages/error/exception") }
 	}))
 	.useMiddleware(ErrorMiddleware)
 	.useMiddleware(RealtimeMiddleware);

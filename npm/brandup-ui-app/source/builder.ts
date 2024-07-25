@@ -1,6 +1,6 @@
 import { Application } from "./app";
 import { Middleware } from "./middlewares/base";
-import { ApplicationModel, EnvironmentModel } from "./typings/app";
+import { ApplicationModel, EnvironmentModel } from "./types";
 
 export class ApplicationBuilder<TModel extends ApplicationModel> {
 	private __model: TModel;

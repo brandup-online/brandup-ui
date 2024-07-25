@@ -17,6 +17,7 @@ export type MiddlewareNext = () => Promise<void>;
 export interface InvokeContext {
 	readonly app: Application;
 	readonly data: ContextData;
+	readonly abort: AbortSignal;
 }
 
 export interface ContextData {
@@ -40,10 +41,16 @@ export interface StopContext<TApplication extends Application = Application, TDa
 // navigate method
 
 export interface NavigateContext<TApplication extends Application = Application, TData extends ContextData = ContextData> extends InvokeContext {
-	readonly app: TApplication;
-	readonly data: TData;
 	/** Source navigation event. */
 	readonly source: NavigateSource;
+	/** Application instance of navigation. */
+	readonly app: TApplication;
+	/** Previous navigation. */
+	readonly current?: NavigateContext<TApplication, TData>;
+	/** Parent navigation context. Specified if the navigation is nested. */
+	readonly parent?: NavigateContext<TApplication, TData>;
+	readonly overided: boolean;
+	readonly data: TData;
 	/** Origin, path and query, but without hash. */
 	readonly url: string;
 	/** Scheme, host and port. */

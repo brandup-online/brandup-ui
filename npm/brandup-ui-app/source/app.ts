@@ -1,24 +1,31 @@
 import { UIElement } from "@brandup/ui";
-import { EnvironmentModel, ApplicationModel, QueryParams } from "./typings/app";
+import { EnvironmentModel, ApplicationModel, QueryParams } from "./types";
 import { Middleware, StartContext, StopContext, NavigateContext, SubmitContext, InvokeContext, ContextData } from "./middlewares/base";
 import { MiddlewareInvoker } from "./middlewares/invoker";
 import StateMiddleware from "./middlewares/state";
 import HyperLinkMiddleware from "./middlewares/hyperlink";
-import FormMiddleware from "./middlewares/form";
 import urlHelper from "./helpers/url";
 import BROWSER from "./browser";
+import CONSTANTS from "./constants";
+
+export const NAV_OVERIDE_ERROR = "NavigationOveride";
 
 /**
  * Base application class.
  */
 export class Application<TModel extends ApplicationModel = ApplicationModel> extends UIElement {
+	/** Application environment. */
 	readonly env: EnvironmentModel;
+	/** Application model. */
 	readonly model: TModel;
-	private readonly __invoker: MiddlewareInvoker;
+	/** Application middleware invoker. */
+	readonly invoker: MiddlewareInvoker;
 	private __isInitialized = false;
 	private __isDestroy = false;
 	private __middlewares: { [key: string]: Middleware } = {};
-	private __lastNav: NavigateContext | null = null;
+	private __globalSubmit?: (e: SubmitEvent) => void;
+	private __execNav?: ExecuteNav<TModel>; // current navigation invoking
+	private __lastNav?: ExecuteNav<TModel>; // last success navigation
 
 	constructor(env: EnvironmentModel, model: TModel, ...args: any[]) {
 		super();
@@ -27,18 +34,15 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		this.model = model;
 
 		const core: Middleware = { name: "app-root" };
-		this.__invoker = new MiddlewareInvoker(core);
+		this.invoker = new MiddlewareInvoker(core);
 	}
 
 	get typeName(): string { return "Application" }
 
-	/** Middleware methods invoker. */
-	get invoker(): MiddlewareInvoker { return this.__invoker; }
-
 	/** @internal */
 	initialize(middlewares: Array<Middleware>) {
 		if (this.__isInitialized)
-			throw 'Application already initialized.';
+			throw new Error('Application already initialized.');
 		this.__isInitialized = true;
 
 		this.onInitialize();
@@ -47,18 +51,17 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			var name = middleware.name;
 
 			if (this.__middlewares.hasOwnProperty(name))
-				throw `Middleware "${name}" already registered.`;
+				throw new Error(`Middleware "${name}" already registered.`);
 
 			this.__middlewares[name] = middleware;
 
-			this.__invoker.next(middleware);
+			this.invoker.next(middleware);
 		});
 	}
 
 	protected onInitialize() {
-		this.__invoker.next(StateMiddleware());
-		this.__invoker.next(HyperLinkMiddleware());
-		this.__invoker.next(FormMiddleware());
+		this.invoker.next(StateMiddleware());
+		this.invoker.next(HyperLinkMiddleware());
 	}
 
 	/**
@@ -69,7 +72,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	middleware<T extends Middleware>(name: string): T {
 		const middleware: any = this.__middlewares[name];
 		if (!middleware)
-			throw `Middleware ${name} is not registered.`;
+			throw new Error(`Middleware ${name} is not registered.`);
 
 		return <T>middleware;
 	}
@@ -86,26 +89,46 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 		this.setElement(element || BROWSER.body);
 
+		const abort = new AbortController();
+
+		const context: StartContext<this, TData> = {
+			abort: abort.signal,
+			app: this,
+			data: contextData
+		};
+
 		try {
-			const context: StartContext<this, TData> = {
-				app: this,
-				data: contextData
-			};
-			await this.__invoker.invoke("start", context);
+			await this.invoker.invoke("start", context);
 			console.info("app start success");
 
-			await this.__invoker.invoke("loaded", context);
+			abort.signal.throwIfAborted();
+
+			BROWSER.window.addEventListener("submit", this.__globalSubmit = (e: SubmitEvent) => {
+				const form = e.target as HTMLFormElement;
+				if (!form.classList.contains(CONSTANTS.FormClassName))
+					return;
+
+				e.preventDefault();
+
+				this.__onSubmit({ form, button: e.submitter instanceof HTMLButtonElement ? <HTMLButtonElement>e.submitter : null })
+					.catch(() => { });
+			}, false);
+
+			await this.invoker.invoke("loaded", context);
 			console.info("app load success");
+
+			abort.signal.throwIfAborted();
+
+			console.info("app runned");
 
 			return await this.nav({ data: context.data });
 		}
 		catch (reason) {
-			console.error(`Unable to run application with reason: ${reason}`);
+			if (this.__globalSubmit)
+				BROWSER.window.removeEventListener("submit", this.__globalSubmit);
 
+			console.error(`Error run application: ${reason}`);
 			throw reason;
-		}
-		finally {
-			console.info("app runned");
 		}
 	}
 
@@ -116,7 +139,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	 */
 	async nav<TData extends ContextData>(options?: NavigationOptions<TData> | string | null): Promise<NavigateContext<this, TData>> {
 		const opt: NavigationOptions<TData> = (!options || typeof options === "string") ? { url: <string>options } : <NavigationOptions<TData>>options;
-		let { url = null, replace = false, data = <TData>{}, callback } = opt;
+		let { url = null, replace = false, data = <TData>{} } = opt;
 
 		const navUrl = urlHelper.parseUrl(url);
 		if (opt.query)
@@ -124,9 +147,26 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 		const isFirst = !this.__lastNav;
 
-		const context: NavigateContext<this, TData> = this.__lastNav = {
-			app: this,
+		let parentNav: ExecuteNav<TModel> | undefined;
+		if (this.__execNav && this.__execNav.status === "work") {
+			parentNav = this.__execNav;
+
+			parentNav.abort.abort(NAV_OVERIDE_ERROR);
+			(<any>parentNav.context).overided = true;
+		}
+
+		const abort = new AbortController();
+		const externalAbort = opt.abort;
+		if (externalAbort)
+			externalAbort.addEventListener("abort", () => abort.abort(externalAbort.reason));
+
+		const context: NavigateContext<this, TData> = {
 			source: isFirst ? "first" : "nav",
+			app: this,
+			abort: abort.signal,
+			current: <NavigateContext<this, TData>>this.__lastNav?.context,
+			parent: <NavigateContext<this, TData>>parentNav?.context,
+			overided: false,
 			data,
 			url: navUrl.url,
 			origin: navUrl.origin,
@@ -138,96 +178,98 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			replace
 		};
 
-		try {
-			console.info(`app nav begin ${navUrl.full}`, context);
+		const currentNav: ExecuteNav<TModel> = { id: parentNav ? parentNav.id + 1 : 1, method: "navigate", context, abort, status: "work" };
+		await this.__execNavigate(currentNav);
 
-			await this.__invoker.invoke("navigate", context);
-
-			if (callback)
-				callback({ status: "success", context: context });
-
-			console.info(`app nav success ${navUrl.full}`);
-
-			return context;
-		}
-		catch (reason) {
-			if (callback)
-				callback({ status: "error", context: context });
-
-			console.error(`app nav error ${navUrl.full}: ${reason}`);
-
-			throw reason;
-		}
+		return context;
 	}
 
-	/**
-	 * Submit application form.
-	 * @param options Submit options.
-	 * @returns Promise of submitted result.
-	 */
-	async submit<TData extends ContextData>(options: SubmitOptions<TData> | HTMLFormElement): Promise<SubmitContext<this, TData>> {
+	private async __onSubmit<TData extends ContextData>(options: SubmitOptions<TData> | HTMLFormElement) {
 		const opt: SubmitOptions<TData> = options instanceof HTMLFormElement ? { form: <HTMLFormElement>options } : <SubmitOptions<TData>>options;
-		const { form, button = null, query, data = <TData>{}, callback = null } = opt;
+		const { form, button = null, query, data = <TData>{} } = opt;
 
+		if (!form.checkValidity())
+			return Promise.reject(new Error('Form is invalid.'));
+
+		let replace = form.hasAttribute(CONSTANTS.NavUrlReplaceAttributeName);
 		let method = form.method;
 		let enctype = form.enctype;
 		let url = form.action;
 
 		if (button) {
-			// Get button patameters for request
 			if (button.hasAttribute("formmethod"))
 				method = button.formMethod;
 			if (button.hasAttribute("formenctype"))
 				enctype = button.formEnctype;
 			if (button.hasAttribute("formaction"))
 				url = button.formAction;
+
+			button.classList.add(CONSTANTS.LoadingElementClass);
+
+			if (button.hasAttribute(CONSTANTS.NavUrlReplaceAttributeName))
+				replace = true;
 		}
+
+		if (form.classList.contains(CONSTANTS.LoadingElementClass))
+			return Promise.reject(new Error('Form already submitting.'));
+		form.classList.add(CONSTANTS.LoadingElementClass);
 
 		method = method.toUpperCase();
 
-		const navUrl = urlHelper.parseUrl(url);
-
-		if (query)
-			urlHelper.extendQuery(navUrl, query);
-
-		let submitContext: SubmitContext<this, TData> = {
-			app: this,
-			source: "submit",
-			data,
-			form,
-			button,
-			method,
-			enctype,
-			url: navUrl.url,
-			origin: navUrl.origin,
-			pathAndQuery: navUrl.relative,
-			path: navUrl.path,
-			query: navUrl.query,
-			hash: navUrl.hash,
-			external: navUrl.external,
-			replace: false
-		};
-
 		try {
-			console.info(`submit ${method} begin ${navUrl.full}`);
 
-			await this.__invoker.invoke("submit", submitContext);
+			if (method === "GET")
+				await this.nav({ url, query: new FormData(form), data: data, replace });
+			else {
+				const navUrl = urlHelper.parseUrl(url);
+				if (query)
+					urlHelper.extendQuery(navUrl, query);
 
-			console.info(`submit ${method} success ${navUrl.full}`);
+				let parentNav: ExecuteNav<TModel> | undefined;
+				if (this.__execNav && this.__execNav.status === "work") {
+					parentNav = this.__execNav;
 
-			if (callback)
-				callback({ status: "success", context: submitContext });
+					parentNav.abort.abort(NAV_OVERIDE_ERROR);
+					(<any>parentNav.context).overided = true;
+				}
+
+				const abort = new AbortController();
+				const externalAbort = opt.abort;
+				if (externalAbort)
+					externalAbort.addEventListener("abort", () => abort.abort(externalAbort.reason));
+
+				let context: SubmitContext<this, TData> = {
+					source: "submit",
+					app: this,
+					abort: abort.signal,
+					current: <NavigateContext<this, TData>>this.__lastNav?.context,
+					parent: <NavigateContext<this, TData>>parentNav?.context,
+					overided: false,
+					data,
+					form,
+					button,
+					method,
+					enctype,
+					url: navUrl.url,
+					origin: navUrl.origin,
+					pathAndQuery: navUrl.relative,
+					path: navUrl.path,
+					query: navUrl.query,
+					hash: navUrl.hash,
+					external: navUrl.external,
+					replace
+				};
+
+				const currentNav: ExecuteNav<TModel> = { id: parentNav ? parentNav.id + 1 : 1, method: "submit", context, abort, status: "work" };
+				await this.__execNavigate(currentNav);
+			}
 		}
-		catch (reason) {
-			console.error(`submit ${method} error ${navUrl.full} reason: ${reason}`)
+		finally {
+			form.classList.remove(CONSTANTS.LoadingElementClass);
 
-			if (callback)
-				callback({ status: "error", context: submitContext });
-
-			throw reason;
+			if (button)
+				button.classList.remove(CONSTANTS.LoadingElementClass);
 		}
-
-		return submitContext;
 	}
 
 	/**
@@ -251,13 +293,19 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 		console.info("app destroy begin");
 
+		if (this.__globalSubmit)
+			BROWSER.window.removeEventListener("submit", this.__globalSubmit);
+
+		const abort = new AbortController();
+
 		const context: StopContext<Application, TData> = {
+			abort: abort.signal,
 			app: this,
 			data: contextData || <TData>{}
 		};
 
 		try {
-			await this.__invoker.invoke("stop", context);
+			await this.invoker.invoke("stop", context);
 
 			console.info("app destroy success");
 
@@ -282,6 +330,37 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	buildUrl(path?: string, query?: QueryParams | URLSearchParams | FormData, hash?: string): string {
 		return urlHelper.buildUrl(this.env.basePath, path, query, hash);
 	}
+
+	private async __execNavigate(nav: ExecuteNav<TModel>) {
+		this.__execNav = nav;
+
+		try {
+			console.info(`${nav.method} begin`, nav.context);
+
+			await this.invoker.invoke(nav.method, nav.context);
+
+			this.__lastNav = nav;
+
+			nav.status = "success";
+			console.info(`${nav.method} ${nav.status} ${nav.context.url}`);
+		}
+		catch (reason: any) {
+			if (reason?.name === "AbortError") {
+				nav.status = "cancelled";
+				console.warn(`${nav.method} ${nav.status} ${nav.context.url}`);
+			}
+			else if (reason === NAV_OVERIDE_ERROR) {
+				nav.status = "overided";
+				console.warn(`${nav.method} ${nav.status} ${nav.context.url}`);
+			}
+			else {
+				nav.status = "error";
+				console.error(`${nav.method} ${nav.status} ${nav.context.url}: ${reason}`);
+			}
+
+			throw reason;
+		}
+	}
 }
 
 export interface NavigationOptions<TData extends ContextData = ContextData> {
@@ -289,7 +368,7 @@ export interface NavigationOptions<TData extends ContextData = ContextData> {
 	query?: QueryParams | URLSearchParams | FormData;
 	replace?: boolean;
 	data?: TData;
-	callback?: (result: CallbackResult<NavigateContext<Application, TData>>) => void | null;
+	abort?: AbortSignal;
 }
 
 export interface SubmitOptions<TData extends ContextData = ContextData> {
@@ -297,12 +376,15 @@ export interface SubmitOptions<TData extends ContextData = ContextData> {
 	button?: HTMLButtonElement | null;
 	query?: QueryParams | URLSearchParams;
 	data?: TData;
-	callback?: (result: CallbackResult<SubmitContext<Application, TData>>) => void;
+	abort?: AbortSignal;
 }
 
-export interface CallbackResult<TContext extends InvokeContext> {
-	status: CallbackStatus;
-	context: TContext;
+interface ExecuteNav<TModel extends ApplicationModel = ApplicationModel> {
+	id: number;
+	method: "navigate" | "submit";
+	context: NavigateContext<Application<TModel>, ContextData>;
+	abort: AbortController;
+	status: ExecuteStatus;
 }
 
-export type CallbackStatus = "success" | "error";
+type ExecuteStatus = "work" | "success" | "overided" | "cancelled" | "error";

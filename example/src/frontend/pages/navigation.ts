@@ -1,13 +1,22 @@
 ﻿import { DOM } from "@brandup/ui-dom";
 import { Page } from "./base";
 import { PageNavigationData } from "frontend/typings/app";
+import { FuncHelper } from "@brandup/ui-helpers";
 
 export default class NavigationPage extends Page {
 	get typeName(): string { return "AboutModel" }
 	get header(): string { return "Navigation" }
 
 	protected async onRenderContent(container: HTMLElement) {
+		if (this.context.query.has("error"))
+			throw new Error("Error is page render.");
+		if (this.context.query.has("long"))
+			await FuncHelper.delay(5000, this.context.abort);
+
 		container.appendChild(DOM.tag("p", null, "Working page navigation."));
+
+		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "?error=true", class: "applink" }, "nav to error in page")));
+		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "?long=true", class: "applink" }, "nav to long render")));
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "#test1" }, "hash1")));
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "#test2" }, "hash2")));
@@ -32,11 +41,6 @@ export default class NavigationPage extends Page {
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "nav2" }, "nav: empty")));
 		this.registerCommand("nav2", () => {
 			return this.app.nav({});
-		});
-
-		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "nav3" }, "nav: callback")));
-		this.registerCommand("nav3", () => {
-			return this.app.nav({ url: "/forms", callback: (result) => { alert(result.status); } });
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "nav4" }, "nav: with replace")));

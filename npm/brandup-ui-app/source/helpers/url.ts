@@ -1,4 +1,4 @@
-import { QueryParams } from "../typings/app";
+import { QueryParams } from "../types";
 import BROWSER from "../browser";
 
 const parseUrl = (url: string | null): ParsedUrl => {

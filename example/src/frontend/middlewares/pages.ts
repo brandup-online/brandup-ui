@@ -50,24 +50,35 @@ class PagesMiddleware implements Middleware {
 
 	async navigate(context: NavigateContext<ExampleApplication, PageNavigationData>, next: MiddlewareNext) {
 		if (context.external) {
-			const linkElem = <HTMLLinkElement>DOM.tag("a", { href: context.url, target: "_blank" });
+			const linkElem = DOM.tag("a", { href: context.url, target: "_blank" });
 			linkElem.click();
 			linkElem.remove();
-
 			return;
 		}
 
 		const result = await FuncHelper.minWaitAsync<{ page: Page, content: DocumentFragment }>(async () => {
 			// resolve and load new page
 			let pageDef = this._options.routes[context.path.toLowerCase()] || this._options.notfound;
-			const pageType = await pageDef.page();
+			let pageType = await pageDef.page();
 
-			// create and render new page
-			const page: Page = new pageType.default(context);
-			const content = await page.render();
+			let page: Page;
+			let content: DocumentFragment;
+			try {
+				// create and render new page
+				page = new pageType.default(context);
+				content = await page.render();
+			}
+			catch {
+				pageDef = this._options.error;
+				pageType = await pageDef.page();
+				page = new pageType.default(context);
+				content = await page.render();
+			}
 
 			return { page, content };
 		}); // 300
+
+		context.abort.throwIfAborted();
 
 		const prevPage = this._page;
 
@@ -130,6 +141,7 @@ class PagesMiddleware implements Middleware {
 export interface PagesOptions {
 	routes: Routes;
 	notfound: Route;
+	error: Route;
 }
 
 export interface Routes {

@@ -42,11 +42,9 @@ it("Application.nav success", async () => {
 	expect(navContext.replace).toEqual(false);
 	expect(navContext.external).toEqual(false);
 
-	// nav with callback and data
-	let isSuccess = false;
-	navContext = await app.nav<TestContextData>({ url: "/company", data: { test: "value" }, callback: () => { isSuccess = true; } });
+	// nav with data
+	navContext = await app.nav<TestContextData>({ url: "/company", data: { test: "value" } });
 	expect(navContext.path).toEqual("/company");
-	expect(isSuccess).toEqual(true);
 	expect(navContext.data.test).toEqual("value");
 
 	// nav with extend query

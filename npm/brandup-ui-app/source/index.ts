@@ -1,4 +1,4 @@
-export * from "./typings/app"
+export * from "./types"
 export * from "./builder"
 export * from "./middlewares/base"
 export * from "./app"

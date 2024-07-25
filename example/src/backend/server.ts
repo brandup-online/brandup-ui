@@ -17,7 +17,7 @@ process.argv.map(value => {
 });
 console.log(`run on port ${port}`);
 
-if (!server.server) throw "server creation error";
+if (!server.server) throw new Error("server creation error");
 
 server.server.listen(port, () => { console.log(`Server start https://localhost:${port}`); })
 	.on("error", (err: any) => {
