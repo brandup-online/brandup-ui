@@ -4,7 +4,7 @@ import internals from "./internals";
 
 /** Request with fetch. */
 export const request = async (options: AjaxRequest, abortSignal?: AbortSignal): Promise<AjaxResponse> => {
-	let { mode = "cors" } = options;
+	let { mode, credentials = "include" } = options;
 	let url = options.url || location.href;
 	url = helpers.addQuery(url, options.query);
 
@@ -29,6 +29,7 @@ export const request = async (options: AjaxRequest, abortSignal?: AbortSignal): 
 			headers: new Headers(prepared.headers),
 			cache: options.disableCache ? "no-cache" : "default",
 			mode,
+			credentials,
 			redirect: "follow",
 			signal: AbortSignal.any(abortSignals),
 			body: prepared.body

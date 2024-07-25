@@ -12,6 +12,7 @@ export interface AjaxRequest<TState = any> {
 	query?: QueryData | null;
 	method?: AJAXMethod | null;
 	mode?: RequestMode;
+	credentials?: RequestCredentials;
 	timeout?: number | null;
 	headers?: { [key: string]: string } | null;
 	type?: AJAXReqestType | null;
