@@ -4,13 +4,14 @@ import internals from "./internals";
 
 /** Request with fetch. */
 export const request = async (options: AjaxRequest, abortSignal?: AbortSignal): Promise<AjaxResponse> => {
+	let { mode = "cors" } = options;
 	let url = options.url || location.href;
 	url = helpers.addQuery(url, options.query);
 
 	const method = options.method ? options.method.toUpperCase() : "GET";
 
 	let body: any = options.data;
-	if (body && method === "GET")
+	if (body && (method === "GET" || method === "HEAD"))
 		throw new Error("GET method is not support request with data.");
 
 	internals.detectRequestType(options);
@@ -27,6 +28,7 @@ export const request = async (options: AjaxRequest, abortSignal?: AbortSignal): 
 			method,
 			headers: new Headers(prepared.headers),
 			cache: options.disableCache ? "no-cache" : "default",
+			mode,
 			redirect: "follow",
 			signal: AbortSignal.any(abortSignals),
 			body: prepared.body

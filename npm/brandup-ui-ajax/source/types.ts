@@ -1,4 +1,4 @@
-export type AJAXMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | string;
+export type AJAXMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | string;
 export type AJAXReqestType = "NONE" | "JSON" | "XML" | "FORM" | "FORMDATA" | "TEXT" | "BLOB";
 export type ResponseType = "none" | "json" | "blob" | "text" | "html";
 
@@ -11,6 +11,7 @@ export interface AjaxRequest<TState = any> {
 	url?: string | null;
 	query?: QueryData | null;
 	method?: AJAXMethod | null;
+	mode?: RequestMode;
 	timeout?: number | null;
 	headers?: { [key: string]: string } | null;
 	type?: AJAXReqestType | null;

@@ -11,9 +11,9 @@ it("DOM.addClass many", () => {
 it("DOM.addClass single", () => {
 	const child = DOM.tag("div", ["zero"]);
 
-	DOM.addClass(DOM.tag("div", null, child), ".zero", "class2");
+	DOM.addClass(DOM.tag("div", null, child), ".zero", "class2 test");
 
-	expect(2).toEqual(child.classList.length);
+	expect(3).toEqual(child.classList.length);
 });
 
 it("DOM.addClass none", () => {
