@@ -11,7 +11,7 @@ export default class NavigationPage extends Page {
 		if (this.context.query.has("error"))
 			throw new Error("Error is page render.");
 		if (this.context.query.has("redirect"))
-			await this.app.nav("/forms");
+			await this.context.redirect("/forms");
 		if (this.context.query.has("long"))
 			await FuncHelper.delay(5000, this.context.abort);
 

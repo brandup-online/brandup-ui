@@ -58,7 +58,12 @@ class PagesMiddleware implements Middleware {
 
 		const result = await FuncHelper.minWaitAsync<{ page: Page, content: DocumentFragment }>(async () => {
 			// resolve and load new page
-			let pageDef = this._options.routes[context.path.toLowerCase()] || this._options.notfound;
+			let pageDef = this._options.routes[context.path.toLowerCase()];
+			if (!pageDef) {
+				console.warn(`page notfound`, context.path);
+				pageDef = this._options.notfound;
+			}
+
 			let pageType = await pageDef.page();
 
 			let page: Page;
@@ -68,7 +73,9 @@ class PagesMiddleware implements Middleware {
 				page = new pageType.default(context);
 				content = await page.render();
 			}
-			catch {
+			catch (reason) {
+				console.error(`page error`, reason);
+
 				pageDef = this._options.error;
 				pageType = await pageDef.page();
 				page = new pageType.default(context);
