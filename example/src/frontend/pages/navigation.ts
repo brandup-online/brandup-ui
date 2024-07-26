@@ -10,12 +10,15 @@ export default class NavigationPage extends Page {
 	protected async onRenderContent(container: HTMLElement) {
 		if (this.context.query.has("error"))
 			throw new Error("Error is page render.");
+		if (this.context.query.has("redirect"))
+			await this.app.nav("/forms");
 		if (this.context.query.has("long"))
 			await FuncHelper.delay(5000, this.context.abort);
 
 		container.appendChild(DOM.tag("p", null, "Working page navigation."));
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "?error=true", class: "applink" }, "nav to error in page")));
+		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "?redirect=true", class: "applink" }, "nav to redirect in page")));
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "?long=true", class: "applink" }, "nav to long render")));
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "#test1" }, "hash1")));

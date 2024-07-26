@@ -13,16 +13,6 @@ it("Application.run success", async () => {
 	}, appEleme);
 
 	expect(navContext.app).toEqual(app);
-	expect(navContext.source).toEqual("first");
-	expect(navContext.url).toEqual("http://localhost/");
-	expect(navContext.origin).toEqual("http://localhost");
-	expect(navContext.pathAndQuery).toEqual("/");
-	expect(navContext.path).toEqual("/");
-	expect(navContext.query.size).toEqual(0);
-	expect(navContext.hash).toBeNull();
-	expect(navContext.replace).toEqual(false);
-	expect(navContext.external).toEqual(false);
-
 	expect(navContext.data.test).toEqual("value");
 });
 

@@ -83,7 +83,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	 * @param element HTMLElement of application. Default is document.body.
 	 * @returns Promise of runned result.
 	 */
-	async run<TData extends ContextData>(contextData?: TData | null, element?: HTMLElement): Promise<NavigateContext<this, TData>> {
+	async run<TData extends ContextData>(contextData?: TData | null, element?: HTMLElement): Promise<StartContext<this, TData>> {
 		if (!contextData)
 			contextData = <TData>{};
 
@@ -121,13 +121,20 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 			console.info("app runned");
 
-			return await this.nav({ data: context.data });
+			await this.nav({ data: context.data });
+
+			return context;
 		}
-		catch (reason) {
+		catch (reason: any) {
+			if (reason === NAV_OVERIDE_ERROR) {
+				console.info(`app run nav overided`);
+				return context;
+			}
+
 			if (this.__globalSubmit)
 				BROWSER.window.removeEventListener("submit", this.__globalSubmit);
 
-			console.error(`Error run application: ${reason}`);
+			console.error(`app run error: ${reason}`);
 			throw reason;
 		}
 	}
