@@ -1,3 +1,4 @@
+import { QueryParams } from "../types";
 import { Application } from "../app";
 
 export interface Middleware {
@@ -40,7 +41,18 @@ export interface StopContext<TApplication extends Application = Application, TDa
 
 // navigate method
 
+
+export interface NavigateOptions<TData extends ContextData = ContextData> {
+	url?: string | null;
+	query?: QueryParams | URLSearchParams | FormData;
+	replace?: boolean;
+	data?: TData;
+	abort?: AbortSignal;
+}
+
 export interface NavigateContext<TApplication extends Application = Application, TData extends ContextData = ContextData> extends InvokeContext {
+	/** Index number of all application navigations. */
+	readonly index: number;
 	/** Source navigation event. */
 	readonly source: NavigateSource;
 	/** Application instance of navigation. */
@@ -67,6 +79,8 @@ export interface NavigateContext<TApplication extends Application = Application,
 	readonly external: boolean;
 	/** Replace current navigation entry. */
 	replace: boolean;
+	/** Redirect to new url and throw for end current context. */
+	redirect(options?: NavigateOptions<TData> | string | null): Promise<NavigateContext<TApplication, TData>>;
 }
 
 /**
@@ -78,6 +92,14 @@ export interface NavigateContext<TApplication extends Application = Application,
 export type NavigateSource = "first" | "nav" | "submit";
 
 // submit method
+
+export interface SubmitOptions<TData extends ContextData = ContextData> {
+	form: HTMLFormElement;
+	button?: HTMLButtonElement | null;
+	query?: QueryParams | URLSearchParams;
+	data?: TData;
+	abort?: AbortSignal;
+}
 
 export interface SubmitContext<TApplication extends Application = Application, TData extends ContextData = ContextData> extends NavigateContext<TApplication, TData> {
 	readonly form: HTMLFormElement;
