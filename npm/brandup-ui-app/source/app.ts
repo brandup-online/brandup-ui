@@ -145,7 +145,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		if (opt.query)
 			urlHelper.extendQuery(navUrl, opt.query);
 
-		const isFirst = !this.__lastNav;
+		let isFirst = !this.__lastNav && !this.__execNav;
 
 		let parentNav: ExecuteNav<TModel> | undefined;
 		if (this.__execNav && this.__execNav.status === "work") {
@@ -295,6 +295,9 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 		if (this.__globalSubmit)
 			BROWSER.window.removeEventListener("submit", this.__globalSubmit);
+
+		if (this.__execNav)
+			this.__execNav.abort.abort();
 
 		const abort = new AbortController();
 

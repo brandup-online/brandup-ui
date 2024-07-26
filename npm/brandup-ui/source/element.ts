@@ -4,7 +4,7 @@ export abstract class UIElement {
 	private __element?: HTMLElement;
 	private __events?: { [key: string]: EventInit | null };
 	private __commands?: { [key: string]: CommandInit };
-	private __destroyCallbacks: Array<() => void> | undefined;
+	private __destroyCallbacks?: Array<VoidFunction>;
 
 	abstract typeName: string;
 

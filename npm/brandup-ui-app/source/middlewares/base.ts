@@ -71,9 +71,9 @@ export interface NavigateContext<TApplication extends Application = Application,
 
 /**
  * Navigation event source.
- * first - first navigation from run.
- * nav - from nav app method.
- * submit - from submit app method. For only get submit.
+ * first - first navigation by application.
+ * nav - from nav application method.
+ * submit - from submit form.
  */
 export type NavigateSource = "first" | "nav" | "submit";
 
