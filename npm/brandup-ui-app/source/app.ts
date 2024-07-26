@@ -103,6 +103,11 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 			abort.signal.throwIfAborted();
 
+			await this.invoker.invoke("loaded", context);
+			console.info("app load success");
+
+			abort.signal.throwIfAborted();
+
 			BROWSER.window.addEventListener("submit", this.__globalSubmit = (e: SubmitEvent) => {
 				const form = e.target as HTMLFormElement;
 				if (!form.classList.contains(CONSTANTS.FormClassName))
@@ -114,16 +119,15 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 					.catch(() => { });
 			}, false);
 
-			await this.invoker.invoke("loaded", context);
-			console.info("app load success");
-
-			abort.signal.throwIfAborted();
-
 			console.info("app runned");
+		}
+		catch (reason: any) {
+			console.error(`app run error: ${reason}`);
+			throw reason;
+		}
 
+		try {
 			await this.nav({ data: context.data });
-
-			return context;
 		}
 		catch (reason: any) {
 			if (reason === NAV_OVERIDE_ERROR) {
@@ -131,12 +135,10 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 				return context;
 			}
 
-			if (this.__globalSubmit)
-				BROWSER.window.removeEventListener("submit", this.__globalSubmit);
-
-			console.error(`app run error: ${reason}`);
 			throw reason;
 		}
+
+		return context;
 	}
 
 	/**
