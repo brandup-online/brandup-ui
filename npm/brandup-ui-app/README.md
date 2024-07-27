@@ -2,19 +2,21 @@
 
 [![Build Status](https://dev.azure.com/brandup/BrandUp%20Core/_apis/build/status%2FBrandUp%2Fbrandup-ui?branchName=master)]()
 
+[TOC]
+
 ## Installation
 
 Install NPM package [@brandup/ui-app](https://www.npmjs.com/package/@brandup/ui-app).
 
 ```
-npm i @brandup/ui-app@latest
+npm i @brandup/ui-app
 ```
 
 ## Configure and run application
 
 Configure your application with middlewares and run.
 
-```
+```typescript
 import { ApplicationBuilder } from "@brandup/ui-app";
 import { PagesMiddleware } from "./middlewares/pages";
 import "./styles.less";
@@ -42,29 +44,25 @@ app.run({ ...optional context params })
 
 Default HTMLElement of application is `document.body`. Set custom element:
 
-```
+```typescript
 const appElement = document.getElementById("app")
 app.run({ ...optional context params }, appElement);
 ```
 
 ## Navigation
 
-Example links for application navigation:
+Example links for application navigation `app.nav({ url: "url" })`:
 
-```
+```html
 <a href="url" class="applink">text</a>
 <button data-nav-url="url">text</button>
-
-app.nav({ url: "url" })
 ```
 
-Replace current url:
+Replace current url `app.nav({ url: "url", replace: true })`:
 
-```
+```html
 <a href="url" class="applink" data-nav-replace>text</a>
 <button data-nav-url="url" data-nav-replace>text</button>
-
-app.nav({ url: "url", replace: true })
 ```
 
 The element's click event will start a chain of `navigate` method calls for all middleware.
@@ -73,7 +71,7 @@ During navigation and until it is completed, the `loading` class is added to the
 
 ## Submit form
 
-```
+```html
 <form class="appform">
 	<input type="text" name="value" />
 </form>
@@ -87,9 +85,9 @@ If the form method is `GET`, then navigation with the form data will start.
 
 Inject to application lifecycle event methods. Middleware methods are called one after another in the order in which they were registered in the `ApplicationBuilder`.
 
-```
-export class PagesMiddleware implements Middleware {
-	readonly name: string = "pages"; // unique name of current middleware
+```typescript
+class PagesMiddleware implements Middleware {
+	name = "pages"; // unique name of this middleware
 
     start(context: StartContext<ExampleApplication>, next: MiddlewareNext) {
         console.log("start");
@@ -127,19 +125,21 @@ export class PagesMiddleware implements Middleware {
 		return next();
     }
 }
+
+export default () => new PagesMiddleware();
 ```
 
 Example SPA navigation middleware: [example/src/frontend/middlewares/pages.ts](/example/src/frontend/middlewares/pages.ts)
 
 Retrivie middleware by unique name:
 
-```
+```typescript
 const middleware = app.middleware<PagesMiddleware>("pages");
 ```
 
-### Async middleware execution
+### Async execution
 
-```
+```typescript
 export class PagesMiddleware implements Middleware {
 	async navigate(context: NavigateContext, next: MiddlewareNext) {
         // Exec before next middleware
@@ -153,7 +153,7 @@ export class PagesMiddleware implements Middleware {
 
 ### Redirect navigation
 
-```
+```typescript
 export class AuthMiddleware implements Middleware {
 	async navigate(context: NavigateContext, next: MiddlewareNext) {
         await context.redirect({ url: "url" });
