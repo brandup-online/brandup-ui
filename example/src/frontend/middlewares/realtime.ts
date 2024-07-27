@@ -4,11 +4,11 @@ import { PageNavigationData } from "../typings/app";
 
 export const REALTIME_NAME = "realtime";
 
-export interface RealtimeMiddleware extends Middleware {
+export interface RealtimeMiddleware {
 	subscribe: (id: string) => void;
 }
 
-export default (): RealtimeMiddleware => {
+export default (): Middleware & RealtimeMiddleware => {
 	return {
 		name: "realtime",
 		navigate: (context: NavigateContext<ExampleApplication, PageNavigationData>, next: MiddlewareNext) => {

@@ -1,16 +1,17 @@
 ﻿import { ApplicationBuilder } from "@brandup/ui-app";
 import { ExampleApplicationModel } from "./typings/app";
 import { ExampleApplication } from "./app";
-import PagesMiddleware from "./middlewares/pages";
-import ErrorMiddleware from "./middlewares/error";
-import RealtimeMiddleware from "./middlewares/realtime";
 import "./styles/styles.less";
+
+import pages from "./middlewares/pages";
+import errors from "./middlewares/error";
+import realtime from "./middlewares/realtime";
 
 const builder = new ApplicationBuilder<ExampleApplicationModel>({});
 
 builder
 	.useApp(ExampleApplication)
-	.useMiddleware(PagesMiddleware, {
+	.useMiddleware(pages, {
 		routes: {
 			'/': { page: () => import("./pages/index"), preload: true },
 			'/commands': { page: () => import("./pages/commands") },
@@ -21,8 +22,8 @@ builder
 		notfound: { page: () => import("./pages/error/notfound") },
 		error: { page: () => import("./pages/error/exception") }
 	})
-	.useMiddleware(ErrorMiddleware)
-	.useMiddleware(RealtimeMiddleware);
+	.useMiddleware(errors)
+	.useMiddleware(realtime);
 
 const app = builder.build({ basePath: "/" });
 

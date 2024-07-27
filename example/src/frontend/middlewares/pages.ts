@@ -6,7 +6,7 @@ import { ExampleApplication } from "../app";
 import { PageNavigationData, PageSubmitData } from "../typings/app";
 import { FuncHelper } from "@brandup/ui-helpers";
 
-class PagesMiddleware implements Middleware {
+class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 	readonly name: string = "pages";
 	private _options: PagesOptions;
 	private _appContentElem: HTMLElement;
@@ -161,6 +161,9 @@ class PagesMiddleware implements Middleware {
 	}
 }
 
+export interface PagesMiddleware {
+}
+
 export interface PagesOptions {
 	routes: Routes;
 	notfound: Route;
@@ -176,4 +179,4 @@ export interface Route {
 	preload?: boolean;
 }
 
-export default (options: PagesOptions) => new PagesMiddleware(options);
+export default (options: PagesOptions) => new PagesMiddlewareImpl(options);

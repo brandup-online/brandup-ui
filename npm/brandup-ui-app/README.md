@@ -20,7 +20,7 @@ Configure your application with middlewares and run.
 
 ```typescript
 import { ApplicationBuilder } from "@brandup/ui-app";
-import { PagesMiddleware } from "./middlewares/pages";
+import pages from "./middlewares/pages";
 import "./styles.less";
 
 // Customize application model
@@ -34,13 +34,13 @@ export class ExampleApplication extends Application<ExampleApplicationModel> {
 const builder = new ApplicationBuilder<ExampleApplicationModel>();
 builder
 	.useApp(ExampleApplication)
-	.useMiddleware(() => new PagesMiddleware());
+	.useMiddleware(pages);
 
 const appModel: ExampleApplicationModel = {};
 const app = builder.build<ExampleApplicationModel>({ basePath: "/" }, appModel);
 
-app.run({ ...optional context params })
-	.then(navContext => { })
+app.run({ /*optional context params*/ })
+	.then(context: StartContext => { })
 	.catch(reason => { });
 ```
 
@@ -48,7 +48,7 @@ Default HTMLElement of application is `document.body`. Set custom element:
 
 ```typescript
 const appElement = document.getElementById("app")
-app.run({ ...optional context params }, appElement);
+app.run({ /*optional context params*/ }, appElement);
 ```
 
 ## Navigation
@@ -79,7 +79,7 @@ During navigation and until it is completed, the `loading` class is added to the
 </form>
 ```
 
-The form's submit event will start a chain of `submit` method calls for all middleware.
+The form's submit event will start a chain of `submit` method calls for all middleware. Class `appform` is required.
 
 If the form method is `GET`, then navigation with the form data will start.
 
@@ -88,7 +88,7 @@ If the form method is `GET`, then navigation with the form data will start.
 Inject to application lifecycle event methods. Middleware methods are called one after another in the order in which they were registered in the `ApplicationBuilder`.
 
 ```typescript
-class PagesMiddleware implements Middleware {
+class PagesMiddlewareImpl implements Middleware {
 	name = "pages"; // unique name of this middleware
 
     start(context: StartContext<ExampleApplication>, next: MiddlewareNext) {
@@ -128,15 +128,21 @@ class PagesMiddleware implements Middleware {
     }
 }
 
-export default () => new PagesMiddleware();
+/** External interface of middleware. */
+export interface PagesMiddleware {
+}
+
+export default () => new PagesMiddlewareImpl();
 ```
 
 Example SPA navigation middleware: [example/src/frontend/middlewares/pages.ts](/example/src/frontend/middlewares/pages.ts)
 
+### Access to middleware
+
 Retrivie middleware by unique name:
 
 ```typescript
-const middleware = app.middleware<PagesMiddleware>("pages");
+const pages = app.middleware<PagesMiddleware>("pages");
 ```
 
 ### Async execution
@@ -167,4 +173,4 @@ export class AuthMiddleware implements Middleware {
 }
 ```
 
-The `redirect` method will always throw an exception and end the current navigation.
+The `redirect` method will always throw an exception with reason `NAV_OVERIDE_ERROR` constant and end the current navigation.
