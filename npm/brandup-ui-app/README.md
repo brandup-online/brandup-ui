@@ -49,11 +49,11 @@ app.run({ ...optional context params }, appElement);
 
 ## Navigation
 
-Example links:
+Example links for application navigation:
 
 ```
 <a href="url" class="applink">text</a>
-<button data-nav-url="url" class="applink">text</button>
+<button data-nav-url="url">text</button>
 
 app.nav({ url: "url" })
 ```
@@ -62,7 +62,7 @@ Replace current url:
 
 ```
 <a href="url" class="applink" data-nav-replace>text</a>
-<button data-nav-url="url" class="applink" data-nav-replace>text</button>
+<button data-nav-url="url" data-nav-replace>text</button>
 
 app.nav({ url: "url", replace: true })
 ```
@@ -73,8 +73,6 @@ During navigation and until it is completed, the `loading` class is added to the
 
 ## Submit form
 
-Example form:
-
 ```
 <form class="appform">
 	<input type="text" name="value" />
@@ -82,6 +80,8 @@ Example form:
 ```
 
 The form's submit event will start a chain of `submit` method calls for all middleware.
+
+If the form method is `GET`, then navigation with the form data will start.
 
 ## Middlewares
 
@@ -156,6 +156,10 @@ export class PagesMiddleware implements Middleware {
 ```
 export class AuthMiddleware implements Middleware {
 	async navigate(context: NavigateContext, next: MiddlewareNext) {
+        await context.redirect({ url: "url" });
+    }
+
+	async submit(context: SubmitContext, next: MiddlewareNext) {
         await context.redirect({ url: "url" });
     }
 }

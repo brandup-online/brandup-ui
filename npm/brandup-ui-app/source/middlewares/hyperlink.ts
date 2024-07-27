@@ -18,13 +18,13 @@ const HyperLinkMiddlewareFactory = (): Middleware => {
 				let elem: Node | null = e.target as Node;
 				let ignore = false;
 				while (elem) {
-					if (elem instanceof Element) {
+					if (elem instanceof HTMLElement) {
 						if (elem.hasAttribute(CONSTANTS.NavIgnoreAttributeName)) {
 							ignore = true;
 							break;
 						}
 
-						if (elem.classList && elem.classList.contains(CONSTANTS.NavUrlClassName))
+						if (elem.classList.contains(CONSTANTS.NavUrlClassName) || elem.hasAttribute(CONSTANTS.NavUrlAttributeName))
 							break;
 					}
 
