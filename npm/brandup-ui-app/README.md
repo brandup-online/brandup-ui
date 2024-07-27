@@ -1,8 +1,8 @@
-# brandup-ui-app
+# @brandup/ui-app
+
+Lightweight, fast and extensible application framework. Full async support. Weight after minification is less than 10KB!
 
 [![Build Status](https://dev.azure.com/brandup/BrandUp%20Core/_apis/build/status%2FBrandUp%2Fbrandup-ui?branchName=master)]()
-
-[TOC]
 
 ## Installation
 
@@ -11,6 +11,8 @@ Install NPM package [@brandup/ui-app](https://www.npmjs.com/package/@brandup/ui-
 ```
 npm i @brandup/ui-app
 ```
+
+This package support **TypeScript** language.
 
 ## Configure and run application
 
