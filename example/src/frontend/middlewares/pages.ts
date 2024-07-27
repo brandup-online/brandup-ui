@@ -1,6 +1,6 @@
 ﻿import { DOM } from "@brandup/ui-dom";
 import { AjaxQueue, } from "@brandup/ui-ajax";
-import { Middleware, MiddlewareNext, NavigateContext, StartContext, StopContext, SubmitContext } from "@brandup/ui-app";
+import { Middleware, MiddlewareNext, NAV_OVERIDE_ERROR, NavigateContext, StartContext, StopContext, SubmitContext } from "@brandup/ui-app";
 import { Page } from "../pages/base";
 import { ExampleApplication } from "../app";
 import { PageNavigationData, PageSubmitData } from "../typings/app";
@@ -66,26 +66,42 @@ class PagesMiddleware implements Middleware {
 
 			let pageType = await pageDef.page();
 
-			let page: Page;
+			let page: Page | undefined;
 			let content: DocumentFragment;
 			try {
 				// create and render new page
-				page = new pageType.default(context);
+
+				if (!pageType.default)
+					throw new Error("Page type is not default.");
+
+				page = new pageType.default(context) as Page;
 				content = await page.render();
 			}
 			catch (reason) {
-				console.error(`page error`, reason);
+				page?.destroy();
 
-				pageDef = this._options.error;
-				pageType = await pageDef.page();
-				page = new pageType.default(context);
-				content = await page.render();
+				if (reason != NAV_OVERIDE_ERROR) {
+					console.error(`page error`, reason);
+
+					pageDef = this._options.error;
+					pageType = await pageDef.page();
+					page = new pageType.default(context) as Page;
+					content = await page.render();
+				}
+				else
+					throw reason;
 			}
 
 			return { page, content };
 		}); // 300
 
-		context.abort.throwIfAborted();
+		try {
+			context.abort.throwIfAborted();
+		}
+		catch (reason) {
+			result.page?.destroy();
+			throw reason;
+		}
 
 		const prevPage = this._page;
 

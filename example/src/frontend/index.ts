@@ -10,7 +10,7 @@ const builder = new ApplicationBuilder<ExampleApplicationModel>({});
 
 builder
 	.useApp(ExampleApplication)
-	.useMiddleware(PagesMiddleware({
+	.useMiddleware(PagesMiddleware, {
 		routes: {
 			'/': { page: () => import("./pages/index"), preload: true },
 			'/commands': { page: () => import("./pages/commands") },
@@ -20,7 +20,7 @@ builder
 		},
 		notfound: { page: () => import("./pages/error/notfound") },
 		error: { page: () => import("./pages/error/exception") }
-	}))
+	})
 	.useMiddleware(ErrorMiddleware)
 	.useMiddleware(RealtimeMiddleware);
 

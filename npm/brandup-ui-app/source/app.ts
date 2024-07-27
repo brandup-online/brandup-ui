@@ -26,8 +26,8 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	private __isRuned?: boolean;
 	private __middlewares: { [key: string]: Middleware } = {};
 	private __globalSubmit?: (e: SubmitEvent) => void;
-	private __execNav?: ExecuteNav<TModel>; // current navigation invoking
-	private __lastNav?: ExecuteNav<TModel>; // last success navigation
+	private __execNav?: ExecuteNav<this, ContextData>; // current navigation invoking
+	private __lastNav?: ExecuteNav<this, ContextData>; // last success navigation
 
 	constructor(env: EnvironmentModel, model: TModel, ...args: any[]) {
 		super();
@@ -41,12 +41,13 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	}
 
 	get typeName(): string { return APP_TYPENAME; }
-	get current(): NavigateContext | undefined { return this.__lastNav?.context; }
+	/** Current navigation context. */
+	get current(): NavigateContext<this> | undefined { return this.__lastNav?.context; }
 	/** Application destroy signal. */
 	get abort(): AbortSignal { return this.__abort.signal; }
 
 	/** @internal */
-	initialize(middlewares: Array<Middleware>) {
+	initialize(middlewares: Middleware[]) {
 		if (this.__isInited)
 			throw new Error('Application already initialized.');
 		this.__isInited = true;
@@ -170,9 +171,9 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 		let isFirst = !this.__lastNav && !this.__execNav;
 
-		let parentNav: ExecuteNav<TModel> | undefined;
+		let parentNav: ExecuteNav<this, TData> | undefined;
 		if (this.__execNav && this.__execNav.status === "work") {
-			parentNav = this.__execNav;
+			parentNav = this.__execNav as ExecuteNav<this, TData>;
 
 			parentNav.abort.abort(NAV_OVERIDE_ERROR);
 			(<any>parentNav.context).overided = true;
@@ -191,8 +192,8 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			source: isFirst ? "first" : "nav",
 			app: this,
 			abort: complextAbort,
-			current: <NavigateContext<this, TData>>this.__lastNav?.context,
-			parent: <NavigateContext<this, TData>>parentNav?.context,
+			current: this.__lastNav?.context as NavigateContext<this, TData>,
+			parent: parentNav?.context as NavigateContext<this, TData>,
 			overided: false,
 			data,
 			url: navUrl.url,
@@ -211,10 +212,8 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			}
 		};
 
-		const currentNav: ExecuteNav<TModel> = { method: "navigate", context, abort: navAbort, status: "work" };
-		await this.__execNavigate(currentNav);
-
-		return context;
+		const currentNav: ExecuteNav<this, TData> = { method: "navigate", context, abort: navAbort, status: "work" };
+		return await this.__execNavigate(currentNav, parentNav) as NavigateContext<this, TData>;
 	}
 
 	/**
@@ -235,7 +234,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		BROWSER.reload();
 	}
 
-	async destroy<TData extends ContextData = ContextData>(contextData?: TData | null): Promise<StopContext<Application, TData>> {
+	async destroy<TData extends ContextData = ContextData>(contextData?: TData | null): Promise<StopContext<this, TData>> {
 		if (this.__abort.signal.aborted)
 			return Promise.reject('Application already destroyed.');
 		this.__abort.abort();
@@ -252,7 +251,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 		const destroyAbort = new AbortController();
 
-		const context: StopContext<Application, TData> = {
+		const context: StopContext<this, TData> = {
 			abort: destroyAbort.signal,
 			app: this,
 			data: contextData || <TData>{}
@@ -328,9 +327,9 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 				if (query)
 					urlHelper.extendQuery(navUrl, query);
 
-				let parentNav: ExecuteNav<TModel> | undefined;
+				let parentNav: ExecuteNav<this, TData> | undefined;
 				if (this.__execNav && this.__execNav.status === "work") {
-					parentNav = this.__execNav;
+					parentNav = this.__execNav as ExecuteNav<this, TData>;
 
 					parentNav.abort.abort(NAV_OVERIDE_ERROR);
 					(<any>parentNav.context).overided = true;
@@ -349,8 +348,8 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 					source: "submit",
 					app: this,
 					abort: complextAbort,
-					current: <NavigateContext<this, TData>>this.__lastNav?.context,
-					parent: <NavigateContext<this, TData>>parentNav?.context,
+					current: this.__lastNav?.context as NavigateContext<this, TData>,
+					parent: parentNav?.context as NavigateContext<this, TData>,
 					overided: false,
 					data,
 					form,
@@ -373,7 +372,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 					}
 				};
 
-				const currentNav: ExecuteNav<TModel> = { method: "submit", context, abort: submitAbort, status: "work" };
+				const currentNav: ExecuteNav<this, TData> = { method: "submit", context, abort: submitAbort, status: "work" };
 				await this.__execNavigate(currentNav);
 			}
 		}
@@ -385,7 +384,10 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		}
 	}
 
-	private async __execNavigate(nav: ExecuteNav<TModel>) {
+	private async __execNavigate(nav: ExecuteNav<this>, parent?: ExecuteNav<this>) {
+		if (parent)
+			parent.overide = nav;
+
 		try {
 			console.info(`${nav.method} begin`, nav.context);
 
@@ -398,6 +400,8 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 			nav.status = "success";
 			console.info(`${nav.method} ${nav.status} ${nav.context.url}`);
+
+			return nav.context;
 		}
 		catch (reason: any) {
 			if (reason?.name === "AbortError") {
@@ -405,8 +409,13 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 				console.warn(`${nav.method} ${nav.status} ${nav.context.url}`);
 			}
 			else if (reason === NAV_OVERIDE_ERROR) {
+				if (!nav.context.overided || !nav.overide)
+					throw new Error("Nav is not overided.");
+
 				nav.status = "overided";
 				console.warn(`${nav.method} ${nav.status} ${nav.context.url}`);
+
+				return nav.overide.context; // return redirected navigation
 			}
 			else {
 				nav.status = "error";
@@ -418,11 +427,12 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	}
 }
 
-interface ExecuteNav<TModel extends ApplicationModel = ApplicationModel> {
+interface ExecuteNav<TApp extends Application = Application, TData extends ContextData = ContextData> {
 	method: "navigate" | "submit";
-	context: NavigateContext<Application<TModel>, ContextData>;
+	context: NavigateContext<TApp, TData>;
 	abort: AbortController;
 	status: ExecuteStatus;
+	overide?: ExecuteNav<TApp, TData>;
 }
 
 type ExecuteStatus = "work" | "success" | "overided" | "cancelled" | "error";

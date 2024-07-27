@@ -47,6 +47,42 @@ const appElement = document.getElementById("app")
 app.run({ ...optional context params }, appElement);
 ```
 
+## Navigation
+
+Example links:
+
+```
+<a href="url" class="applink">text</a>
+<button data-nav-url="url" class="applink">text</button>
+
+app.nav({ url: "url" })
+```
+
+Replace current url:
+
+```
+<a href="url" class="applink" data-nav-replace>text</a>
+<button data-nav-url="url" class="applink" data-nav-replace>text</button>
+
+app.nav({ url: "url", replace: true })
+```
+
+The element's click event will start a chain of `navigate` method calls for all middleware.
+
+During navigation and until it is completed, the `loading` class is added to the element that started the navigation.
+
+## Submit form
+
+Example form:
+
+```
+<form class="appform">
+	<input type="text" name="value" />
+</form>
+```
+
+The form's submit event will start a chain of `submit` method calls for all middleware.
+
 ## Middlewares
 
 Inject to application lifecycle event methods. Middleware methods are called one after another in the order in which they were registered in the `ApplicationBuilder`.
@@ -114,3 +150,15 @@ export class PagesMiddleware implements Middleware {
     }
 }
 ```
+
+### Redirect navigation
+
+```
+export class AuthMiddleware implements Middleware {
+	async navigate(context: NavigateContext, next: MiddlewareNext) {
+        await context.redirect({ url: "url" });
+    }
+}
+```
+
+The `redirect` method will always throw an exception and end the current navigation.

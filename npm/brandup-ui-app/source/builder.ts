@@ -13,29 +13,16 @@ export class ApplicationBuilder<TModel extends ApplicationModel> {
 
 	useApp(appType: typeof Application<TModel>) {
 		this.__appType = appType;
-
 		return this;
 	}
 
-	useMiddleware(middleware: ((...params: Array<any>) => Middleware) | Middleware, ...params: Array<any>) {
-		if (!middleware)
-			throw `Middleware propery is required.`;
-
-		let midl: Middleware;
-		if (typeof middleware === "function")
-			midl = middleware(...params);
-		else
-			midl = middleware;
-
+	useMiddleware(createFunc: ((...params: Array<any>) => Middleware), ...params: Array<any>) {
+		let midl = createFunc(...params);
 		this.__middlewares.push(midl);
-
 		return this;
 	}
 
 	build(env: EnvironmentModel, ...args: any[]) {
-		if (!env)
-			throw new Error("Parameter env is required.");
-
 		if (!env.basePath)
 			env.basePath = "/";
 

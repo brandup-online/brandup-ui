@@ -150,7 +150,9 @@ it("Application.nav redirect with nav", async () => {
 	const appEleme = DOM.tag("div");
 	await app.run({}, appEleme);
 
-	await app.nav("/about");
+	const navContext = await app.nav("/about");
+	expect(navContext.overided).toBeTruthy();
+	expect(navContext.path).toEqual("/about");
 });
 
 it("Application.nav redirect", async () => {
@@ -169,7 +171,12 @@ it("Application.nav redirect", async () => {
 	const appEleme = DOM.tag("div");
 	await app.run({}, appEleme);
 
-	await expect(app.nav("/about")).rejects.toEqual(NAV_OVERIDE_ERROR);
+	const navContext = await app.nav("/about");
+	expect(navContext.overided).toBeFalsy();
+	expect(navContext.path).toEqual("/company");
+	expect(navContext.parent?.overided).toBeTruthy();
+	expect(navContext.parent?.path).toEqual("/about");
+	//await expect(app.nav("/about")).rejects.toEqual(NAV_OVERIDE_ERROR);
 });
 
 interface TestAppModel extends ApplicationModel {
