@@ -1,13 +1,13 @@
 # brandup-ui-dom
 
-[![Build Status](https://dev.azure.com/brandup/BrandUp%20Core/_apis/build/status%2FBrandUp%2Fbrandup-ui?branchName=master)](https://dev.azure.com/brandup/BrandUp%20Core/_build/latest?definitionId=69&branchName=master)
+[![Build Status](https://dev.azure.com/brandup/BrandUp%20Core/_apis/build/status%2FBrandUp%2Fbrandup-ui?branchName=master)]()
 
 ## Installation
 
-Install NPM package [brandup-ui-dom](https://www.npmjs.com/package/brandup-ui-dom).
+Install NPM package [@brandup/ui-dom](https://www.npmjs.com/package/@brandup/ui-dom).
 
 ```
-npm i brandup-ui-dom@latest
+npm i @brandup/ui-dom@latest
 ```
 
 ## DOM helper
@@ -16,17 +16,17 @@ npm i brandup-ui-dom@latest
 
 ```
 class DOM {
-    static getElementById(id: string): HTMLElement;
-    static getElementByClass(parentElement: Element, className: string): HTMLElement;
-    static getElementByName(name: string): HTMLElement;
-    static getElementByTagName(parentElement: Element, tagName: string): HTMLElement;
+    static getElementById(id: string): HTMLElement | null;
+    static getElementByClass(parentElement: Element, className: string): HTMLElement | null;
+    static getElementByName(name: string): HTMLElement | null;
+    static getElementByTagName(parentElement: Element, tagName: string): HTMLElement | null;
     static getElementsByTagName(parentElement: Element, tagName: string);
-    static queryElement(parentElement: Element, query: string): HTMLElement;
+    static queryElement(parentElement: Element, query: string): HTMLElement | null;
     static queryElements(parentElement: Element, query: string): NodeListOf<HTMLElement>;
-    static nextElementByClass(currentElement: Element, className: string): HTMLElement;
-    static prevElementByClass(currentElement: Element, className: string): HTMLElement;
-    static prevElement(currentElement: Element): HTMLElement;
-    static nextElement(currentElement: Element): HTMLElement;
+    static nextElementByClass(currentElement: Element, className: string): HTMLElement | null;
+    static prevElementByClass(currentElement: Element, className: string): HTMLElement | null;
+    static prevElement(currentElement: Element): HTMLElement | null;
+    static nextElement(currentElement: Element): HTMLElement | null;
 
     static tag(tagName: string, options?: ElementOptions | string, children?: ((elem: Element) => void) | Element | string | Array<Element | string | ((parent: Element) => Element)>): HTMLElement
 
@@ -37,7 +37,7 @@ class DOM {
 }
 ```
 
-### Создание элементов
+### Creation HTML elements
 
 ```
 DOM.tag("div", "css class name")

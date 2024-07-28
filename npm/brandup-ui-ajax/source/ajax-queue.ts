@@ -1,14 +1,10 @@
-import { AjaxRequest, ajaxRequest, ajaxDelegate, AjaxResponse } from "./ajax";
-
-export interface AjaxQueueOptions {
-	preRequest?: (request: AjaxRequest) => void | boolean;
-	postRequest?: (response: AjaxResponse) => void | boolean;
-}
+import { AjaxRequest, AjaxResponse } from "./types";
+import { request } from "./request";
 
 export class AjaxQueue {
 	private _options: AjaxQueueOptions;
-	private _requests: Array<{ options: AjaxRequest; xhr: XMLHttpRequest | null }> = [];
-	private _curent: { options: AjaxRequest; xhr: XMLHttpRequest | null } | null = null;
+	private _requests: Array<RequestTask> = [];
+	private _curent: RequestTask | null = null;
 	private _destroyed = false;
 
 	constructor(options?: AjaxQueueOptions) {
@@ -19,81 +15,119 @@ export class AjaxQueue {
 	get isFree(): boolean { return !this._requests.length && !this._curent; }
 	get isEmpty(): boolean { return !this._requests.length; }
 
-	push(options: AjaxRequest) {
-		if (!options)
-			throw "Ajax request options is required.";
-
+	push(request: AjaxRequest, abortSignal?: AbortSignal) {
 		if (this._destroyed)
-			return;
+			throw new Error("AjaxQueue is destroyed.");
 
-		const successFunc = options.success ? options.success : () => { };
-		options.success = (response) => { this.__success(successFunc, response); };
+		this._requests.push({ request, cancel: abortSignal, abort: new AbortController() });
 
-		this._requests.push({ options: options, xhr: null });
-
-		if (this._curent === null)
+		if (!this._curent)
 			this.__execute();
 	}
 
-	reset(abortCurrentRequest = false) {
+	enque(request: AjaxRequest, abortSignal?: AbortSignal) {
+		const { success, error } = request;
+
+		return new Promise<AjaxResponse>((resolve, reject) => {
+			request.success = (response: AjaxResponse) => {
+				if (success)
+					success(response);
+
+				resolve(response);
+			};
+			request.error = (request: AjaxRequest, reason?: any) => {
+				if (error)
+					error(request, reason);
+
+				reject(reason);
+			};
+
+			this.push(request, abortSignal);
+		});
+	}
+
+	reset(cancelCurrentRequest = false) {
 		this._requests = [];
 
-		if (abortCurrentRequest && this._curent) {
-			this._curent.xhr?.abort();
-			this._curent = null;
-		}
+		const current = this._curent;
+		this._curent = null;
+
+		if (cancelCurrentRequest && current)
+			current.abort?.abort("ResetAjaxQueue");
 	}
 
 	destroy() {
+		if (this._destroyed)
+			return;
 		this._destroyed = true;
+
 		this._requests = [];
 
 		if (this._curent) {
-			this._curent.xhr?.abort();
+			this._curent.abort?.abort("DestroyAjaxQueue");
 			this._curent = null;
 		}
 	}
 
 	private __execute() {
 		if (this._destroyed)
-			throw "AjaxQueue is destroed.";
-		if (this._curent)
-			throw "AjaxQueue currently is executing.";
-
-		this._curent = this._requests.shift() ?? null;
-		if (this._curent) {
-			if (this._options.preRequest) {
-				if (this._options.preRequest(this._curent.options) === false) {
-					this.__next();
-					return;
-				}
-			}
-
-			this._curent.xhr = ajaxRequest(this._curent.options);
-		}
-	}
-
-	private __success(originSuccess: ajaxDelegate, response: AjaxResponse) {
-		if (this._requests === null)
 			return;
 
-		if (this._options.postRequest) {
-			if (this._options.postRequest(response) === false) {
+		if (this._curent)
+			throw new Error("AjaxQueue currently is executing.");
+
+		const task = this._curent = this._requests.shift() ?? null;
+
+		if (task) {
+			if (this._options.canRequest && this._options.canRequest(task.request) === false) {
 				this.__next();
 				return;
 			}
-		}
 
-		try {
-			originSuccess(response);
-		}
-		finally {
-			this.__next();
+			if (task.request.abort?.aborted || task.cancel?.aborted)
+				task.result = Promise.reject("cancelled");
+			else {
+				task.abort = new AbortController();
+				task.result = request(task.request, task.cancel ? AbortSignal.any([task.abort.signal, task.cancel]) : task.abort.signal);
+			}
+
+			task.result
+				.then(response => {
+					if (this._destroyed)
+						return;
+
+					if (this._options.successRequest)
+						this._options.successRequest(task.request, response);
+				})
+				.catch(reason => {
+					if (this._destroyed)
+						return;
+
+					if (this._options.errorRequest)
+						this._options.errorRequest(task.request, reason);
+				})
+				.finally(() => this.__next());
 		}
 	}
 
 	private __next() {
+		if (this._destroyed)
+			return;
+
 		this._curent = null;
 		this.__execute();
 	}
+}
+
+export interface AjaxQueueOptions {
+	canRequest?: (request: AjaxRequest) => void | boolean;
+	successRequest?: (request: AjaxRequest, response: AjaxResponse) => void;
+	errorRequest?: (response: AjaxRequest, reason?: any) => void;
+}
+
+interface RequestTask {
+	readonly request: AjaxRequest;
+	cancel?: AbortSignal;
+	abort?: AbortController;
+	result?: Promise<AjaxResponse>;
 }

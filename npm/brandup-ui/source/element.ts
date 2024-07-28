@@ -1,31 +1,17 @@
-export const ElemAttributeName = "uiElement";
-export const ElemPropertyName = "brandupUiElement";
-export const CommandAttributeName = "command";
-export const CommandExecutingCssClassName = "executing";
-
-export type CommandDelegate = (elem: HTMLElement, context: CommandContext) => void;
-export type CommandCanExecuteDelegate = (elem: HTMLElement, context: CommandContext) => boolean;
-export type CommandAsyncDelegate = (context: CommandAsyncContext) => void;
-
-interface CommandHandler {
-	name: string;
-	execute?: CommandDelegate;
-	canExecute?: CommandCanExecuteDelegate | null;
-	delegate?: CommandAsyncDelegate | null;
-	isExecuting: boolean;
-}
+import UICONSTANTS from "./constants";
 
 export abstract class UIElement {
-	private __element: HTMLElement | null = null;
-	private __events: { [key: string]: EventOptions | null } = {};
-	private __commandHandlers: { [key: string]: CommandHandler } = {};
-
-	static hasElement(elem: HTMLElement) {
-		return !!elem.dataset[ElemAttributeName];
-	}
+	private __element?: HTMLElement;
+	private __events?: { [key: string]: EventInit | null };
+	private __commands?: { [key: string]: CommandInit };
+	private __destroyCallbacks?: Array<VoidFunction>;
 
 	abstract typeName: string;
-	get element(): HTMLElement | null { return this.__element; }
+
+	// Element members
+
+	get element(): HTMLElement | undefined { return this.__element; }
+
 	protected setElement(elem: HTMLElement) {
 		if (!elem)
 			throw "Not set value elem.";
@@ -35,228 +21,197 @@ export abstract class UIElement {
 
 		this.__element = elem;
 
-		this.__element[ElemPropertyName] = this;
-		this.__element.dataset[ElemAttributeName] = this.typeName;
+		(<any>elem)[UICONSTANTS.ElemPropertyName] = this;
+		elem.dataset[UICONSTANTS.ElemAttributeName] = this.typeName;
 
-		this.defineEvent("command", { cancelable: false, bubbles: true });
+		this.defineEvent(UICONSTANTS.CommandEventName, { cancelable: false, bubbles: true });
 
 		this._onRenderElement(elem);
 	}
 
-	// HTMLElement Events
-	protected defineEvent(eventName: string, eventOptions?: EventOptions) {
+	// static members
+
+	static hasElement(elem: HTMLElement) {
+		return !!elem.dataset[UICONSTANTS.ElemAttributeName];
+	}
+
+	// HTMLElement event members
+
+	protected defineEvent(eventName: string, eventOptions?: EventInit) {
+		if (!this.__events)
+			this.__events = {};
 		this.__events[eventName] = eventOptions ? eventOptions : null;
 	}
+
 	protected raiseEvent<T = {}>(eventName: string, eventArgs?: T): boolean {
-		if (!(eventName in this.__events))
-			throw `Not found event "${eventName}".`;
+		if (!this.__events || !(eventName in this.__events))
+			throw new Error(`Not found event "${eventName}".`);
 
 		const eventOptions = this.__events[eventName];
 
 		const eventInit: CustomEventInit<T> = {};
 		if (eventOptions) {
-			if (eventOptions.bubbles)
-				eventInit.bubbles = eventOptions.bubbles;
-			if (eventOptions.cancelable)
-				eventInit.cancelable = eventOptions.cancelable;
-			if (eventOptions.composed)
-				eventInit.composed = eventOptions.composed;
+			eventInit.bubbles = eventOptions.bubbles;
+			eventInit.cancelable = eventOptions.cancelable;
+			eventInit.composed = eventOptions.composed;
 		}
-		eventInit.detail = eventArgs ? eventArgs : <T>{};
+		eventInit.detail = eventArgs;
 
-		const event = new CustomEvent<T>(eventName, eventInit);
-
-		return this.dispatchEvent(event);
+		return this.dispatchEvent(new CustomEvent<T>(eventName, eventInit));
 	}
+
 	addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) {
 		this.__element?.addEventListener(type, listener, options);
 	}
+
 	removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions) {
 		this.__element?.removeEventListener(type, listener, options);
 	}
+
 	dispatchEvent(event: Event): boolean {
 		if (!this.__element)
-			throw "HTMLElement is not defined.";
+			throw new Error("HTMLElement is not defined.");
 
 		return this.__element.dispatchEvent(event);
 	}
 
-	// Commands
-	registerCommand(name: string, execute: CommandDelegate, canExecute: CommandCanExecuteDelegate | null = null) {
-		name = this.verifyCommandName(name);
+	// Command members
 
-		this.__commandHandlers[name] = {
+	registerCommand(name: string, execute: CommandExecuteFunction, canExecute?: CommandCanExecuteFunction) {
+		if (!this.__commands)
+			this.__commands = {};
+
+		const nornalizedName = name.toLowerCase();
+		if (nornalizedName in this.__commands)
+			throw new Error(`Command "${name}" already registered.`);
+
+		this.__commands[nornalizedName] = {
 			name: name,
 			execute,
-			canExecute,
-			isExecuting: false
+			canExecute
 		};
 	}
-	registerAsyncCommand(name: string, delegate: CommandAsyncDelegate, canExecute: CommandCanExecuteDelegate | null = null) {
-		name = this.verifyCommandName(name);
 
-		this.__commandHandlers[name] = {
-			name: name,
-			delegate,
-			canExecute,
-			isExecuting: false
-		};
-	}
-	private verifyCommandName(name: string) {
-		const key = name.toLowerCase();
-		if (key in this.__commandHandlers)
-			throw `Command "${name}" already registered.`;
-		return key;
-	}
 	hasCommand(name: string) {
-		return name.toLowerCase() in this.__commandHandlers;
+		return this.__commands && name.toLowerCase() in this.__commands;
 	}
-	execCommand(name: string, elem: HTMLElement): CommandExecutionResult {
-		if (!this.__element)
-			throw "UIElement is not set HTMLElement.";
+
+	/** @internal */
+	__execCommand(name: string, target: HTMLElement): CommandResult {
+		if (!this.__element || !this.__commands)
+			throw new Error("UIElement is not set HTMLElement.");
 
 		const key = name.toLowerCase();
-		if (!(key in this.__commandHandlers))
-			throw `Command "${name}" is not registered.`;
+		const command = this.__commands[key];
+		if (!command)
+			throw new Error(`Command "${name}" is not registered.`);
 
 		const context: CommandContext = {
-			target: elem,
-			uiElem: this,
-			transparent: false
+			target,
+			uiElem: this
 		};
 
-		const handler = this.__commandHandlers[key];
+		if (command.isExecuting)
+			return { status: "already", context };
+		command.isExecuting = true;
 
-		if (handler.isExecuting)
-			return { result: CommandsExecStatus.AlreadyExecuting, context };
-		handler.isExecuting = true;
-
-		if (!this._onCanExecCommand(name, elem)) {
-			handler.isExecuting = false;
-			return { result: CommandsExecStatus.NotAllow, context };
+		if (!this._onCanExecCommand(name, target)) {
+			delete command.isExecuting;
+			return { status: "disallow", context };
 		}
 
-		if (handler.canExecute && !handler.canExecute(elem, context)) {
-			handler.isExecuting = false;
-			return { result: CommandsExecStatus.NotAllow, context };
+		if (command.canExecute && !command.canExecute(context)) {
+			delete command.isExecuting;
+			return { status: "disallow", context };
 		}
 
-		this.raiseEvent<CommandEventArgs>("command", {
-			name: handler.name,
+		this.raiseEvent<CommandEventArgs>(UICONSTANTS.CommandEventName, {
+			name: command.name,
 			uiElem: this,
 			elem: this.__element
 		});
 
-		if (handler.execute) {
-			// Если команда синхронная.
+		let isAsync: boolean | undefined;
+		try {
+			const commandResult = command.execute(context);
 
-			try {
-				handler.execute(elem, context);
-			}
-			finally {
-				handler.isExecuting = false;
+			if (commandResult && commandResult instanceof Promise) {
+				isAsync = true;
+
+				target.classList.add(UICONSTANTS.CommandExecutingCssClassName);
+				commandResult
+					.finally(() => {
+						target.classList.remove(UICONSTANTS.CommandExecutingCssClassName);
+						delete command.isExecuting;
+					});
 			}
 		}
-		else if (handler.delegate) {
-			// Если команда асинхронная.
-
-			elem.classList.add(CommandExecutingCssClassName);
-
-			let timeoutId: number = 0;
-
-			const endFunc = () => {
-				handler.isExecuting = false;
-				elem.classList.remove(CommandExecutingCssClassName);
-			};
-
-			const asyncContext: CommandAsyncContext = {
-				target: elem,
-				uiElem: this,
-				transparent: context.transparent,
-				complate: () => {
-					clearTimeout(timeoutId);
-					endFunc();
-				},
-				timeout: 30000,
-				timeoutCallback: () => { }
-			};
-
-			handler.delegate(asyncContext);
-
-			if (handler.isExecuting) {
-				timeoutId = window.setTimeout(() => {
-					if (asyncContext.timeoutCallback)
-						asyncContext.timeoutCallback();
-					endFunc();
-				}, asyncContext.timeout);
-			}
-
-			context.transparent = asyncContext.transparent;
+		finally {
+			if (!isAsync)
+				delete command.isExecuting;
 		}
-		else
-			throw "";
 
-		return { result: CommandsExecStatus.Success, context: context };
+		return { status: "success", context: context };
 	}
 
-	protected _onRenderElement(_elem: HTMLElement) {
-		return;
-	}
+	protected _onRenderElement(_elem: HTMLElement) { }
+
 	protected _onCanExecCommand(_name: string, _elem: HTMLElement): boolean {
 		return true;
 	}
 
-	destroy() {
-		if (this.__element) {
-			//this.__element.removeAttribute(ElemAttributeName);
-			delete this.__element.dataset[ElemAttributeName];
-			delete this.__element[ElemPropertyName];
+	onDestroy(callback: VoidFunction | UIElement | Element) {
+		if (!this.__element || !callback)
+			return;
 
-			this.__element = null;
+		if (!this.__destroyCallbacks)
+			this.__destroyCallbacks = [];
+
+		if (callback instanceof UIElement)
+			this.__destroyCallbacks.push(() => callback.destroy());
+		else if (callback instanceof Element)
+			this.__destroyCallbacks.push(() => callback.remove());
+		else if (typeof callback === "function")
+			this.__destroyCallbacks.push(callback);
+		else
+			throw new Error("Unsupported callback type.");
+	}
+
+	toString(): string {
+		return this.typeName;
+	}
+
+	destroy() {
+		const elem = this.__element;
+		if (!elem)
+			return;
+
+		delete elem.dataset[UICONSTANTS.ElemAttributeName];
+		delete (<any>elem)[UICONSTANTS.ElemPropertyName];
+
+		delete this.__element;
+		delete this.__events;
+		delete this.__commands;
+
+		if (this.__destroyCallbacks) {
+			this.__destroyCallbacks.map(callback => {
+				try {
+					callback();
+				}
+				catch (reason) {
+					console.error(`Error in call "${this.typeName}" destroy callback.`);
+				}
+			});
+
+			delete this.__destroyCallbacks;
 		}
 	}
 }
 
-export interface EventOptions {
-	bubbles?: boolean;
-	cancelable?: boolean;
-	composed?: boolean;
-}
-
-export interface CommandEventArgs {
-	name: string;
-	uiElem: UIElement;
-	elem: HTMLElement;
-}
-
-export interface CommandContext {
-	/** Елемент, который принял команду. */
-	target: HTMLElement;
-	uiElem: UIElement;
-	transparent?: boolean;
-}
-
-export interface CommandExecutionResult {
-	result: CommandsExecStatus;
-	context: CommandContext;
-}
-
-export interface CommandAsyncContext extends CommandContext {
-	complate: () => void;
-	timeout: number;
-	timeoutCallback: () => void;
-}
-
-export enum CommandsExecStatus {
-	NotAllow = 1,
-	AlreadyExecuting = 2,
-	Success = 3
-}
-
 const fundUiElementByCommand = (elem: HTMLElement, commandName: string): UIElement | null => {
 	while (elem) {
-		if (elem.dataset[ElemAttributeName]) {
-			const uiElem: UIElement = elem[ElemPropertyName];
+		if (elem.dataset[UICONSTANTS.ElemAttributeName]) {
+			const uiElem: UIElement = (<any>elem)[UICONSTANTS.ElemPropertyName];
 			if (uiElem.hasCommand(commandName))
 				return uiElem;
 		}
@@ -271,10 +226,11 @@ const fundUiElementByCommand = (elem: HTMLElement, commandName: string): UIEleme
 
 	return null;
 };
+
 const commandClickHandler = (e: MouseEvent) => {
 	let commandElem: HTMLElement | null = e.target as HTMLElement;
 	while (commandElem) {
-		if (commandElem.dataset[CommandAttributeName])
+		if (commandElem.dataset[UICONSTANTS.CommandAttributeName])
 			break;
 
 		if (commandElem === e.currentTarget)
@@ -286,19 +242,18 @@ const commandClickHandler = (e: MouseEvent) => {
 	if (!commandElem)
 		return;
 
-	const commandName = commandElem.dataset[CommandAttributeName];
+	const commandName = commandElem.dataset[UICONSTANTS.CommandAttributeName];
 	if (!commandName)
-		throw "Command data attribute is not have value.";
+		throw new Error("Command data attribute is not have value.");
 
 	const uiElem = fundUiElementByCommand(commandElem, commandName);
-	if (uiElem === null) {
-		console.warn(`Not find handler for command "${commandName}".`);
-	}
-	else {
-		const commandResult = uiElem.execCommand(commandName, commandElem);
-		if (commandResult.context.transparent)
+	if (uiElem) {
+		const result = uiElem.__execCommand(commandName, commandElem);
+		if (result.status == "success" && result.context.transparent)
 			return;
 	}
+	else
+		console.warn(`Not find handler for command "${commandName}".`);
 
 	e.preventDefault();
 	e.stopPropagation();
@@ -306,3 +261,35 @@ const commandClickHandler = (e: MouseEvent) => {
 }
 
 window.addEventListener("click", commandClickHandler, false);
+
+interface CommandInit {
+	name: string;
+	execute: CommandExecuteFunction;
+	canExecute?: CommandCanExecuteFunction;
+	isExecuting?: boolean;
+}
+
+export type CommandExecuteFunction = (context: CommandContext) => void | Promise<void | any>;
+export type CommandCanExecuteFunction = (context: CommandContext) => boolean;
+
+export interface CommandEventArgs {
+	name: string;
+	uiElem: UIElement;
+	elem: HTMLElement;
+}
+
+export interface CommandContext {
+	/** HTMLElement on which the command is executed */
+	target: HTMLElement;
+	/** UIElement in which the command handler is registered. */
+	uiElem: UIElement;
+	/** Don't stop the click event chain of target. */
+	transparent?: boolean;
+}
+
+export interface CommandResult {
+	status: CommandExecStatus;
+	context: CommandContext;
+}
+
+export type CommandExecStatus = "disallow" | "already" | "success";

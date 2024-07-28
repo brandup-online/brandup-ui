@@ -1,13 +1,13 @@
 # brandup-ui
 
-[![Build Status](https://dev.azure.com/brandup/BrandUp%20Core/_apis/build/status%2FBrandUp%2Fbrandup-ui?branchName=master)](https://dev.azure.com/brandup/BrandUp%20Core/_build/latest?definitionId=69&branchName=master)
+[![Build Status](https://dev.azure.com/brandup/BrandUp%20Core/_apis/build/status%2FBrandUp%2Fbrandup-ui?branchName=master)]()
 
 ## Installation
 
-Install NPM package [brandup-ui](https://www.npmjs.com/package/brandup-ui).
+Install NPM package [@brandup/ui](https://www.npmjs.com/package/@brandup/ui).
 
 ```
-npm i brandup-ui@latest
+npm i @brandup/ui@latest
 ```
 
 ## UIElement
@@ -21,25 +21,24 @@ npm i brandup-ui@latest
 ```
 abstract class UIElement {
     abstract typeName: string;
-    readonly element: HTMLElement;
+    readonly element: HTMLElement | undefined;
 
     protected setElement(elem: HTMLElement): void;
 
-    protected defineEvent(eventName: string, eventOptions?: IEventOptions): void;
+    protected defineEvent(eventName: string, eventOptions?: EventInit): void;
     protected raiseEvent(eventName: string, eventArgs?: any): boolean;
 
     addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
     removeEventListener(type: string, listener?: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
     dispatchEvent(event: Event): boolean;
 
-    registerCommand(name: string, execute: CommandDelegate, canExecute: CommandCanExecuteDelegate = null): void;
-    registerAsyncCommand(name: string, delegate: CommandAsyncDelegate): void;
+    registerCommand(name: string, execute: CommandDelegate, canExecute?: CommandCanExecuteDelegate): void;
     hasCommand(name: string): boolean;
-    execCommand(name: string, elem: HTMLElement): CommandExecutionResult;
     
     protected _onRenderElement(_elem: HTMLElement);
     protected _onCanExecCommand(_name: string, _elem: HTMLElement): boolean;
 
+	onDestroy(callback: VoidFunction | UIElement | Element);
     destroy(): void;
 }
 ```
@@ -51,27 +50,23 @@ abstract class UIElement {
 ```
 <button data-command="send">Send</button>
 
-this.registerCommand("send", (elem: HTMLElement, context: CommandContext) => { elem.innerHTML = "ok"; });
+this.registerCommand("send", (context: CommandContext) => { context.target.innerHTML = "ok"; });
 ```
 
 Так же можно регистрировать асинхронные команды:
 
 ```
-this.registerAsyncCommand("command1-async", (context: CommandAsyncContext) => {
-    context.timeout = 3000;
-
-    context.target.innerHTML = "Loading...";
-    const t = window.setTimeout(() => {
-        context.target.innerHTML = "Ok";
-        context.complate();
-    }, 2000);
-
-    context.timeoutCallback = () => {
-        clearTimeout(t);
-    };
+this.registerCommand("command1-async", (context: CommandContext) => {
+	return Promise<void>(resolve => {
+		context.target.innerHTML = "Loading...";
+		const t = window.setTimeout(() => {
+			context.target.innerHTML = "Ok";
+			resolve();
+		}, 2000);
+	});
 });
 ```
 
-Команды вызываются по событию click.
+Команды срабатывают по событию `click`.
 
 Во время выполнения команды, у элемента добавляется стиль **executing**.

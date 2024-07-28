@@ -1,22 +1,22 @@
 {
 	"compilerOptions": {
-		"module": "commonjs",
+		"module": "ESNext",
 		"moduleResolution": "node",
 		"target": "ESNext",
 		"sourceMap": false,
 		"strict": true,
 		"lib": [
-			"ES2020",
+			"ESNext",
 			"DOM"
 		],
 		"baseUrl": "./src",
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
-		"noImplicitAny": false,
+		"noImplicitAny": true,
 		"noEmitOnError": true,
 		"declarationMap": false,
 		"resolveJsonModule": true,
-		"esModuleInterop": false,
+		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"skipLibCheck": true,
 		"allowSyntheticDefaultImports": true

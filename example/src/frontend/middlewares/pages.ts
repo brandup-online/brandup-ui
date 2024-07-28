@@ -1,116 +1,182 @@
-﻿import { LoadContext, Middleware, NavigateContext, StartContext, StopContext, SubmitContext } from "brandup-ui-app";
-import { PageModel } from "../pages/base";
-import { DOM } from "brandup-ui-dom";
-import { AJAXMethod, AjaxResponse, ajaxRequest } from "brandup-ui-ajax";
+﻿import { DOM } from "@brandup/ui-dom";
+import { AjaxQueue, } from "@brandup/ui-ajax";
+import { Middleware, MiddlewareNext, NAV_OVERIDE_ERROR, NavigateContext, StartContext, StopContext, SubmitContext } from "@brandup/ui-app";
+import { Page } from "../pages/base";
 import { ExampleApplication } from "../app";
-import { ExampleApplicationModel } from "../typings/app";
+import { PageNavigationData, PageSubmitData } from "../typings/app";
+import { FuncHelper } from "@brandup/ui-helpers";
 
-export class PagesMiddleware extends Middleware<ExampleApplication, ExampleApplicationModel> {
+class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
+	readonly name: string = "pages";
+	private _options: PagesOptions;
 	private _appContentElem: HTMLElement;
-	private _pages: { [key: string]: PageDefinition };
-	private _page: PageModel | null = null;
+	private _ajax: AjaxQueue;
+	private _page: Page | null = null;
+	private _loaderElem?: HTMLElement;
 
-	constructor() {
-		super();
+	constructor(options: PagesOptions) {
+		this._options = options;
 
 		const appContentElem = document.getElementById("app-content")
 		if (!appContentElem)
 			throw new Error("Not found page content container.");
 		this._appContentElem = appContentElem;
 
-		this._pages = {
-			'/': { type: () => import("../pages/index"), title: "Main page" },
-			'/navigation': { type: () => import("../pages/navigation"), title: "Navigation" },
-			'/forms': { type: () => import("../pages/forms"), title: "Forms" }
-		};
+		this._ajax = new AjaxQueue();
 	}
 
-	start(context: StartContext, next: () => void, end: () => void) {
+	async start(context: StartContext, next: MiddlewareNext) {
 		window.addEventListener("popstate", (e: PopStateEvent) => {
 			e.preventDefault();
 
-			this.app.nav({ url: location.href, replace: true });
+			console.log(`popstate`);
+
+			context.app.nav();
 		});
 
-		super.start(context, next, end);
-	}
+		context.app.element?.insertAdjacentElement("beforeend", this._loaderElem = DOM.tag("div", "app-loader"));
 
-	loaded(context: LoadContext, next: () => void, end: () => void) {
-		super.loaded(context, next, end);
-	}
-
-	navigate(context: NavigateContext, next: () => void, end: () => void) {
-		if (this._page) {
-			this._page.destroy();
-			this._page = null;
+		for (var key in this._options.routes) {
+			const route = this._options.routes[key];
+			if (route.preload)
+				await route.page();
 		}
 
-		const pageDef = this._pages[context.path];
-		if (!pageDef) {
-			this._nav(context, "Page not found");
+		if (this._options.notfound.preload)
+			await this._options.notfound.page();
 
-			DOM.empty(this._appContentElem);
-			this._appContentElem.innerText = "Page not found";
+		await next();
+	}
 
-			end();
+	async navigate(context: NavigateContext<ExampleApplication, PageNavigationData>, next: MiddlewareNext) {
+		if (context.external) {
+			const linkElem = DOM.tag("a", { href: context.url, target: "_blank" });
+			linkElem.click();
+			linkElem.remove();
 			return;
 		}
 
-		this._nav(context, pageDef.title);
-
-		pageDef.type()
-			.then((t) => {
-				DOM.empty(this._appContentElem);
-
-				const content = document.createDocumentFragment();
-				const contentElem = DOM.tag("div", "page");
-				content.appendChild(contentElem);
-
-				this._page = new t.default(this.app, contentElem);
-
-				this._appContentElem.appendChild(content);
-
-				super.navigate(context, next, end);
-			})
-			.catch((reason) => {
-				console.error(reason);
-
-				end();
-			});
-	}
-
-	submit(context: SubmitContext, next: () => void, end: () => void) {
-		const data = new FormData(context.form);
-		//const antyElem = <HTMLInputElement>document.getElementsByName("__RequestVerificationToken")[0];
-		//data.append(antyElem.name, antyElem.value);
-
-		ajaxRequest({
-			url: context.url,
-			method: <AJAXMethod>context.method.toUpperCase(),
-			data: data,
-			success: (response: AjaxResponse) => {
-				alert(response.data);
-
-				super.submit(context, next, end);
+		const result = await FuncHelper.minWaitAsync<{ page: Page, content: DocumentFragment }>(async () => {
+			// resolve and load new page
+			let pageDef = this._options.routes[context.path.toLowerCase()];
+			if (!pageDef) {
+				console.warn(`page notfound`, context.path);
+				pageDef = this._options.notfound;
 			}
+
+			let pageType = await pageDef.page();
+
+			let page: Page | undefined;
+			let content: DocumentFragment;
+			try {
+				// create and render new page
+
+				if (!pageType.default)
+					throw new Error("Page type is not default.");
+
+				page = new pageType.default(context) as Page;
+				content = await page.render();
+			}
+			catch (reason) {
+				page?.destroy();
+
+				if (reason != NAV_OVERIDE_ERROR) {
+					console.error(`page error`, reason);
+
+					pageDef = this._options.error;
+					pageType = await pageDef.page();
+					page = new pageType.default(context) as Page;
+					content = await page.render();
+				}
+				else
+					throw reason;
+			}
+
+			return { page, content };
+		}); // 300
+
+		try {
+			context.abort.throwIfAborted();
+		}
+		catch (reason) {
+			result.page?.destroy();
+			throw reason;
+		}
+
+		const prevPage = this._page;
+
+		this._nav(context, result.page);
+
+		// destroy current page
+		prevPage?.destroy();
+		this._appContentElem.appendChild(result.content);
+
+		await next();
+	}
+
+	async submit(context: SubmitContext<ExampleApplication, PageSubmitData>, next: MiddlewareNext) {
+		if (!this._page)
+			throw new Error();
+
+		const page = context.data.page = this._page;
+
+		const response = context.data.response = await this._ajax.enque({
+			url: context.url,
+			method: context.method,
+			data: new FormData(context.form)
 		});
-	}
 
-	stop(context: StopContext, next: () => void, end: () => void) {
-		super.stop(context, next, end);
-	}
-
-	private _nav(context: NavigateContext, title: string) {
-		if (context.replace)
-			window.history.replaceState(window.history.state, title, context.url);
+		if (response.redirected) {
+			await context.app.nav({ url: response.url, data: context.data });
+		}
 		else
-			window.history.pushState(window.history.state, title, context.url);
+			await page.formSubmitted(response, context);
+
+		await next();
+	}
+
+	async stop(_context: StopContext, next: MiddlewareNext) {
+		await next();
+
+		this._ajax.destroy();
+	}
+
+	private _nav(context: NavigateContext, page: Page) {
+		this._page = page;
+
+		const title = page.header;
+
+		if (context.source != "first") {
+			let url = context.url;
+			if (context.hash)
+				url += "#" + context.hash;
+
+			if (context.replace)
+				window.history.replaceState(window.history.state, title, url);
+			else
+				window.history.pushState(window.history.state, title, url);
+		}
 
 		document.title = title;
 	}
 }
 
-interface PageDefinition {
-	title: string;
-	type: () => Promise<any>;
+export interface PagesMiddleware {
 }
+
+export interface PagesOptions {
+	routes: Routes;
+	notfound: Route;
+	error: Route;
+}
+
+export interface Routes {
+	[url: string]: Route;
+}
+
+export interface Route {
+	page: () => Promise<{ default: typeof Page | any }>;
+	preload?: boolean;
+}
+
+export default (options: PagesOptions) => new PagesMiddlewareImpl(options);

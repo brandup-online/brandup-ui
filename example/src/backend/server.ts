@@ -1,13 +1,14 @@
-const cors = require("cors");
-const path = require("path");
-const https = require("https");
-const fs = require("fs");
-import * as express from "express";
+const express = require("express");
+import { Application } from "express";
+import Server from "./src/index";
+
+const app: Application = express();
+const server: Server = new Server(app);
 
 const PORT_ARG_PREFIX = "--port=";
 const PORT_DEFAULT = 443;
 
-let port = PORT_DEFAULT;
+let port: number = PORT_DEFAULT;
 process.argv.map(value => {
 	if (value.indexOf(PORT_ARG_PREFIX) !== 0)
 		return;
@@ -16,31 +17,12 @@ process.argv.map(value => {
 });
 console.log(`run on port ${port}`);
 
-const app = express();
+if (!server.server) throw new Error("server creation error");
 
-const corsOptions = {
-	origin: "*",
-};
-app.use(cors(corsOptions));
-
-
-const distDir = path.join(__dirname, "../../wwwroot/dist");
-app.use(express.static(distDir));
-
-app.get("/redirect", (req, res) => {
-	res.redirect("/forms");
-});
-
-app.get("*", (req, res) => {
-	res.sendFile("index.html", { root: distDir });
-});
-
-const privateKey = fs.readFileSync(path.join(__dirname, "sslcert", "local.decrypted.key"), "utf8");
-const certificate = fs.readFileSync(path.join(__dirname, "sslcert", "local.crt"), "utf8");
-const credentials = { key: privateKey, cert: certificate };
-const httpsServer = https.createServer(credentials, app);
-
-httpsServer.listen(port, () => {
-	console.log(`Server start on port ${port}`);
-	console.log(`Server start https://localhost:${port}`);
-});
+server.server.listen(port, () => { console.log(`Server start https://localhost:${port}`); })
+	.on("error", (err: any) => {
+		if (err.code === "EADDRINUSE")
+			console.log("Error: address already in use");
+		else
+			console.log(err);
+	});
