@@ -1,10 +1,12 @@
+import { EventEmitter } from "./events";
 import UICONSTANTS from "./constants";
 
-export abstract class UIElement {
+export abstract class UIElement extends EventEmitter {
 	private __element?: HTMLElement;
 	private __events?: { [key: string]: EventInit | null };
 	private __commands?: { [key: string]: CommandInit };
 	private __destroyCallbacks?: Array<VoidFunction>;
+	private __destroyed?: boolean;
 
 	abstract typeName: string;
 
@@ -14,17 +16,15 @@ export abstract class UIElement {
 
 	protected setElement(elem: HTMLElement) {
 		if (!elem)
-			throw "Not set value elem.";
+			throw new Error("Not set value elem.");
 
 		if (this.__element || UIElement.hasElement(elem))
-			throw "UIElement already defined";
+			throw new Error("UIElement already defined");
 
 		this.__element = elem;
 
 		(<any>elem)[UICONSTANTS.ElemPropertyName] = this;
 		elem.dataset[UICONSTANTS.ElemAttributeName] = this.typeName;
-
-		this.defineEvent(UICONSTANTS.CommandEventName, { cancelable: false, bubbles: true });
 
 		this._onRenderElement(elem);
 	}
@@ -35,61 +35,25 @@ export abstract class UIElement {
 		return !!elem.dataset[UICONSTANTS.ElemAttributeName];
 	}
 
-	// HTMLElement event members
-
-	protected defineEvent(eventName: string, eventOptions?: EventInit) {
-		if (!this.__events)
-			this.__events = {};
-		this.__events[eventName] = eventOptions ? eventOptions : null;
-	}
-
-	protected raiseEvent<T = {}>(eventName: string, eventArgs?: T): boolean {
-		if (!this.__events || !(eventName in this.__events))
-			throw new Error(`Not found event "${eventName}".`);
-
-		const eventOptions = this.__events[eventName];
-
-		const eventInit: CustomEventInit<T> = {};
-		if (eventOptions) {
-			eventInit.bubbles = eventOptions.bubbles;
-			eventInit.cancelable = eventOptions.cancelable;
-			eventInit.composed = eventOptions.composed;
-		}
-		eventInit.detail = eventArgs;
-
-		return this.dispatchEvent(new CustomEvent<T>(eventName, eventInit));
-	}
-
-	addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) {
-		this.__element?.addEventListener(type, listener, options);
-	}
-
-	removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions) {
-		this.__element?.removeEventListener(type, listener, options);
-	}
-
-	dispatchEvent(event: Event): boolean {
-		if (!this.__element)
-			throw new Error("HTMLElement is not defined.");
-
-		return this.__element.dispatchEvent(event);
-	}
-
 	// Command members
 
 	registerCommand(name: string, execute: CommandExecuteFunction, canExecute?: CommandCanExecuteFunction) {
-		if (!this.__commands)
-			this.__commands = {};
+		if (this.__destroyed)
+			return this;
+
+		const commands = this.__commands || (this.__commands = {});
 
 		const nornalizedName = name.toLowerCase();
-		if (nornalizedName in this.__commands)
+		if (nornalizedName in commands)
 			throw new Error(`Command "${name}" already registered.`);
 
-		this.__commands[nornalizedName] = {
+		commands[nornalizedName] = {
 			name: name,
 			execute,
 			canExecute
 		};
+
+		return this;
 	}
 
 	hasCommand(name: string) {
@@ -98,7 +62,7 @@ export abstract class UIElement {
 
 	/** @internal */
 	__execCommand(name: string, target: HTMLElement): CommandResult {
-		if (!this.__element || !this.__commands)
+		if (this.__destroyed || !this.__element || !this.__commands)
 			throw new Error("UIElement is not set HTMLElement.");
 
 		const key = name.toLowerCase();
@@ -125,11 +89,7 @@ export abstract class UIElement {
 			return { status: "disallow", context };
 		}
 
-		this.raiseEvent<CommandEventArgs>(UICONSTANTS.CommandEventName, {
-			name: command.name,
-			uiElem: this,
-			elem: this.__element
-		});
+		this.trigger("command", { element: this, name: command.name });
 
 		let isAsync: boolean | undefined;
 		try {
@@ -182,27 +142,25 @@ export abstract class UIElement {
 	}
 
 	destroy() {
-		const elem = this.__element;
-		if (!elem)
+		if (this.__destroyed)
 			return;
+		this.__destroyed = true;
 
-		delete elem.dataset[UICONSTANTS.ElemAttributeName];
-		delete (<any>elem)[UICONSTANTS.ElemPropertyName];
+		this.trigger("destroy", this);
+		super.stopEvents();
+
+		const elem = this.__element;
+		if (elem) {
+			delete elem.dataset[UICONSTANTS.ElemAttributeName];
+			delete (<any>elem)[UICONSTANTS.ElemPropertyName];
+		}
 
 		delete this.__element;
 		delete this.__events;
 		delete this.__commands;
 
 		if (this.__destroyCallbacks) {
-			this.__destroyCallbacks.map(callback => {
-				try {
-					callback();
-				}
-				catch (reason) {
-					console.error(`Error in call "${this.typeName}" destroy callback.`);
-				}
-			});
-
+			this.__destroyCallbacks.map(callback => callback());
 			delete this.__destroyCallbacks;
 		}
 	}
@@ -273,9 +231,8 @@ export type CommandExecuteFunction = (context: CommandContext) => void | Promise
 export type CommandCanExecuteFunction = (context: CommandContext) => boolean;
 
 export interface CommandEventArgs {
+	element: UIElement;
 	name: string;
-	uiElem: UIElement;
-	elem: HTMLElement;
 }
 
 export interface CommandContext {
