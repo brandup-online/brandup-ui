@@ -69,19 +69,6 @@ export class EventEmitter {
 		return this;
 	}
 
-	private _addListeningTo(source: EventEmitter, eventName: EventName) {
-		const listeningTo = this._listeningTo || (this._listeningTo = {});
-		const listenId = source._listenId || (source._listenId = `l${ListenCounter++}`);
-
-		const listenTo = listeningTo[listenId] || (listeningTo[listenId] = { emmiter: source, events: [] });
-
-		eventName = eventName.toLowerCase();
-		if (listenTo.events.indexOf(eventName) !== -1)
-			throw new Error(`Event ${eventName} already listening.`);
-
-		listenTo.events.push(eventName);
-	}
-
 	protected stopListening(source?: EventEmitter, eventName?: EventName, callback?: EventCallbackFunc) {
 		if (!this._listeningTo)
 			return this;
@@ -110,6 +97,19 @@ export class EventEmitter {
 
 		if (!this._listeningTo || Object.keys(this._listeningTo).length === 0)
 			delete this._listeningTo;
+	}
+
+	private _addListeningTo(source: EventEmitter, eventName: EventName) {
+		const listeningTo = this._listeningTo || (this._listeningTo = {});
+		const listenId = source._listenId || (source._listenId = `l${ListenCounter++}`);
+
+		const listenTo = listeningTo[listenId] || (listeningTo[listenId] = { emmiter: source, events: [] });
+
+		eventName = eventName.toLowerCase();
+		if (listenTo.events.indexOf(eventName) !== -1)
+			throw new Error(`Event ${eventName} already listening.`);
+
+		listenTo.events.push(eventName);
 	}
 
 	private stopAllListeners() {

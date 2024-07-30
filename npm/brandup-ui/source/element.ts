@@ -5,7 +5,6 @@ export abstract class UIElement extends EventEmitter {
 	private __element?: HTMLElement;
 	private __events?: { [key: string]: EventInit | null };
 	private __commands?: { [key: string]: CommandInit };
-	private __destroyCallbacks?: Array<VoidFunction>;
 	private __destroyed?: boolean;
 
 	abstract typeName: string;
@@ -124,22 +123,17 @@ export abstract class UIElement extends EventEmitter {
 		if (!this.__element || !callback)
 			return;
 
-		if (!this.__destroyCallbacks)
-			this.__destroyCallbacks = [];
-
 		if (callback instanceof UIElement)
-			this.__destroyCallbacks.push(() => callback.destroy());
+			callback.listenTo(this, "destroy", () => callback.destroy());
 		else if (callback instanceof Element)
-			this.__destroyCallbacks.push(() => callback.remove());
+			this.on("destroy", () => callback.remove());
 		else if (typeof callback === "function")
-			this.__destroyCallbacks.push(callback);
+			this.on("destroy", () => callback());
 		else
 			throw new Error("Unsupported callback type.");
 	}
 
-	toString(): string {
-		return this.typeName;
-	}
+	toString(): string { return this.typeName; }
 
 	destroy() {
 		if (this.__destroyed)
@@ -158,11 +152,6 @@ export abstract class UIElement extends EventEmitter {
 		delete this.__element;
 		delete this.__events;
 		delete this.__commands;
-
-		if (this.__destroyCallbacks) {
-			this.__destroyCallbacks.map(callback => callback());
-			delete this.__destroyCallbacks;
-		}
 	}
 }
 

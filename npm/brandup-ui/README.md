@@ -43,7 +43,7 @@ abstract class UIElement {
 }
 ```
 
-## Command handling
+## UI commands
 
 Класс UIElement позволяет регистрировать обработчики комманд, которые определяются в разметке HTML элемента.
 
@@ -53,7 +53,7 @@ abstract class UIElement {
 this.registerCommand("send", (context: CommandContext) => { context.target.innerHTML = "ok"; });
 ```
 
-Так же можно регистрировать асинхронные команды:
+Так же можно регистрировать асинхронные обработчики комманд:
 
 ```
 this.registerCommand("command1-async", (context: CommandContext) => {
@@ -70,3 +70,7 @@ this.registerCommand("command1-async", (context: CommandContext) => {
 Команды срабатывают по событию `click`.
 
 Во время выполнения команды, у элемента добавляется стиль **executing**.
+
+## UI Events
+
+`UIElement` extends class of `EveentEmmiter`.
