@@ -60,10 +60,11 @@ Example links for application navigation `app.nav({ url: "url" })`:
 <button data-nav-url="url">text</button>
 ```
 
-Replace current url `app.nav({ url: "url", replace: true })`:
+Replace current url `app.nav({ url: "url", replace: true, scope: "replace scope" })`:
 
 ```html
 <a href="url" class="applink" data-nav-replace>text</a>
+<a href="url" class="applink" data-nav-replace data-nav-scope="replace scope">text</a>
 <button data-nav-url="url" data-nav-replace>text</button>
 ```
 

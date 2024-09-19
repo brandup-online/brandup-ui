@@ -56,5 +56,16 @@ export default class NavigationPage extends Page {
 		this.registerCommand("nav5", () => {
 			return this.app.nav<PageNavigationData>({ data: { error: true } });
 		});
+
+		container.appendChild(DOM.tag("div", null, [
+			DOM.tag("div", null, [
+				DOM.tag("a", { href: "?test1=test1", "data-nav-replace": null, class: "applink" }, "noscope1"),
+				DOM.tag("a", { href: "?test1=test2", "data-nav-replace": null, class: "applink" }, "noscope2")
+			]),
+			DOM.tag("div", null, [
+				DOM.tag("a", { href: "?test2=test1", "data-nav-replace": null, "data-nav-scope": "test", class: "applink" }, "scope1"),
+				DOM.tag("a", { href: "?test2=test2", "data-nav-replace": null, "data-nav-scope": "test", class: "applink" }, "scope2")
+			])
+		]));
 	}
 }

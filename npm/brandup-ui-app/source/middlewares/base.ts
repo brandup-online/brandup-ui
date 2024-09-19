@@ -46,6 +46,7 @@ export interface NavigateOptions<TData extends ContextData = ContextData> {
 	url?: string | null;
 	query?: QueryParams | URLSearchParams | FormData;
 	replace?: boolean;
+	scope?: string | null;
 	data?: TData;
 	abort?: AbortSignal;
 }
@@ -79,6 +80,7 @@ export interface NavigateContext<TApplication extends Application = Application,
 	readonly external: boolean;
 	/** Replace current navigation entry. */
 	replace: boolean;
+	scope?: string | null;
 	/** Redirect to new url and throw for end current context. */
 	redirect(options?: NavigateOptions<TData> | string | null): Promise<NavigateContext<TApplication, TData>>;
 }

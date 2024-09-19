@@ -163,7 +163,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	 */
 	async nav<TData extends ContextData>(options?: NavigateOptions<TData> | string | null): Promise<NavigateContext<this, TData>> {
 		const opt: NavigateOptions<TData> = (!options || typeof options === "string") ? { url: <string>options } : <NavigateOptions<TData>>options;
-		let { url = null, replace = false, data = <TData>{} } = opt;
+		let { url = null, replace = false, scope = null, data = <TData>{} } = opt;
 
 		const navUrl = urlHelper.parseUrl(url);
 		if (opt.query)
@@ -187,6 +187,9 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			aborts.push(opt.abort);
 		const complextAbort = AbortSignal.any(aborts);
 
+		if (replace && this.__lastNav?.context?.scope != scope)
+			replace = false;
+
 		const context: NavigateContext<this, TData> = {
 			index: navIndex,
 			source: isFirst ? "first" : "nav",
@@ -204,6 +207,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			hash: navUrl.hash,
 			external: navUrl.external,
 			replace,
+			scope,
 			redirect: async (options?: NavigateOptions<TData> | string | null) => {
 				complextAbort.throwIfAborted();
 				const result = await this.nav<TData>(options);

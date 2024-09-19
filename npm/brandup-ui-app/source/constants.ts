@@ -4,6 +4,7 @@ interface Constants {
 	readonly FormClassName: string;
 	readonly NavUrlAttributeName: string;
 	readonly NavUrlReplaceAttributeName: string;
+	readonly NavUrlScopeAttributeName: string;
 	readonly NavIgnoreAttributeName: string;
 	readonly STATE_CLASS: {
 		readonly LOADING: string;
@@ -18,6 +19,7 @@ const result: Constants = {
 	FormClassName: "appform",
 	NavUrlAttributeName: "data-nav-url",
 	NavUrlReplaceAttributeName: "data-nav-replace",
+	NavUrlScopeAttributeName: "data-nav-scope",
 	NavIgnoreAttributeName: "data-nav-ignore",
 	STATE_CLASS: {
 		LOADING: "bp-state-loading",
