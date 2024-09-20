@@ -151,10 +151,20 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 			if (context.hash)
 				url += "#" + context.hash;
 
-			if (context.replace)
+			let replace = context.replace;
+			if (replace && (context.current?.scope != context.scope || context.current?.source === "first")) {
+				// Если изменилась область навигации или предыдущая бала первой, то 
+				// не нужно перезаписывать текущую страницу
+				replace = false;
+			}
+
+			if (replace)
 				window.history.replaceState(window.history.state, title, url);
-			else
+			else {
 				window.history.pushState(window.history.state, title, url);
+
+				window.scrollTo({ left: 0, top: 0, behavior: "auto" });
+			}
 		}
 
 		document.title = title;
