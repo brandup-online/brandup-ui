@@ -187,9 +187,6 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			aborts.push(opt.abort);
 		const complextAbort = AbortSignal.any(aborts);
 
-		if (replace && this.__lastNav?.context?.scope != scope)
-			replace = false;
-
 		const context: NavigateContext<this, TData> = {
 			index: navIndex,
 			source: isFirst ? "first" : "nav",
