@@ -34,7 +34,7 @@ function queryElement<TElement extends HTMLElement = HTMLElement>(container: Ele
 	return container.querySelector(query);
 }
 
-function queryElements<TElement extends HTMLElement = HTMLElement>(container: Element, query: string): NodeListOf<HTMLElement> {
+function queryElements<TElement extends HTMLElement = HTMLElement>(container: Element, query: string): NodeListOf<TElement> {
 	return container.querySelectorAll(query) as NodeListOf<TElement>;
 }
 
