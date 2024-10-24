@@ -1,12 +1,13 @@
 import { UIElement } from "@brandup/ui";
 import { EnvironmentModel, ApplicationModel, QueryParams } from "./types";
-import { Middleware, StartContext, StopContext, NavigateContext, SubmitContext, ContextData, SubmitOptions, NavigateOptions } from "./middlewares/base";
+import { Middleware, StartContext, StopContext, NavigateContext, SubmitContext, ContextData, SubmitOptions, NavigateOptions, NavigateAction } from "./middlewares/base";
 import { MiddlewareInvoker } from "./middlewares/invoker";
 import StateMiddleware from "./middlewares/state";
 import HyperLinkMiddleware from "./middlewares/hyperlink";
 import urlHelper from "./helpers/url";
 import BROWSER from "./browser";
 import CONSTANTS from "./constants";
+import { Guid } from "@brandup/ui-helpers";
 
 export const APP_TYPENAME = "brandup-ui-app";
 export const NAV_OVERIDE_ERROR = "NavigationOveride";
@@ -28,6 +29,11 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	private __globalSubmit?: (e: SubmitEvent) => void;
 	private __execNav?: ExecuteNav<this, ContextData>; // current navigation invoking
 	private __lastNav?: ExecuteNav<this, ContextData>; // last success navigation
+	private __hash?: {
+		options: NavigateOptions,
+		resolve?: (context: NavigateContext<any, any>) => void,
+		reject?: (reason?: any) => void
+	};
 
 	constructor(env: EnvironmentModel, model: TModel, ...args: any[]) {
 		super();
@@ -123,6 +129,8 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 			this.__abort.signal.throwIfAborted();
 
+			window.addEventListener("popstate", (e: PopStateEvent) => this.__onPopState(context, e));
+
 			element.addEventListener("submit", this.__globalSubmit = (e: SubmitEvent) => {
 				const form = e.target as HTMLFormElement;
 				if (!form.classList.contains(CONSTANTS.FormClassName))
@@ -163,13 +171,55 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	 */
 	async nav<TData extends ContextData>(options?: NavigateOptions<TData> | string | null): Promise<NavigateContext<this, TData>> {
 		const opt: NavigateOptions<TData> = (!options || typeof options === "string") ? { url: <string>options } : <NavigateOptions<TData>>options;
-		let { url = null, replace = false, scope = null, data = <TData>{} } = opt;
+		let { url = null, query, replace = false, scope = null, data = <TData>{}, abort } = opt;
 
 		const navUrl = urlHelper.parseUrl(url);
-		if (opt.query)
-			urlHelper.extendQuery(navUrl, opt.query);
+		if (query)
+			urlHelper.extendQuery(navUrl, query);
 
 		let isFirst = !this.__lastNav && !this.__execNav;
+		let action: NavigateAction;
+		if (isFirst)
+			action = "first";
+		else {
+			const isChangedUrl = this.__lastNav?.context.url.toLowerCase() !== navUrl.url.toLowerCase();
+			const hasHash = !!this.__lastNav?.context.hash || !!navUrl.hash;
+
+			if (isChangedUrl) {
+				action = "url-change"; // если изменился url
+			}
+			else {
+				if (!hasHash)
+					action = "url-no-change"; // если хеша нет, то страница не изменилась
+				else {
+					const prevHash = this.__lastNav?.context.hash ?? null;
+					const newHash = navUrl.hash;
+					const isHashEqual = prevHash?.toLowerCase() === newHash?.toLowerCase();
+
+					if (!isHashEqual && !data.popstate) {
+						this.__hash = {
+							options: { url, query, replace, scope, data, abort }
+						};
+
+						const hashNavResult = new Promise<NavigateContext<this, TData>>((resolve, reject) => {
+							if (!this.__hash)
+								throw new Error();
+
+							this.__hash.resolve = resolve;
+							this.__hash.reject = reject;
+
+							const newHash = navUrl.hash ? "#" + navUrl.hash : "";
+							console.log(`nav to hash: ${newHash}`);
+							location.hash = newHash;
+						});
+
+						return await hashNavResult;
+					}
+
+					action = "hash";
+				}
+			}
+		}
 
 		let parentNav: ExecuteNav<this, TData> | undefined;
 		if (this.__execNav && this.__execNav.status === "work") {
@@ -183,18 +233,20 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 		const navAbort = new AbortController();
 		const aborts: AbortSignal[] = [this.__abort.signal, navAbort.signal];
-		if (opt.abort)
-			aborts.push(opt.abort);
+		if (abort)
+			aborts.push(abort);
 		const complextAbort = AbortSignal.any(aborts);
 
 		const context: NavigateContext<this, TData> = {
 			index: navIndex,
+			id: Guid.createGuid(),
 			source: isFirst ? "first" : "nav",
 			app: this,
 			abort: complextAbort,
 			current: this.__lastNav?.context as NavigateContext<this, TData>,
 			parent: parentNav?.context as NavigateContext<this, TData>,
 			overided: false,
+			action: action,
 			data,
 			url: navUrl.url,
 			origin: navUrl.origin,
@@ -346,12 +398,14 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 				let context: SubmitContext<this, TData> = {
 					index: navIndex,
+					id: Guid.createGuid(),
 					source: "submit",
 					app: this,
 					abort: complextAbort,
 					current: this.__lastNav?.context as NavigateContext<this, TData>,
 					parent: parentNav?.context as NavigateContext<this, TData>,
 					overided: false,
+					action: "submit",
 					data,
 					form,
 					button,
@@ -383,6 +437,32 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			if (button)
 				button.classList.remove(CONSTANTS.LoadingElementClass);
 		}
+	}
+
+	private __onPopState(context: StartContext, event: PopStateEvent) {
+		console.log(`popstate: ${location.href}`, event.state);
+
+		const hash = this.__hash;
+		delete this.__hash;
+
+		if (hash)
+			console.log('process hash from pop event', hash);
+
+		const navOptions = hash ? hash.options : {};
+
+		if (!navOptions.data)
+			navOptions.data = {};
+		navOptions.data.popstate = true;
+
+		context.app.nav(navOptions)
+			.then(context => {
+				if (hash && hash.resolve)
+					hash.resolve(context);
+			})
+			.catch(reason => {
+				if (hash && hash.reject)
+					hash.reject(reason);
+			});
 	}
 
 	private async __execNavigate(nav: ExecuteNav<this>, parent?: ExecuteNav<this>) {

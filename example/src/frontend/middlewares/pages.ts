@@ -26,14 +26,6 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 	}
 
 	async start(context: StartContext, next: MiddlewareNext) {
-		window.addEventListener("popstate", (e: PopStateEvent) => {
-			e.preventDefault();
-
-			console.log(`popstate`);
-
-			context.app.nav();
-		});
-
 		context.app.element?.insertAdjacentElement("beforeend", this._loaderElem = DOM.tag("div", "app-loader"));
 
 		for (var key in this._options.routes) {
@@ -54,6 +46,18 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 			linkElem.click();
 			linkElem.remove();
 			return;
+		}
+
+		switch (context.action) {
+			case "hash": {
+				if (this._page) {
+					this._nav(context, this._page, true);
+					this._page.__changedHash(context, context.hash, context.current?.hash ?? null);
+				}
+
+				await next();
+				return;
+			}
 		}
 
 		const result = await FuncHelper.minWaitAsync<{ page: Page, content: DocumentFragment }>(async () => {
@@ -141,31 +145,45 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 		this._ajax.destroy();
 	}
 
-	private _nav(context: NavigateContext, page: Page) {
+	private _nav(context: NavigateContext, page: Page, forceReplace: boolean = false) {
 		this._page = page;
+
+		let url = context.url;
+		if (context.hash)
+			url += "#" + context.hash;
 
 		const title = page.header;
 
-		if (context.source != "first") {
-			let url = context.url;
-			if (context.hash)
-				url += "#" + context.hash;
+		let state = window.history.state;
+		if (!state)
+			state = {};
+		state._b_navid = context.id;
 
+		if (context.source != "first") {
 			let replace = context.replace;
-			if (replace && (context.current?.scope != context.scope || context.current?.source === "first")) {
+			if (context.current?.scope != context.scope || context.current?.source === "first") {
 				// Если изменилась область навигации или предыдущая бала первой, то 
 				// не нужно перезаписывать текущую страницу
 				replace = false;
 			}
 
-			if (replace)
-				window.history.replaceState(window.history.state, title, url);
-			else {
-				window.history.pushState(window.history.state, title, url);
+			if (forceReplace)
+				replace = true;
 
-				window.scrollTo({ left: 0, top: 0, behavior: "auto" });
+			let scroll = false;
+			if (replace)
+				window.history.replaceState(state, title, url);
+			else {
+				window.history.pushState(state, title, url);
+
+				scroll = true;
 			}
+
+			if (scroll)
+				window.scrollTo({ left: 0, top: 0, behavior: "auto" });
 		}
+		else
+			window.history.replaceState(state, title, url);
 
 		document.title = title;
 	}

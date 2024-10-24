@@ -67,5 +67,13 @@ export default class NavigationPage extends Page {
 				DOM.tag("a", { href: "?test2=test2", "data-nav-replace": null, "data-nav-scope": "test", class: "applink" }, "scope2")
 			])
 		]));
+
+		console.log("render page");
+	}
+
+	protected async onChangedHash(newHash: string | null, oldHash: string | null) {
+		await super.onChangedHash(newHash, oldHash);
+
+		console.log(`change hash ${oldHash} -> ${newHash}`);
 	}
 }

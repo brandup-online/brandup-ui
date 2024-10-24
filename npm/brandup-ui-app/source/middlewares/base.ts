@@ -54,6 +54,7 @@ export interface NavigateOptions<TData extends ContextData = ContextData> {
 export interface NavigateContext<TApplication extends Application = Application, TData extends ContextData = ContextData> extends InvokeContext {
 	/** Index number of all application navigations. */
 	readonly index: number;
+	readonly id: string;
 	/** Source navigation event. */
 	readonly source: NavigateSource;
 	/** Application instance of navigation. */
@@ -63,6 +64,7 @@ export interface NavigateContext<TApplication extends Application = Application,
 	/** Parent navigation context. Specified if the navigation is nested. */
 	readonly parent?: NavigateContext<TApplication, TData>;
 	readonly overided: boolean;
+	readonly action: NavigateAction;
 	readonly data: TData;
 	/** Origin, path and query, but without hash. */
 	readonly url: string;
@@ -92,6 +94,8 @@ export interface NavigateContext<TApplication extends Application = Application,
  * submit - from submit form.
  */
 export type NavigateSource = "first" | "nav" | "submit";
+
+export type NavigateAction = "first" | "url-change" | "url-no-change" | "hash" | "submit";
 
 // submit method
 
