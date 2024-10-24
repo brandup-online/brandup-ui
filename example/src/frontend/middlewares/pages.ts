@@ -51,12 +51,12 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 		switch (context.action) {
 			case "hash": {
 				if (this._page) {
-					this._nav(context, this._page, true);
+					this._nav(context, this._page);
 					this._page.__changedHash(context, context.hash, context.current?.hash ?? null);
-				}
 
-				await next();
-				return;
+					await next();
+					return;
+				}
 			}
 		}
 
@@ -179,7 +179,7 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 				scroll = true;
 			}
 
-			if (scroll)
+			if (scroll && context.action !== "hash")
 				window.scrollTo({ left: 0, top: 0, behavior: "auto" });
 		}
 		else

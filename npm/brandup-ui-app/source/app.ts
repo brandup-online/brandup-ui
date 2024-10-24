@@ -29,11 +29,6 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	private __globalSubmit?: (e: SubmitEvent) => void;
 	private __execNav?: ExecuteNav<this, ContextData>; // current navigation invoking
 	private __lastNav?: ExecuteNav<this, ContextData>; // last success navigation
-	private __hash?: {
-		options: NavigateOptions,
-		resolve?: (context: NavigateContext<any, any>) => void,
-		reject?: (reason?: any) => void
-	};
 
 	constructor(env: EnvironmentModel, model: TModel, ...args: any[]) {
 		super();
@@ -185,40 +180,10 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			const isChangedUrl = this.__lastNav?.context.url.toLowerCase() !== navUrl.url.toLowerCase();
 			const hasHash = !!this.__lastNav?.context.hash || !!navUrl.hash;
 
-			if (isChangedUrl) {
+			if (isChangedUrl)
 				action = "url-change"; // если изменился url
-			}
-			else {
-				if (!hasHash)
-					action = "url-no-change"; // если хеша нет, то страница не изменилась
-				else {
-					const prevHash = this.__lastNav?.context.hash ?? null;
-					const newHash = navUrl.hash;
-					const isHashEqual = prevHash?.toLowerCase() === newHash?.toLowerCase();
-
-					if (!isHashEqual && !data.popstate) {
-						this.__hash = {
-							options: { url, query, replace, scope, data, abort }
-						};
-
-						const hashNavResult = new Promise<NavigateContext<this, TData>>((resolve, reject) => {
-							if (!this.__hash)
-								throw new Error();
-
-							this.__hash.resolve = resolve;
-							this.__hash.reject = reject;
-
-							const newHash = navUrl.hash ? "#" + navUrl.hash : "";
-							console.log(`nav to hash: ${newHash}`);
-							location.hash = newHash;
-						});
-
-						return await hashNavResult;
-					}
-
-					action = "hash";
-				}
-			}
+			else
+				action = hasHash ? "hash" : "url-no-change";
 		}
 
 		let parentNav: ExecuteNav<this, TData> | undefined;
@@ -442,27 +407,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	private __onPopState(context: StartContext, event: PopStateEvent) {
 		console.log(`popstate: ${location.href}`, event.state);
 
-		const hash = this.__hash;
-		delete this.__hash;
-
-		if (hash)
-			console.log('process hash from pop event', hash);
-
-		const navOptions = hash ? hash.options : {};
-
-		if (!navOptions.data)
-			navOptions.data = {};
-		navOptions.data.popstate = true;
-
-		context.app.nav(navOptions)
-			.then(context => {
-				if (hash && hash.resolve)
-					hash.resolve(context);
-			})
-			.catch(reason => {
-				if (hash && hash.reject)
-					hash.reject(reason);
-			});
+		context.app.nav(location.href);
 	}
 
 	private async __execNavigate(nav: ExecuteNav<this>, parent?: ExecuteNav<this>) {

@@ -21,8 +21,9 @@ export default class NavigationPage extends Page {
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "?redirect=true", class: "applink" }, "nav to redirect in page")));
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "?long=true", class: "applink" }, "nav to long render")));
 
-		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "#test1" }, "hash1")));
-		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "#test2" }, "hash2")));
+		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "#test1", class: "applink" }, "hash1")));
+		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "#test2", class: "applink" }, "hash2")));
+		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "#test3", class: "applink", dataset: { navReplace: "true" } }, "hash3 replace")));
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "/forms" }, "link: direct navigate")));
 		container.appendChild(DOM.tag("div", null, DOM.tag("button", { "data-nav-url": "/forms" }, "link: navigate to /forms")));
