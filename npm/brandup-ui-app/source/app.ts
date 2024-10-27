@@ -409,7 +409,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 		console.log(`popstate: ${popUrl}`, event.state);
 
-		this.nav(popUrl);
+		this.nav({ url: popUrl, data: { popstate: event.state } });
 	}
 
 	private async __execNavigate(nav: ExecuteNav<this>, parent?: ExecuteNav<this>) {

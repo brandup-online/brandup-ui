@@ -145,7 +145,7 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 		this._ajax.destroy();
 	}
 
-	private _nav(context: NavigateContext, page: Page, forceReplace: boolean = false) {
+	private _nav(context: NavigateContext, page: Page) {
 		this._page = page;
 
 		let url = context.url;
@@ -161,14 +161,18 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 
 		if (context.source != "first") {
 			let replace = context.replace;
+
+			if (context.data.popstate) {
+				/* Если навигация из события popstate, то принулительно перезаписываем состояние. */
+				console.warn(`nav from popstate`, context.data.popstate);
+				replace = true;
+			}
+
 			if (context.current?.scope != context.scope || context.current?.source === "first") {
 				// Если изменилась область навигации или предыдущая бала первой, то 
 				// не нужно перезаписывать текущую страницу
 				replace = false;
 			}
-
-			if (forceReplace)
-				replace = true;
 
 			let scroll = false;
 			if (replace)

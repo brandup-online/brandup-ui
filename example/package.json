@@ -40,7 +40,7 @@
 		"webpack-manifest-plugin": "^5.0.0"
 	},
 	"scripts": {
-		"build": "npm run build:fallback && npm run build:modern",
+		"build": "npm run build:webpack",
 		"build:webpack": "cross-env NODE_ENV=production webpack --config webpack.config.js",
 		"build:fallback": "cross-env BROWSERS_ENV=fallback npm run build:webpack",
 		"build:modern": "cross-env BROWSERS_ENV=modern npm run build:webpack",
