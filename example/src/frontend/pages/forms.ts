@@ -8,6 +8,19 @@ export default class FormsPage extends Page {
 	protected async onRenderContent(container: HTMLElement) {
 		container.appendChild(DOM.tag("p", null, "Working application forms."));
 
+		let form: HTMLFormElement;
+		container.appendChild(DOM.tag("div", null, [
+			DOM.tag("p", null, "Submit by page method"),
+			form = DOM.tag("form", { class: "appform", method: "post", enctype: "multipart/form-data", action: this.app.buildUrl("/_form/send") }, [
+				DOM.tag("input", { type: "text", name: "value" }),
+				DOM.tag("button", { type: "button", command: "submit" }, "Send")
+			])
+		]));
+
+		this.registerCommand("submit", () => {
+			form.dispatchEvent(new SubmitEvent("submit", { submitter: form, bubbles: true }));
+		});
+
 		container.appendChild(DOM.tag("div", null, [
 			DOM.tag("p", null, "Submit form as multipart/form-data"),
 			DOM.tag("form", { class: "appform", method: "post", enctype: "multipart/form-data", action: this.app.buildUrl("/_form/send") }, [
