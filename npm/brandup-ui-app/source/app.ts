@@ -405,9 +405,11 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	}
 
 	private __onPopState(context: StartContext, event: PopStateEvent) {
-		console.log(`popstate: ${location.href}`, event.state);
+		const popUrl = location.href;
 
-		context.app.nav(location.href);
+		console.log(`popstate: ${popUrl}`, event.state);
+
+		this.nav(popUrl);
 	}
 
 	private async __execNavigate(nav: ExecuteNav<this>, parent?: ExecuteNav<this>) {
