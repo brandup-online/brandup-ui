@@ -52,8 +52,27 @@ function delay(time: number, abort?: AbortSignal): Promise<void> {
 	});
 }
 
+function timeout<T>(promise: Promise<T>, timeout: number): Promise<T> {
+	return new Promise<T>((resolve, reject) => {
+		if (timeout <= 0)
+			throw new Error("Invalid timeout value.");
+
+		const timer = window.setTimeout(() => {
+			reject(new Error(TIMEOUT_ERROR));
+		}, timeout);
+
+		promise
+			.then(result => resolve(result))
+			.catch(reason => reject(reason))
+			.finally(() => window.clearTimeout(timer));
+	});
+}
+
+export const TIMEOUT_ERROR = "Timeout";
+
 export {
 	minWait,
 	minWaitAsync,
-	delay
+	delay,
+	timeout
 }
