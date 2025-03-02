@@ -4,7 +4,7 @@ import { PageNavigationData } from "../typings/app";
 
 export const REALTIME_NAME = "realtime";
 
-export interface RealtimeMiddleware {
+export interface RealtimeMiddleware extends Middleware {
 	subscribe: (id: string) => void;
 }
 

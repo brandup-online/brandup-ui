@@ -11,7 +11,7 @@ const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 let bundleOutputDir = './wwwroot/dist';
 const frontDir = path.resolve(__dirname, "src", "frontend");
 
-const lessLoaderOptions = { webpackImporter: true, lessOptions: { math: 'always', plugins: [new CleanCSSPlugin({ advanced: true })] } };
+const lessLoaderOptions = { webpackImporter: true, lessOptions: { math: 'always', plugins: [new CleanCSSPlugin({ advanced: false })] } };
 var splitChunks = {
     cacheGroups: {
         vendors: {
