@@ -8,7 +8,7 @@ export interface RealtimeMiddleware extends Middleware {
 	subscribe: (id: string) => void;
 }
 
-export default (): Middleware & RealtimeMiddleware => {
+export default (): RealtimeMiddleware => {
 	return {
 		name: "realtime",
 		navigate: (context: NavigateContext<ExampleApplication, PageNavigationData>, next: MiddlewareNext) => {
