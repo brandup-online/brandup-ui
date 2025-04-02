@@ -308,7 +308,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		const opt: SubmitOptions<TData> = options instanceof HTMLFormElement ? { form: <HTMLFormElement>options } : <SubmitOptions<TData>>options;
 		const { form, button = null, query, data = <TData>{} } = opt;
 
-		if (!form.checkValidity())
+		if ((!button || !button.formNoValidate) && !form.checkValidity())
 			throw new Error('Form is invalid.');
 
 		let replace = form.hasAttribute(CONSTANTS.NavUrlReplaceAttributeName);

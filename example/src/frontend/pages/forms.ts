@@ -38,6 +38,30 @@ export default class FormsPage extends Page {
 		]));
 
 		container.appendChild(DOM.tag("div", null, [
+			DOM.tag("p", null, "Submit button with validate"),
+			DOM.tag("form", { class: "appform", method: "post", action: this.app.buildUrl("/_form/send") }, [
+				DOM.tag("input", { type: "text", name: "value", required: "" }),
+				DOM.tag("button", { type: "submit" }, "Send")
+			])
+		]));
+
+		container.appendChild(DOM.tag("div", null, [
+			DOM.tag("p", null, "Submit button with formnovalidate"),
+			DOM.tag("form", { class: "appform", method: "post", action: this.app.buildUrl("/_form/send") }, [
+				DOM.tag("input", { type: "text", name: "value", required: "" }),
+				DOM.tag("button", { type: "submit", formnovalidate: "" }, "Send")
+			])
+		]));
+
+		container.appendChild(DOM.tag("div", null, [
+			DOM.tag("p", null, "Submit form with formnovalidate (not working)"),
+			DOM.tag("form", { class: "appform", method: "post", action: this.app.buildUrl("/_form/send"), formnovalidate: "" }, [
+				DOM.tag("input", { type: "text", name: "value", required: "" }),
+				DOM.tag("button", { type: "submit" }, "Send")
+			])
+		]));
+
+		container.appendChild(DOM.tag("div", null, [
 			DOM.tag("p", null, "Submit post with empty action"),
 			DOM.tag("form", { class: "appform", method: "post" }, [
 				DOM.tag("input", { type: "text", name: "value" }),
