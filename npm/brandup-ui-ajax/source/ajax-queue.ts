@@ -25,11 +25,11 @@ export class AjaxQueue {
 			this.__execute();
 	}
 
-	enque(request: AjaxRequest, abortSignal?: AbortSignal) {
+	enque<TResponse = any>(request: AjaxRequest, abortSignal?: AbortSignal) {
 		const { success, error } = request;
 
-		return new Promise<AjaxResponse>((resolve, reject) => {
-			request.success = (response: AjaxResponse) => {
+		return new Promise<AjaxResponse<TResponse>>((resolve, reject) => {
+			request.success = (response: AjaxResponse<TResponse>) => {
 				if (success)
 					success(response);
 
