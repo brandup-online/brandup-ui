@@ -67,10 +67,17 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		});
 	}
 
+	/** Initialize application instance. */
 	protected onInitialize() {
 		this.invoker.next(StateMiddleware());
 		this.invoker.next(HyperLinkMiddleware());
 	}
+
+	/** Begin run application. */
+	protected onStarting(): Promise<void> { return Promise.resolve(); }
+
+	/** Complate run application. */
+	protected onStared(): Promise<void> { return Promise.resolve(); }
 
 	/**
 	 * Get middleware by type.
@@ -114,6 +121,8 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		};
 
 		try {
+			await this.onStarting();
+
 			await this.invoker.invoke("start", context);
 			console.info("app start success");
 
@@ -136,6 +145,8 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 				this.__onSubmit({ form, button: e.submitter instanceof HTMLButtonElement ? <HTMLButtonElement>e.submitter : null })
 					.catch(() => { });
 			}, false);
+
+			await this.onStared();
 
 			console.info("app runned");
 		}
