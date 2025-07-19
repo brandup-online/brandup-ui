@@ -339,3 +339,4 @@ ASALocalRun/
 /npm/*/source/**/*.d.ts
 /npm/*/source/**/*.js.map
 /npm/*/wwwroot/dist
+/npm/*/server

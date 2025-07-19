@@ -25,6 +25,7 @@
 	"exclude": [
 		"node_modules",
 		"wwwroot",
+		"server",
 		".idea",
 		".vscode"
 	],
