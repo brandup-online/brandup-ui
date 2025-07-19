@@ -23,8 +23,8 @@ export class ApplicationBuilder<TModel extends ApplicationModel> {
 	}
 
 	build(env: EnvironmentModel, ...args: any[]) {
-		if (!env.basePath)
-			env.basePath = "/";
+		if (!env.basePath || env.basePath == '/')
+			env.basePath = '';
 
 		const app = new this.__appType(env, this.__model, ...args);
 		app.initialize(this.__middlewares);

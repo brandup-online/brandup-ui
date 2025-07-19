@@ -334,9 +334,8 @@ ASALocalRun/
 **/package-lock.json
 /npm/*/dist
 /npm/*/source/*.js
+/npm/*/src/**/*.js
 /npm/*/.rpt2_cache
 /npm/*/source/**/*.d.ts
 /npm/*/source/**/*.js.map
-/example/wwwroot/dist
-/example/package-lock.json
-/example/src/**/*.js
+/npm/*/wwwroot/dist

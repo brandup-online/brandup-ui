@@ -179,7 +179,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		const opt: NavigateOptions<TData> = (!options || typeof options === "string") ? { url: <string>options } : <NavigateOptions<TData>>options;
 		let { url = null, query, replace = false, scope = null, data = <TData>{}, abort } = opt;
 
-		const navUrl = urlHelper.parseUrl(url);
+		const navUrl = urlHelper.parseUrl(this.env.basePath, url);
 		if (query)
 			urlHelper.extendQuery(navUrl, query);
 
@@ -352,7 +352,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			if (method === "GET")
 				await this.nav({ url, query: new FormData(form), data: data, replace, abort: opt.abort });
 			else {
-				const navUrl = urlHelper.parseUrl(url);
+				const navUrl = urlHelper.parseUrl(this.env.basePath, url);
 				if (query)
 					urlHelper.extendQuery(navUrl, query);
 

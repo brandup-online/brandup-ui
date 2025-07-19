@@ -1,13 +1,16 @@
 import { QueryParams } from "../types";
 import BROWSER from "../browser";
 
-const parseUrl = (url: string | null): ParsedUrl => {
+const parseUrl = (basePath: string, url: string | null): ParsedUrl => {
 	const loc = BROWSER.location;
 	let origin: string = loc.origin;
 	let path: string;
 	let query: URLSearchParams | null = null;
 	let hash: string | null = null;
 	let isExternal = false;
+
+	if (basePath === '/')
+		basePath = '';
 
 	if (!url) {
 		path = loc.pathname;
@@ -70,23 +73,33 @@ const parseUrl = (url: string | null): ParsedUrl => {
 	}
 
 	if (!path)
-		path = "/";
-	else if (path.length > 1 && path.endsWith("/"))
+		path = '/';
+	else if (path.length > 1 && path.endsWith('/'))
 		path = path.substring(0, path.length - 1);
+
+	path = path.toLowerCase();
+
+	if (basePath) {
+		if (path.toLowerCase().startsWith(basePath.toLowerCase()))
+			path = path.substring(basePath.length);
+		else
+			basePath = '';
+	}
 
 	if (!query)
 		query = new URLSearchParams();
 
-	if (hash === "#")
+	if (hash === '#')
 		hash = null;
 	else if (hash)
 		hash = hash.substring(1);
 
 	var result = {
-		full: "",
-		url: "",
-		relative: "",
+		full: '',
+		url: '',
+		relative: '',
 		origin,
+		basePath,
 		path,
 		query,
 		hash,
@@ -129,7 +142,7 @@ const extendQuery = (url: ParsedUrl, query: QueryParams | URLSearchParams | Form
 };
 
 const rebuildUrl = (parsedUrl: ParsedUrl) => {
-	let relativeUrl = parsedUrl.path;
+	let relativeUrl = parsedUrl.basePath + parsedUrl.path;
 
 	if (parsedUrl.query.size)
 		relativeUrl += "?" + parsedUrl.query.toString();
@@ -191,6 +204,7 @@ export interface ParsedUrl {
 	url: string; // origin, path and query, but without hash
 	relative: string; // path and query, but without hash
 	origin: string;
+	basePath: string;
 	path: string;
 	query: URLSearchParams;
 	hash: string | null;
