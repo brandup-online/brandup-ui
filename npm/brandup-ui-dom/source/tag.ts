@@ -1,15 +1,11 @@
 import { ElementOptions, CssClass, TagChildrenLike, TagChildrenPrimitive, ElementEvents } from "./types";
 import helpers from "./helpers";
 
-function tag<TElement extends keyof HTMLElementTagNameMap>(tagName: TElement, options?: ElementOptions | CssClass | null, children?: TagChildrenLike | Array<TagChildrenLike>): HTMLElementTagNameMap[TElement] {
+function tag<TElement extends keyof HTMLElementTagNameMap>(tagName: TElement, options?: ElementOptions | CssClass | null, children?: TagChildrenLike): HTMLElementTagNameMap[TElement] {
 	const elem = document.createElement(tagName);
 
 	applyOptions(elem, options);
-
-	if (children instanceof Array)
-		children.forEach(child => appendChild(elem, "beforeend", child));
-	else
-		appendChild(elem, "beforeend", children);
+	appendChild(elem, "beforeend", children);
 
 	return elem as HTMLElementTagNameMap[TElement];
 }
@@ -79,27 +75,31 @@ const appendChild = (container: HTMLElement, where: InsertPosition, children?: T
 	if (!children)
 		return;
 
-	if (children instanceof Element)
+	if (children instanceof Array)
+		children.forEach(child => appendChild(container, where, child));
+	else if (children instanceof Element)
 		container.insertAdjacentElement(where, children);
 	else if (children instanceof Promise)
 		children.then((child: TagChildrenPrimitive) => appendChild(container, where, child));
 	else {
 		const typeName = typeof children;
+		let html: string;
 		switch (typeName) {
 			case "string":
-				container.insertAdjacentHTML(where, <string>children);
+				html = <string>children;
 				break;
 			case "number":
-				container.insertAdjacentHTML(where, children.toString());
+			case "boolean":
+				html = children.toString();
 				break;
 			case "function":
 				const child = (<(elem: HTMLElement) => TagChildrenPrimitive>children)(container);
-				if (child)
-					appendChild(container, where, child);
-				break;
+				appendChild(container, where, child);
+				return;
 			default:
 				throw new Error(`Not support child type of ${typeName}.`);
 		}
+		container.insertAdjacentHTML(where, html);
 	}
 };
 

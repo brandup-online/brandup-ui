@@ -22,10 +22,17 @@ export class ExampleApplication extends Application<ExampleApplicationModel> {
 					DOM.tag("a", { class: "logo", title: "brandup-ui" }, [logoIcon, DOM.tag("span", null, "UI")]).navUrl("/"),
 					DOM.tag("menu", null, [
 						DOM.tag("li", null, DOM.tag("a", null, "My account").navUrl("/account")),
-						DOM.tag("li", null, DOM.tag("a", null, "Commands").nav(this, "/commands")),
-						DOM.tag("li", null, DOM.tag("a", null, "Navigation").nav(this, "/navigation")),
-						DOM.tag("li", null, DOM.tag("a", null, "Forms").nav(this, "/forms")),
-						DOM.tag("li", null, DOM.tag("a", null, "Ajax").nav(this, "/ajax"))
+						() => {
+							if (this.env.basePath === '') {
+								return [
+									DOM.tag("li", null, DOM.tag("a", null, "Commands").nav(this, "/commands")),
+									DOM.tag("li", null, DOM.tag("a", null, "Navigation").nav(this, "/navigation")),
+									DOM.tag("li", null, DOM.tag("a", null, "Forms").nav(this, "/forms")),
+									DOM.tag("li", null, DOM.tag("a", null, "Ajax").nav(this, "/ajax"))
+								];
+							}
+							return null;
+						}
 					])
 				])
 			),

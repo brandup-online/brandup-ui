@@ -20,5 +20,5 @@ export type ElementEvents = {
 
 export type ElementStyles = Partial<CSSStyleDeclaration>;
 
-export type TagChildrenLike = TagChildrenPrimitive | Promise<TagChildrenPrimitive> | ((elem: HTMLElement) => Promise<TagChildrenPrimitive> | TagChildrenPrimitive | void);
+export type TagChildrenLike = TagChildrenPrimitive | Promise<TagChildrenPrimitive> | ((elem: HTMLElement) => Promise<TagChildrenPrimitive> | Promise<TagChildrenPrimitive[]> | TagChildrenPrimitive | TagChildrenPrimitive[] | void) | Array<TagChildrenLike>;
 export type TagChildrenPrimitive = Element | string | number | null | undefined;
