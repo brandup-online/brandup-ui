@@ -1,6 +1,6 @@
 ﻿import { DOM } from "@brandup/ui-dom";
 import { request } from "@brandup/ui-ajax";
-import { Page } from "./base";
+import { Page } from "../../page";
 
 export default class NavigationPage extends Page {
 	get typeName(): string { return "AboutModel" }
@@ -57,7 +57,7 @@ export default class NavigationPage extends Page {
 			const module = await import('./modules/test');
 			module.Test(context.target);
 
-			const test = await import('./../components/test');
+			const test = await import('../../../components/test');
 			const component = new test.default(context.target);
 			this.onDestroy(component);
 		});

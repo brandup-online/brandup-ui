@@ -1,8 +1,8 @@
 ﻿import { DOM } from "@brandup/ui-dom";
-import { Page } from "./base";
+import { Page } from "../../page";
 import { AjaxQueue } from "@brandup/ui-ajax";
-import { ExampleApplication } from "frontend/app";
 import { NavigateContext } from "@brandup/ui-app";
+import { ExampleApplication } from "frontend/app";
 
 export default class AjaxPage extends Page {
 	get typeName(): string { return "AjaxPage" }
@@ -10,7 +10,7 @@ export default class AjaxPage extends Page {
 
 	readonly queue: AjaxQueue;
 
-	constructor(context: NavigateContext) {
+	constructor(context: NavigateContext<ExampleApplication>) {
 		super(context);
 
 		this.queue = new AjaxQueue({

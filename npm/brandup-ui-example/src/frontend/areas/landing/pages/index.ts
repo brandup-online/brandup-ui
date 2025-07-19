@@ -1,5 +1,5 @@
-import { Page } from "./base";
-import { REALTIME_NAME, RealtimeMiddleware } from "../middlewares/realtime";
+import { Page } from "../../page";
+import { REALTIME_NAME, RealtimeMiddleware } from "../../../middlewares/realtime";
 
 export default class IndexModel extends Page {
 	get typeName(): string { return "IndexModel" }

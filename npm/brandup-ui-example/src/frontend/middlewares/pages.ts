@@ -1,26 +1,21 @@
 ﻿import { DOM } from "@brandup/ui-dom";
 import { AjaxQueue, } from "@brandup/ui-ajax";
 import { Middleware, MiddlewareNext, NAV_OVERIDE_ERROR, NavigateContext, StartContext, StopContext, SubmitContext } from "@brandup/ui-app";
-import { Page } from "../pages/base";
+import { Page } from "../areas/page";
 import { ExampleApplication } from "../app";
 import { PageNavigationData, PageSubmitData } from "../typings/app";
 import { FuncHelper } from "@brandup/ui-helpers";
+import AREAS from "../areas";
 
 class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 	readonly name: string = "pages";
 	private _options: PagesOptions;
-	private _appContentElem: HTMLElement;
 	private _ajax: AjaxQueue;
 	private _page: Page | null = null;
 	private _loaderElem?: HTMLElement;
 
 	constructor(options: PagesOptions) {
 		this._options = options;
-
-		const appContentElem = document.getElementById("app-content")
-		if (!appContentElem)
-			throw new Error("Not found page content container.");
-		this._appContentElem = appContentElem;
 
 		this._ajax = new AjaxQueue();
 	}
@@ -30,21 +25,21 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 
 		const bodyElem = document.body;
 
-        bodyElem.addEventListener("invalid", (event: Event) => {
-            event.preventDefault();
+		bodyElem.addEventListener("invalid", (event: Event) => {
+			event.preventDefault();
 
-            const elem = event.target as HTMLElement;
-            elem.classList.add("invalid");
+			const elem = event.target as HTMLElement;
+			elem.classList.add("invalid");
 
-            if (elem.hasAttribute("required"))
-                elem.classList.add("invalid-required");
-        }, true);
+			if (elem.hasAttribute("required"))
+				elem.classList.add("invalid-required");
+		}, true);
 
-        bodyElem.addEventListener("change", (event: Event) => {
-            const elem = event.target as HTMLElement;
-            elem.classList.remove("invalid");
-            elem.classList.remove("invalid-required");
-        });
+		bodyElem.addEventListener("change", (event: Event) => {
+			const elem = event.target as HTMLElement;
+			elem.classList.remove("invalid");
+			elem.classList.remove("invalid-required");
+		});
 
 		for (var key in this._options.routes) {
 			const route = this._options.routes[key];
@@ -64,6 +59,21 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 			linkElem.click();
 			linkElem.remove();
 			return;
+		}
+
+		if (context.basePath != context.app.env.basePath) {
+			// Если базовый путь изменился, то перезагружаем страницу
+			console.log(`Change base path from "${context.app.env.basePath}" to "${context.basePath}"`);
+			location.href = context.url;
+			return;
+		}
+		else if (!context.basePath) {
+			var area = AREAS.findArea(context.path);
+			if (area && area.basePath) {
+				console.log(`Change base path from "${context.app.env.basePath}" to "${area.basePath}"`);
+				location.href = context.url;
+				return;
+			}
 		}
 
 		switch (context.action) {
@@ -131,7 +141,7 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 
 		// destroy current page
 		prevPage?.destroy();
-		this._appContentElem.appendChild(result.content);
+		context.app.contentElem.appendChild(result.content);
 
 		await next();
 	}

@@ -70,8 +70,10 @@ export interface NavigateContext<TApplication extends Application = Application,
 	readonly url: string;
 	/** Scheme, host and port. */
 	readonly origin: string;
-	/** Path and query, but without hash. */
+	/** Base path, path and query, but without hash. */
 	readonly pathAndQuery: string;
+	/** Base path. */
+	readonly basePath: string;
 	/** Path of navigation url. */
 	readonly path: string;
 	/** Query parameters of navigation url. */

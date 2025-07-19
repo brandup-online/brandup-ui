@@ -1,30 +1,22 @@
 ﻿import "./fix";
-import { ApplicationBuilder } from "@brandup/ui-app";
-import { ExampleApplicationModel } from "./typings/app";
-import { ExampleApplication } from "./app";
+import AREAS from "./areas";
 import "./styles/styles.less";
 
-import pages from "./middlewares/pages";
-import errors from "./middlewares/error";
-import realtime from "./middlewares/realtime";
+AREAS.registerArea('', {
+	app: () => import("./areas/landing/landing")
+});
 
-const builder = new ApplicationBuilder<ExampleApplicationModel>({});
+AREAS.registerArea('account', {
+	app: () => import("./areas/account/account")
+});
 
-builder
-	.useApp(ExampleApplication)
-	.useMiddleware(pages, {
-		routes: {
-			'/': { page: () => import("./pages/index"), preload: true },
-			'/commands': { page: () => import("./pages/commands") },
-			'/navigation': { page: () => import("./pages/navigation") },
-			'/forms': { page: () => import("./pages/forms"), preload: true },
-			'/ajax': { page: () => import("./pages/ajax") }
-		},
-		notfound: { page: () => import("./pages/error/notfound") },
-		error: { page: () => import("./pages/error/exception") }
-	})
-	.useMiddleware(errors)
-	.useMiddleware(realtime);
+var area = AREAS.findArea();
+if (!area)
+	area = AREAS.findArea('');
+if (!area)
+	throw new Error('Not found app area.');
 
-const app = builder.build({ basePath: '' });
+var appFactory = await area.app();
+var builder = appFactory.default();
+const app = builder.build({ basePath: area.basePath });
 app.run();

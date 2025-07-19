@@ -1,6 +1,5 @@
 import { Middleware, MiddlewareNext, StartContext, StopContext } from "./base";
 import CONSTANTS from "../constants";
-import BROWSER from "../browser";
 
 export const HYPERLINK_MIDDLEWARE_NAME = "app-hyperlink";
 
@@ -14,7 +13,7 @@ const HyperLinkMiddlewareFactory = (): Middleware => {
 		start: async (context: StartContext, next: MiddlewareNext) => {
 			await next();
 
-			BROWSER.window.addEventListener("click", onClick = (e: MouseEvent) => {
+			window.addEventListener("click", onClick = (e: MouseEvent) => {
 				let elem: Node | null = e.target as Node;
 				let ignore = false;
 				while (elem) {
@@ -56,9 +55,9 @@ const HyperLinkMiddlewareFactory = (): Middleware => {
 				elem.classList.add(CONSTANTS.LoadingElementClass);
 
 				context.app
-					.nav({ 
-						url, 
-						replace: elem.hasAttribute(CONSTANTS.NavUrlReplaceAttributeName), 
+					.nav({
+						url,
+						replace: elem.hasAttribute(CONSTANTS.NavUrlReplaceAttributeName),
 						scope: elem.getAttribute(CONSTANTS.NavUrlScopeAttributeName),
 						data: { clickElem: elem }
 					})
@@ -66,13 +65,13 @@ const HyperLinkMiddlewareFactory = (): Middleware => {
 					.finally(() => elem.classList.remove(CONSTANTS.LoadingElementClass));
 			}, false);
 
-			BROWSER.window.addEventListener("keydown", onKeyDownUp, false);
-			BROWSER.window.addEventListener("keyup", onKeyDownUp, false);
+			window.addEventListener("keydown", onKeyDownUp, false);
+			window.addEventListener("keyup", onKeyDownUp, false);
 		},
 		stop: (_context: StopContext, next: MiddlewareNext) => {
-			BROWSER.window.removeEventListener("click", onClick, false);
-			BROWSER.window.removeEventListener("keydown", onKeyDownUp, false);
-			BROWSER.window.removeEventListener("keyup", onKeyDownUp, false);
+			window.removeEventListener("click", onClick, false);
+			window.removeEventListener("keydown", onKeyDownUp, false);
+			window.removeEventListener("keyup", onKeyDownUp, false);
 
 			return next();
 		}

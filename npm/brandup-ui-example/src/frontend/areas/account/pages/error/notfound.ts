@@ -1,5 +1,5 @@
 ﻿import { DOM } from "@brandup/ui-dom";
-import { Page } from "../base";
+import { Page } from "../../../page";
 
 export default class NotFoundPage extends Page {
 	get typeName(): string { return "NotFoundPage" }

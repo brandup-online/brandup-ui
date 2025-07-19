@@ -5,7 +5,6 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CleanCSSPlugin = require("less-plugin-clean-css");
 const TerserPlugin = require("terser-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const ModernBuildPlugin = require('./utils/ModernBuildPlugin');
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 
 let bundleOutputDir = './wwwroot/dist';
@@ -34,14 +33,11 @@ var splitChunks = {
 
 module.exports = (env) => {
     const isDevBuild = process.env.NODE_ENV !== "production";
-    const isModern = process.env.BROWSERS_ENV === "modern";
-	const noBrowsers = !process.env.BROWSERS_ENV;
-    const prefix = isModern ? "modern" : "fallback";
 
     console.log(`NODE_ENV: "${process.env.NODE_ENV}"`);
     console.log(`isDevBuild: ${isDevBuild}`);
 
-    const getFilePath = (relativePath) => path.join(prefix, relativePath);
+    const getFilePath = (relativePath) => relativePath;
 
     return [{
         mode: isDevBuild ? "development" : "production",
@@ -57,8 +53,8 @@ module.exports = (env) => {
             filename: getFilePath('[name].js'),
             chunkFilename: isDevBuild ? getFilePath('[name].js') : getFilePath('[name].[contenthash].js'),
             iife: true,
-            clean: noBrowsers || process.env.BROWSERS_ENV === "fallback",
-            publicPath: './'
+            clean: true,
+            publicPath: '/'
         },
         module: {
             rules: [
@@ -79,7 +75,7 @@ module.exports = (env) => {
                 },
                 {
                     test: /\.html$/,
-					include: /pages/,
+					//include: /pages/,
                     use: [ { loader: "raw-loader" } ]
                 },
                 {
@@ -132,14 +128,11 @@ module.exports = (env) => {
             new WebpackManifestPlugin({
                 fileName: getFilePath('manifest.json'),
             }),
-            ...((isModern || noBrowsers) ? [
-                new HtmlWebpackPlugin({
-                    filename: "index.html",
-                    template: path.join(frontDir, "template.html"),
-                    publicPath:"./"
-                }),
-				...(isModern ? [ new ModernBuildPlugin(path.join(__dirname, bundleOutputDir, "fallback")) ] : [])
-            ] : [])
+            new HtmlWebpackPlugin({
+                filename: "index.html",
+                template: path.join(frontDir, "template.html"),
+                publicPath: "/"
+            })
         ]
     }];
 };

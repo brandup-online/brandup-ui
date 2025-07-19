@@ -1,8 +1,7 @@
 import { QueryParams } from "../types";
-import BROWSER from "../browser";
 
 const parseUrl = (basePath: string, url: string | null): ParsedUrl => {
-	const loc = BROWSER.location;
+	const loc = window.location;
 	let origin: string = loc.origin;
 	let path: string;
 	let query: URLSearchParams | null = null;
@@ -80,8 +79,11 @@ const parseUrl = (basePath: string, url: string | null): ParsedUrl => {
 	path = path.toLowerCase();
 
 	if (basePath) {
-		if (path.toLowerCase().startsWith(basePath.toLowerCase()))
+		if (path.toLowerCase().startsWith(basePath.toLowerCase())) {
 			path = path.substring(basePath.length);
+			if (!path)
+				path = '/';
+		}
 		else
 			basePath = '';
 	}
@@ -143,6 +145,8 @@ const extendQuery = (url: ParsedUrl, query: QueryParams | URLSearchParams | Form
 
 const rebuildUrl = (parsedUrl: ParsedUrl) => {
 	let relativeUrl = parsedUrl.basePath + parsedUrl.path;
+	if (relativeUrl.length > 1 && relativeUrl.endsWith('/'))
+		relativeUrl = relativeUrl.substring(0, relativeUrl.length - 1);
 
 	if (parsedUrl.query.size)
 		relativeUrl += "?" + parsedUrl.query.toString();
@@ -155,11 +159,19 @@ const rebuildUrl = (parsedUrl: ParsedUrl) => {
 
 const buildUrl = (basePath: string, path?: string, query?: QueryParams | URLSearchParams | FormData, hash?: string) => {
 	let url = basePath;
+	if (url == '/')
+		url = '';
+
 	if (path) {
-		if (path.startsWith("/"))
-			path = path.substring(1);
+		if (!path.startsWith("/"))
+			path = '/' + path;
 		url += path;
 	}
+
+	if (!url)
+		url = '/'
+	else if (url.endsWith('/'))
+		url = url.substring(0, url.length - 1);
 
 	if (query) {
 		let params: URLSearchParams;

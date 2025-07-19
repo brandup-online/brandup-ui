@@ -5,7 +5,6 @@ import { MiddlewareInvoker } from "./middlewares/invoker";
 import StateMiddleware from "./middlewares/state";
 import HyperLinkMiddleware from "./middlewares/hyperlink";
 import urlHelper from "./helpers/url";
-import BROWSER from "./browser";
 import CONSTANTS from "./constants";
 import { Guid } from "@brandup/ui-helpers";
 
@@ -111,7 +110,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		if (!contextData)
 			contextData = <TData>{};
 
-		element = element || BROWSER.body;
+		element = element || document.body;
 		this.setElement(element);
 
 		const context: StartContext<this, TData> = {
@@ -227,6 +226,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			url: navUrl.url,
 			origin: navUrl.origin,
 			pathAndQuery: navUrl.relative,
+			basePath: navUrl.basePath,
 			path: navUrl.path,
 			query: navUrl.query,
 			hash: navUrl.hash,
@@ -260,7 +260,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	restart() {
 		this.__abort.signal.throwIfAborted();
 
-		BROWSER.reload();
+		window.location.reload();
 	}
 
 	async destroy<TData extends ContextData = ContextData>(contextData?: TData | null): Promise<StopContext<this, TData>> {
@@ -390,6 +390,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 					url: navUrl.url,
 					origin: navUrl.origin,
 					pathAndQuery: navUrl.relative,
+					basePath: navUrl.basePath,
 					path: navUrl.path,
 					query: navUrl.query,
 					hash: navUrl.hash,
