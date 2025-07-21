@@ -3,7 +3,7 @@ import * as helpers from "./helpers";
 import internals from "./internals";
 
 /** Request with fetch. */
-export const request = async (options: AjaxRequest, abortSignal?: AbortSignal): Promise<AjaxResponse> => {
+export async function request<TData = any, TState = any>(options: AjaxRequest<TState>, abortSignal?: AbortSignal): Promise<AjaxResponse<TData, TState>> {
 	let { mode, credentials = "include" } = options;
 	let url = options.url || location.href;
 	url = helpers.addQuery(url, options.query);
