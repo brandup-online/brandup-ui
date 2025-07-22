@@ -1,4 +1,4 @@
-import { getValue } from "./object";
+import { getProperty } from "./object";
 import { formatText } from "./string";
 
 declare global {
@@ -12,7 +12,7 @@ declare global {
 }
 
 Object.prop = function (obj: any, path: string) {
-	return getValue(obj, path);
+	return getProperty(obj, path);
 };
 
 String.prototype.format = function (...args: any[]): string {

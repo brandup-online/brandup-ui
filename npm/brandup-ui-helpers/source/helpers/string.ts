@@ -1,4 +1,4 @@
-import { getValue } from "./object";
+import { getProperty } from "./object";
 
 function formatText(template: string, ...args: any[]): any {
 	if (!args.length) return template;
@@ -6,7 +6,7 @@ function formatText(template: string, ...args: any[]): any {
 	const obj = typeof args[0] === "object" ? args[0] : null;
 
 	return template.replace(/\{([^}]+)\}/g, (_match, key) => {
-		if (obj) return getValue(obj, key) ?? "";
+		if (obj) return getProperty(obj, key) ?? "";
 		else {
 			const paramIndex = parseInt(key);
 			if (!isNaN(paramIndex) && paramIndex < args.length)
