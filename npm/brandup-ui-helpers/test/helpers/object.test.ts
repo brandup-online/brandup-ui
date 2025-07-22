@@ -1,6 +1,6 @@
 import { ObjectHelper } from "../../source/index";
 
-describe("getValue", () => {
+describe("getProperty", () => {
 	it("Return value", () => {
 		expect(ObjectHelper.getProperty(testObj, "layout.nav.logo.title")).toBe("LedTrees");
 	});
