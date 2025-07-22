@@ -1,43 +1,38 @@
+function getProperty(obj: any, property: string): any {
+	if (!obj)
+		return null;
+
+	const props = property.split('.');
+
+	for (let i = 0; i < props.length; i++) {
+		const name = props[i];
+		if (!(name in obj))
+			return undefined;
+
+		obj = obj[name];
+	}
+
+	return obj;
+}
+
 function hasProperty(obj: any, property: string): boolean {
 	if (!obj)
 		return false;
 
-	const props = property.split(".");
+	const props = property.split('.');
 
-	let t = obj;
 	for (let i = 0; i < props.length; i++) {
-		if (!t)
+		const name = props[i];
+		if (!(name in obj))
 			return false;
 
-		const pName = props[i];
-		if (!(pName in t))
-			return false;
-
-		t = t[pName];
+		obj = obj[name];
 	}
 
 	return true;
 }
 
-function getProperty(obj: any, property: string): any {
-	if (!obj)
-		return null;
-
-	const props = property.split(".");
-
-	let t = obj;
-	for (let i = 0; i < props.length; i++) {
-		const pName = props[i];
-		if (!(pName in t))
-			return undefined;
-
-		t = t[pName];
-	}
-
-	return t;
-}
-
 export {
-	hasProperty,
-	getProperty
+	getProperty,
+	hasProperty
 }

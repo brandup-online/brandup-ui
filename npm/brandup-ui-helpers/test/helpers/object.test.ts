@@ -1,48 +1,87 @@
 import { ObjectHelper } from "../../source/index";
 
 describe("getProperty", () => {
-	it("Return value", () => {
-		expect(ObjectHelper.getProperty(testObj, "layout.nav.logo.title")).toBe("LedTrees");
+	it("Object is null", () => {
+		const model = null;
+		const value = ObjectHelper.getProperty(model, "name");
+		expect(value).toBeNull();
+
+		const has = ObjectHelper.hasProperty(model, "name");
+		expect(has).toBe(false);
 	});
 
-	it("If key undefined", () => {
-		expect(ObjectHelper.getProperty(testObj, "layout.nav.lang.ar")).toBeUndefined();
+	it("Object is undefined", () => {
+		const model = undefined;
+		const value = ObjectHelper.getProperty(model, "name");
+		expect(value).toBeNull();
+
+		const has = ObjectHelper.hasProperty(model, "name");
+		expect(has).toBe(false);
 	});
 
-	it("If obj undefined", () => {
-		expect(ObjectHelper.getProperty(testObj, "missing.anyKey")).toBeUndefined();
+	it("Return first level value", () => {
+		const model = {
+			name: "Test"
+		}
+		const value = ObjectHelper.getProperty(model, "name");
+		expect(value).toBe(model.name);
+
+		const has = ObjectHelper.hasProperty(model, "name");
+		expect(has).toBe(true);
 	});
 
-	it("Returns value for single-level key", () => {
-		expect(ObjectHelper.getProperty(testObj, "hello")).toBe("world");
+	it("Return second level value", () => {
+		const model = {
+			item: {
+				name: "Test"
+			}
+		}
+		const value = ObjectHelper.getProperty(model, "item.name");
+		expect(value).toBe(model.item.name);
+
+		const has = ObjectHelper.hasProperty(model, "item.name");
+		expect(has).toBe(true);
+	});
+
+	it("Return null value", () => {
+		const model = {
+			name: null
+		}
+		const value = ObjectHelper.getProperty(model, "name");
+		expect(value).toBeNull();
+
+		const has = ObjectHelper.hasProperty(model, "name");
+		expect(has).toBe(true);
+	});
+
+	it("Return empty string value", () => {
+		const model = {
+			name: ""
+		}
+		const value = ObjectHelper.getProperty(model, "name");
+		expect(value).toBe("");
+
+		const has = ObjectHelper.hasProperty(model, "name");
+		expect(has).toBe(true);
+	});
+
+	it("Return zero value", () => {
+		const model = {
+			name: 0
+		}
+		const value = ObjectHelper.getProperty(model, "name");
+		expect(value).toBe(0);
+
+		const has = ObjectHelper.hasProperty(model, "name");
+		expect(has).toBe(true);
+	});
+
+	it("Return undefined value", () => {
+		const model = {}
+		const value = ObjectHelper.getProperty(model, "name");
+		expect(value).toBeUndefined();
+
+		const has = ObjectHelper.hasProperty(model, "name");
+		expect(has).toBe(false);
 	});
 });
-
-const testObj = {
-	hello: "world",
-	layout: {
-		nav: {
-			logo: {
-				title: "LedTrees",
-			},
-			langs: {
-				en: {
-					title: "английский",
-				},
-				ru: {
-					title: "русский",
-				},
-				ar: {
-					title: "",
-				},
-				zh: {
-					title: "китайский",
-				},
-			},
-		},
-		footer: {
-			copy: "{year} права защищены",
-			policy: "Политика конфиденциальности",
-		},
-	},
-};
