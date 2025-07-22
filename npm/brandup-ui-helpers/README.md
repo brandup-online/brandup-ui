@@ -10,49 +10,36 @@ Install NPM package [@brandup/ui-helpers](https://www.npmjs.com/package/@brandup
 npm i @brandup/ui-helpers@latest
 ```
 
-Метод строк `format()` для удобной подстановки значений.
+## String helpers
 
-Поддерживает как позиционные ({0}, {1}), так и именованные ({name}) аргументы
+### Format text
 
-Автоматически обрабатывает отсутствующие значения (возвращает пустую строку)
+Format with model values:
 
-Не модифицирует оригинальную строку
-
-```ts
-// Позиционные аргументы
-"Привет, {0}".format("Мир"); // "Привет, Мир"
-"Порядок: {1}, {0}".format("Первый", "Второй"); // "Порядок: Второй, Первый"
-
-// Именованные аргументы (объект)
-"Год: {year}".format({ year: 2024 }); // "Год: 2024"
-"Имя: {name}, возраст: {age}".format({ name: "Иван", age: 30 }); // "Имя: Иван, возраст: 30"
-
-// Несуществующие ключи возвращают пустую строку
-"Привет, {unknown}".format({ name: "Пётр" }); // "Привет, "
+```TypeScript
+const text = "Hello, {name}";
+const result = text.format({ name: "Dmitry" }); // Hello, Dmitry
 ```
 
-Метод `prop()` к `Object` для безопасного доступа к вложенным свойствам.
+Format with arguments:
 
-Рекурсивно обрабатывает вложенные свойства через точку (obj.prop1.prop2)
+```TypeScript
+const text = "Hello, {0}";
+const result = text.format("Dmitry"); // Hello, Dmitry
+```
 
-Безопасно обрабатывает несуществующие пути (возвращает undefined)
+## Object helpers
 
-```ts
-const data = {
-	user: {
-		name: "Alex",
-		contacts: {
-			email: "mail@example.com",
-			phone: "+1234567890",
-		},
-	},
-};
+### Get value by property path
 
-// Получение значений
-Object.prop(data, "user.name"); // "Alex"
-Object.prop(data, "user.contats.email"); // "mail@example.com"
+```TypeScript
+const model = {
+	header: {
+		value: "Item"
+	}
+}
 
-// Несуществующие свойства возвращают undefined
-Object.prop(data, "user.age"); // undefined
-Object.prop(data, "missing.property"); // undefined
+const value = Object.prop(model, "header.value"); // return "Item"
+
+const hasValue = Object.hasProp(model, "header.value"); // return true
 ```

@@ -1,8 +1,8 @@
-function getProperty(obj: any, property: string): any {
+function getProperty(obj: any, path: string): any {
 	if (!obj)
 		return null;
 
-	const props = property.split('.');
+	const props = path.split('.');
 
 	for (let i = 0; i < props.length; i++) {
 		const name = props[i];
@@ -15,11 +15,11 @@ function getProperty(obj: any, property: string): any {
 	return obj;
 }
 
-function hasProperty(obj: any, property: string): boolean {
+function hasProperty(obj: any, path: string): boolean {
 	if (!obj)
 		return false;
 
-	const props = property.split('.');
+	const props = path.split('.');
 
 	for (let i = 0; i < props.length; i++) {
 		const name = props[i];
