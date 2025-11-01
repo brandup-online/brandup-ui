@@ -2,7 +2,7 @@
 import { AjaxQueue, AjaxResponse } from "@brandup/ui-ajax";
 import { DOM } from "@brandup/ui-dom";
 import { ExampleApplication } from "../app";
-import { PageNavigationData, PageSubmitData } from "frontend/typings/app";
+import { PageNavigationData, PageSubmitData } from "../typings/app";
 import { NavigateContext, SubmitContext } from "@brandup/ui-app";
 
 export abstract class Page extends UIElement {
@@ -12,6 +12,7 @@ export abstract class Page extends UIElement {
 	private __hash: string | null;
 
 	get context() { return this.__context; }
+	get hash() { return this.__hash; }
 
 	constructor(context: NavigateContext<ExampleApplication, PageNavigationData>) {
 		super();
@@ -36,7 +37,7 @@ export abstract class Page extends UIElement {
 		return content;
 	}
 
-	protected _onRenderElement(element: HTMLElement) {
+	protected override _onRenderElement(element: HTMLElement) {
 		element.appendChild(DOM.tag("header", "page-header", [
 			DOM.tag("h1", null, this.header)
 		]));
@@ -66,9 +67,9 @@ export abstract class Page extends UIElement {
 	abstract get header(): string;
 	protected abstract onRenderContent(container: HTMLElement): Promise<void>;
 	protected onChangedHash(_newHash: string | null, _oldHash: string | null): Promise<void> { return Promise.resolve(); }
-	protected async onFormSubmitted(response: AjaxResponse, context: SubmitContext<ExampleApplication, PageSubmitData>) { }
+	protected async onFormSubmitted(_response: AjaxResponse, _context: SubmitContext<ExampleApplication, PageSubmitData>) { }
 
-	destroy() {
+	override destroy() {
 		this.ajax.destroy();
 		this.element?.remove();
 

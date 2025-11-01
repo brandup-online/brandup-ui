@@ -1,4 +1,4 @@
-import { Application, ApplicationBuilder, ApplicationModel, EnvironmentModel } from "../source/index";
+import { Application, ApplicationBuilder, EnvironmentModel } from "../source/index";
 import { ContextData, Middleware, MiddlewareNext, StartContext } from "../source/middlewares/base";
 
 it('Custom app', () => {
@@ -47,7 +47,7 @@ const createMiddleware = (test: string): TestMiddleware => {
 	return {
 		name: "test",
 		test: test,
-		start: async (context: StartContext<TestApplication, ContextData>, next: MiddlewareNext) => {
+		start: async (_context: StartContext<TestApplication, ContextData>, next: MiddlewareNext) => {
 			await next();
 		}
 	};

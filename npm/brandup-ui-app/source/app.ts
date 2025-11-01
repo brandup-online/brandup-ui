@@ -29,7 +29,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	private __execNav?: ExecuteNav<this, ContextData>; // current navigation invoking
 	private __lastNav?: ExecuteNav<this, ContextData>; // last success navigation
 
-	constructor(env: EnvironmentModel, model: TModel, ...args: any[]) {
+	constructor(env: EnvironmentModel, model: TModel, ..._args: any[]) {
 		super();
 
 		this.env = env;
@@ -263,7 +263,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		window.location.reload();
 	}
 
-	async destroy<TData extends ContextData = ContextData>(contextData?: TData | null): Promise<StopContext<this, TData>> {
+	override async destroy<TData extends ContextData = ContextData>(contextData?: TData | null): Promise<StopContext<this, TData>> {
 		if (this.__abort.signal.aborted)
 			return Promise.reject('Application already destroyed.');
 		this.__abort.abort();
@@ -416,7 +416,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		}
 	}
 
-	private __onPopState(context: StartContext, event: PopStateEvent) {
+	private __onPopState(_context: StartContext, event: PopStateEvent) {
 		const popUrl = location.href;
 
 		console.log(`popstate: ${popUrl}`, event.state);

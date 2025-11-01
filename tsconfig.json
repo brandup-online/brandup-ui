@@ -1,20 +1,29 @@
 {
 	"compilerOptions": {
-		"module": "ES2020",
-		"moduleResolution": "node",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
 		"target": "ESNext",
 		"sourceMap": false,
 		"strict": true,
 		"lib": [
-			"DOM",
-			"ES2020"
+			"ESNext",
+			"DOM"
 		],
-		"esModuleInterop": true,
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
 		"noImplicitAny": true,
 		"noEmitOnError": true,
-		"declaration": false,
+		"noImplicitOverride": true,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
 		"declarationMap": false,
-		"removeComments": false
+		"resolveJsonModule": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
+		"allowSyntheticDefaultImports": true
 	},
 	"exclude": [
 		"node_modules",

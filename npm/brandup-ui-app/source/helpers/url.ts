@@ -120,11 +120,11 @@ const parseUrl = (basePath: string, url: string | null): ParsedUrl => {
  */
 const extendQuery = (url: ParsedUrl, query: QueryParams | URLSearchParams | FormData) => {
 	if (query instanceof URLSearchParams) {
-		query.forEach((v, k) => url.query.delete(k));
+		query.forEach((_v, k) => url.query.delete(k));
 		query.forEach((v, k) => url.query.append(k, v));
 	}
 	else if (query instanceof FormData) {
-		query.forEach((v, k) => url.query.delete(k));
+		query.forEach((_v, k) => url.query.delete(k));
 		query.forEach((v, k) => url.query.append(k, v.toString()));
 	}
 	else {

@@ -3,20 +3,18 @@
 	"editor.formatOnSave": true,
 	"editor.formatOnPaste": true,
 	"editor.linkedEditing": true,
-	"[csharp]": {
-		"editor.defaultFormatter": "ms-dotnettools.csharp"
-	},
-	"less.format.newlineBetweenRules": true,
-	"less.format.newlineBetweenSelectors": false,
-	"less.format.spaceAroundSelectorSeparator": true,
-	"less.format.preserveNewLines": true,
-	"less.format.maxPreserveNewLines": 2,
-	"less.format.braceStyle": "collapse",
-	"less.validate": true,
 	"javascript.format.insertSpaceAfterConstructor": true,
 	"javascript.format.insertSpaceAfterCommaDelimiter": true,
 	"[javascript]": {
-		"editor.defaultFormatter": "ms-vscode.js-debug"
+		"editor.defaultFormatter": "vscode.typescript-language-features"
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "vscode.typescript-language-features"
+	},
+	"less.validate": true,
+	"[less]": {
+		"editor.defaultFormatter": null,
+		"editor.formatOnSave": false
 	},
 	"html.suggest.html5": true,
 	"html.autoClosingTags": true,
@@ -28,5 +26,11 @@
 	"html.format.templating": true,
 	"html.format.indentHandlebars": true,
 	"html.format.unformatted": "svg,path",
-	"html.format.contentUnformatted": "svg,path"
+	"html.format.contentUnformatted": "svg,path",
+	"[yaml]": {
+		"editor.defaultFormatter": "redhat.vscode-yaml",
+		"editor.formatOnSave": true,
+		"editor.tabSize": 4,
+		"editor.indentSize": "tabSize"
+	}
 }

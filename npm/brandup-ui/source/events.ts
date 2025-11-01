@@ -97,6 +97,8 @@ export class EventEmitter {
 
 		if (!this._listeningTo || Object.keys(this._listeningTo).length === 0)
 			delete this._listeningTo;
+
+		return this;
 	}
 
 	private _addListeningTo(source: EventEmitter, eventName: EventName) {

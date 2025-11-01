@@ -67,7 +67,7 @@ it('DOM.tag with single children', async () => {
 	elem = DOM.tag("div", null, child);
 	expect("test").toEqual(elem.innerHTML);
 
-	child = (elem: HTMLElement) => { return DOM.tag("div"); };
+	child = (_elem: HTMLElement) => { return DOM.tag("div"); };
 	elem = DOM.tag("div", null, child);
 	expect("<div></div>").toEqual(elem.innerHTML);
 
@@ -120,7 +120,7 @@ it('DOM.tag with many children', async () => {
 	elem = DOM.tag("div", null, [child]);
 	expect("test").toEqual(elem.innerHTML);
 
-	child = (elem: HTMLElement) => { return DOM.tag("div"); };
+	child = (_elem: HTMLElement) => { return DOM.tag("div"); };
 	elem = DOM.tag("div", null, [child]);
 	expect("<div></div>").toEqual(elem.innerHTML);
 

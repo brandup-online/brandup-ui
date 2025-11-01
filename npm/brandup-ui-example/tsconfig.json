@@ -1,19 +1,24 @@
 {
 	"compilerOptions": {
 		"module": "ESNext",
-		"moduleResolution": "node",
+		"moduleResolution": "bundler",
 		"target": "ESNext",
-		"sourceMap": false,
+		"sourceMap": true,
 		"strict": true,
 		"lib": [
-			"ESNext",
-			"DOM"
+			"DOM",
+			"ESNext"
 		],
 		"baseUrl": "./src",
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
 		"noImplicitAny": true,
 		"noEmitOnError": true,
+		"noImplicitOverride": true,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
 		"declarationMap": false,
 		"resolveJsonModule": true,
 		"esModuleInterop": true,
@@ -21,13 +26,15 @@
 		"skipLibCheck": true,
 		"allowSyntheticDefaultImports": true
 	},
-	"type": "module",
+	"include": [
+		"source",
+		"test"
+	],
 	"exclude": [
 		"node_modules",
-		"wwwroot",
-		"server",
-		".idea",
+		"dist",
+		".vs",
 		".vscode"
 	],
-	"compileOnSave": true
+	"compileOnSave": false
 }

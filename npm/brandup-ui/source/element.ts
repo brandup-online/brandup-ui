@@ -133,7 +133,7 @@ export abstract class UIElement extends EventEmitter {
 			throw new Error("Unsupported callback type.");
 	}
 
-	toString(): string { return this.typeName; }
+	override toString(): string { return this.typeName; }
 
 	destroy() {
 		if (this.__destroyed)

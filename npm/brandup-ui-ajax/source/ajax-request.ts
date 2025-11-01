@@ -27,7 +27,7 @@ export const ajaxRequest = (options: AjaxRequest) => {
 	if (options.timeout === 0 || options.timeout)
 		xhr.timeout = options.timeout;
 
-	xhr.onreadystatechange = (e: Event) => {
+	xhr.onreadystatechange = (_e: Event) => {
 		switch (xhr.readyState) {
 			case XMLHttpRequest.DONE: {
 				if (options.success) {
@@ -93,7 +93,7 @@ export const ajaxRequest = (options: AjaxRequest) => {
 		}
 	};
 
-	xhr.onabort = (e: ProgressEvent) => {
+	xhr.onabort = (_e: ProgressEvent) => {
 		if (options.error)
 			options.error(options, "Request aborted");
 	}

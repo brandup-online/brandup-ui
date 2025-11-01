@@ -209,7 +209,7 @@ it('EventEmitter.trigger with args to once', () => {
 class Component extends EventEmitter {
 	get events(): { [key: string]: { callback: EventCallbackFunc, context?: EventContextInit, ctx: EventContextInit }[] } { return (<any>this)._events; }
 
-	trigger(eventName: string, ...args: any[]): this {
+	override trigger(eventName: string, ...args: any[]): this {
 		return super.trigger(eventName, ...args);
 	}
 }

@@ -1,5 +1,5 @@
 import { DOM } from "@brandup/ui-dom";
-import { Application, NAV_OVERIDE_ERROR } from "../source/app";
+import { Application } from "../source/app";
 import { ApplicationModel } from "../source/types";
 import { ApplicationBuilder } from "../source/builder";
 import { ContextData, Middleware, MiddlewareNext, NavigateContext, StartContext } from "../source/middlewares/base";
@@ -152,7 +152,7 @@ it("Application.run error in first nav", async () => {
 	const builder = new ApplicationBuilder<TestAppModel>({ userId: "user" });
 	builder.useMiddleware(() => <Middleware>{
 		name: "test",
-		navigate: async (context: NavigateContext, next) => {
+		navigate: async (_context: NavigateContext, next) => {
 			await next();
 
 			throw new Error("nav error");

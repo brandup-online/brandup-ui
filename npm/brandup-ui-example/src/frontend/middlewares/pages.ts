@@ -12,7 +12,6 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 	private _options: PagesOptions;
 	private _ajax: AjaxQueue;
 	private _page: Page | null = null;
-	private _loaderElem?: HTMLElement;
 
 	constructor(options: PagesOptions) {
 		this._options = options;
@@ -21,7 +20,7 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 	}
 
 	async start(context: StartContext, next: MiddlewareNext) {
-		context.app.element?.insertAdjacentElement("beforeend", this._loaderElem = DOM.tag("div", "app-loader"));
+		context.app.element?.insertAdjacentElement("beforeend", DOM.tag("div", "app-loader"));
 
 		const bodyElem = document.body;
 

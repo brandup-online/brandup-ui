@@ -5,13 +5,13 @@ export const STATE_MIDDLEWARE_NAME = "app-state";
 
 const StateMiddlewareFactory = (): Middleware => {
 	let counter: number = 0;
-	let beginTime: number;
+	//let beginTime: number;
 
 	const begin = (context: InvokeContext) => {
 		const prev = counter++;
 
 		if (prev === 0) {
-			beginTime = Date.now();
+			//beginTime = Date.now();
 
 			context.app.element?.classList.remove(CONSTANTS.STATE_CLASS.LOADED);
 			context.app.element?.classList.add(CONSTANTS.STATE_CLASS.LOADING);

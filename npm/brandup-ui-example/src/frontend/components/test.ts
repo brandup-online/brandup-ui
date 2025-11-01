@@ -13,7 +13,7 @@ class TestElem extends UIElement {
 		container.insertAdjacentElement("beforeend", elem);
 	}
 
-	destroy() {
+	override destroy() {
 		alert("destroy");
 
 		this.element?.remove();

@@ -1,4 +1,4 @@
-﻿import { Middleware, MiddlewareNext, StartContext, NavigateContext, SubmitContext } from "@brandup/ui-app";
+﻿import { Middleware, MiddlewareNext, NavigateContext, SubmitContext } from "@brandup/ui-app";
 import { ExampleApplication } from "../app";
 import { PageNavigationData } from "../typings/app";
 
@@ -22,7 +22,7 @@ export default (): RealtimeMiddleware => {
 
 			return next();
 		},
-		submit: (context: SubmitContext, next: MiddlewareNext) => {
+		submit: (_context: SubmitContext, next: MiddlewareNext) => {
 			console.log("realtime submit: ok");
 
 			return next();
