@@ -1,7 +1,7 @@
 import { ElementOptions, CssClass, TagChildrenLike, TagChildrenPrimitive, ElementEvents } from "./types";
 import helpers from "./helpers";
 
-function tag<TElement extends keyof HTMLElementTagNameMap>(tagName: TElement, options?: ElementOptions | CssClass | null, children?: TagChildrenLike): HTMLElementTagNameMap[TElement] {
+function tag<TElement extends keyof HTMLElementTagNameMap>(tagName: TElement, options?: ElementOptions | CssClass | null, ...children: TagChildrenLike[]): HTMLElementTagNameMap[TElement] {
 	const elem = document.createElement(tagName);
 
 	applyOptions(elem, options);

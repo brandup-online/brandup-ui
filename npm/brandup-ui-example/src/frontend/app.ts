@@ -13,14 +13,14 @@ export class ExampleApplication extends Application<ExampleApplicationModel> {
 		this.contentElem = DOM.tag("main", { role: "main", class: "app-content content-width" });
 	}
 
-	protected async onStared() {
+	protected override async onStared() {
 		await super.onStared();
 
-		const layoutElem = DOM.tag("div", "app", [
+		const layoutElem = DOM.tag("div", "app",
 			DOM.tag("nav", { class: "app-nav", role: "navigation" },
-				DOM.tag("div", "content-width", [
-					DOM.tag("a", { class: "logo", title: "brandup-ui" }, [logoIcon, DOM.tag("span", null, "UI")]).navUrl("/"),
-					DOM.tag("menu", null, [
+				DOM.tag("div", "content-width",
+					DOM.tag("a", { class: "logo", title: "brandup-ui" }, logoIcon, DOM.tag("span", null, "UI")).navUrl("/"),
+					DOM.tag("menu", null,
 						DOM.tag("li", null, DOM.tag("a", null, "My account").navUrl("/account")),
 						() => {
 							if (this.env.basePath === '') {
@@ -33,11 +33,9 @@ export class ExampleApplication extends Application<ExampleApplicationModel> {
 							}
 							return null;
 						}
-					])
-				])
+					))
 			),
-			this.contentElem
-		]);
+			this.contentElem);
 
 		this.element?.insertAdjacentElement("beforeend", layoutElem);
 	}
