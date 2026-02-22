@@ -1,4 +1,4 @@
-import { UIElement, CommandEventArgs } from "./element";
+import { CommandEventArgs, UIElement } from "./element";
 
 declare global {
 	interface HTMLElement {
@@ -18,3 +18,5 @@ HTMLElement.prototype.ui = function (factory: (elem: HTMLElement) => UIElement):
 	factory(this);
 	return this;
 };
+
+export { };

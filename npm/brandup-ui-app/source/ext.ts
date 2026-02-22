@@ -40,3 +40,5 @@ HTMLElement.prototype.navScope = function (scope: string) {
 	this.setAttribute(CONSTANTS.NavUrlScopeAttributeName, scope);
 	return this;
 };
+
+export { };
