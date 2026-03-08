@@ -1,6 +1,6 @@
 import { FuncHelper } from "../../source/index";
 
-it('FuncHelper success', async () => {
+it('FuncHelper timeout success', async () => {
 	const result = await FuncHelper.timeout(new Promise<string>((resolve, _reject) => {
 		resolve("test");
 	}), 5000);
@@ -8,19 +8,28 @@ it('FuncHelper success', async () => {
 	expect("test").toEqual(result);
 });
 
-it('FuncHelper error', async () => {
+it('FuncHelper timeout error', async () => {
 	await expect(FuncHelper.timeout(new Promise<string>((_resolve, reject) => {
 		reject(new Error("error"));
 	}), 5000)).rejects.toThrow("error");
 });
 
-it('FuncHelper timeout', async () => {
+it('FuncHelper timeout timeout', async () => {
 	await expect(FuncHelper.timeout(new Promise<string>((resolve, _reject) => {
 		setTimeout(() => resolve("test"), 2000);
-	}), 1000)).rejects.toThrow(FuncHelper.TIMEOUT_ERROR);
+	}), 1000)).rejects.toEqual(FuncHelper.TIMEOUT_REASON);
 });
 
-it('FuncHelper invalid', async () => {
+it('FuncHelper timeout cancel', async () => {
+	const abort = new AbortController();
+	abort.abort("CANCEL");
+
+	await expect(FuncHelper.timeout(new Promise<string>((resolve, _reject) => {
+		setTimeout(() => resolve("test"), 2000);
+	}), 1000, abort.signal)).rejects.toEqual(abort.signal.reason);
+});
+
+it('FuncHelper timeout invalid', async () => {
 	await expect(FuncHelper.timeout(new Promise<string>((resolve, _reject) => {
 		resolve("test");
 	}), 0)).rejects.toThrow("Invalid timeout value.");

@@ -38,11 +38,10 @@ const getRightTime = (start: number, minTime: number) => {
 
 function delay(time: number, abort?: AbortSignal): Promise<void> {
 	return new Promise<void>((resolve, reject) => {
+		abort?.throwIfAborted();
+
 		const timer = window.setTimeout(() => {
-			if (abort && abort.aborted)
-				reject(abort.reason);
-			else
-				resolve();
+			resolve();
 		}, time);
 
 		abort?.addEventListener("abort", () => {
@@ -52,14 +51,21 @@ function delay(time: number, abort?: AbortSignal): Promise<void> {
 	});
 }
 
-function timeout<T>(promise: Promise<T>, timeout: number): Promise<T> {
+function timeout<T>(promise: Promise<T>, timeout: number, abort?: AbortSignal): Promise<T> {
 	return new Promise<T>((resolve, reject) => {
 		if (timeout <= 0)
 			throw new Error("Invalid timeout value.");
 
+		abort?.throwIfAborted();
+
 		const timer = window.setTimeout(() => {
-			reject(new Error(TIMEOUT_ERROR));
+			reject(TIMEOUT_REASON);
 		}, timeout);
+
+		abort?.addEventListener("abort", () => {
+			window.clearTimeout(timer);
+			reject(abort.reason);
+		});
 
 		promise
 			.then(result => resolve(result))
@@ -68,7 +74,7 @@ function timeout<T>(promise: Promise<T>, timeout: number): Promise<T> {
 	});
 }
 
-export const TIMEOUT_ERROR = "Timeout";
+export const TIMEOUT_REASON = "Timeout";
 
 export {
 	minWait,
