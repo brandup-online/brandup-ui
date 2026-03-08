@@ -6,7 +6,10 @@ const config = {
 		"^.+\\.[jt]sx?$": "babel-jest",
 		".+\\.(css|styl|less|sass|scss|png|jpg|ttf|woff|woff2)$": "jest-transform-stub",
 	},
-	moduleFileExtensions: ["js", "ts"]
+	moduleFileExtensions: ["js", "ts"],
+	setupFilesAfterEnv: [
+		"./jest.setup.js"
+	]
 };
 
 module.exports = config;

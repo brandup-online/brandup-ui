@@ -5,18 +5,7 @@ import { ApplicationBuilder } from "../source/builder";
 import { ContextData, Middleware, MiddlewareNext, NavigateContext, StartContext } from "../source/middlewares/base";
 
 const setLocation = (url: string) => {
-	var u = new URL(url);
-	Object.defineProperty(window, 'location', {
-		value: {
-			href: url,
-			origin: u.origin,
-			hostname: u.hostname,
-			pathname: u.pathname,
-			search: u.search,
-			hash: u.hash
-		},
-		writable: true // possibility to override
-	});
+	window.location.href = url;
 	expect(window.location.href).toEqual(url);
 };
 
