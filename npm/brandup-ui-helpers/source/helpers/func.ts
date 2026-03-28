@@ -15,7 +15,7 @@ const minWait = (func: (...args: any[]) => void, minTime?: number) => {
 	return ret;
 };
 
-async function minWaitAsync<TResult>(func: () => Promise<TResult>, minTime?: number, abort?: AbortSignal): Promise<TResult> {
+async function minWaitAsync<TResult = unknown>(func: () => Promise<TResult>, minTime?: number, abort?: AbortSignal): Promise<TResult> {
 	if (!minTime)
 		return func();
 
@@ -51,7 +51,7 @@ function delay(time: number, abort?: AbortSignal): Promise<void> {
 	});
 }
 
-function timeout<T>(promise: Promise<T>, timeout: number, abort?: AbortSignal): Promise<T> {
+function timeout<T = unknown>(promise: Promise<T>, timeout: number, abort?: AbortSignal): Promise<T> {
 	return new Promise<T>((resolve, reject) => {
 		if (timeout <= 0)
 			throw new Error("Invalid timeout value.");
