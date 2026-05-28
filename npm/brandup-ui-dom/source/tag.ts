@@ -52,8 +52,6 @@ const applyOptions = (elem: HTMLElement, options?: ElementOptions | CssClass | n
 					if (value) {
 						for (const eventName in value as ElementEvents)
 							elem.addEventListener(eventName, (<any>value)[eventName]);
-
-						elem.style
 					}
 					break;
 				}

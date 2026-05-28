@@ -33,7 +33,7 @@ export default [
 		extensions: [ '.mjs', '.js', '.json', '.node', '.ts', '.mts' ],
 		preferBuiltins: true
 	  }),
-      typescript({ tsconfig: "./tsconfig.json" })
+      typescript({ tsconfig: "./tsconfig.json", exclude: ["**/*.test.ts", "test/**"], rootDir: "source" })
     ]
   },
   {

@@ -10,7 +10,7 @@ const createQuery = (query?: QueryData | FormData | null) => {
 		query.forEach((value: FormDataEntryValue, key: string) => {
 			if (!key)
 				return;
-			query.append(key, value.toString());
+			urlParams.append(key, value.toString());
 		});
 	}
 	else {

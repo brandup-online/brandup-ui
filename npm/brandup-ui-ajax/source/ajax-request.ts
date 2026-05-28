@@ -39,7 +39,14 @@ export const ajaxRequest = (options: AjaxRequest) => {
 						if (contentType) {
 							if (contentType.includes("json")) {
 								responseType = "json";
-								responseData = JSON.parse(xhr.responseText);
+								try {
+									responseData = JSON.parse(xhr.responseText);
+								}
+								catch (e) {
+									if (options.error)
+										options.error(options, e);
+									break;
+								}
 							}
 							else if (contentType.includes("text/plain")) {
 								responseType = "text";
@@ -96,6 +103,16 @@ export const ajaxRequest = (options: AjaxRequest) => {
 	xhr.onabort = (_e: ProgressEvent) => {
 		if (options.error)
 			options.error(options, "Request aborted");
+	}
+
+	xhr.onerror = (_e: ProgressEvent) => {
+		if (options.error)
+			options.error(options, "Request network error");
+	}
+
+	xhr.ontimeout = (_e: ProgressEvent) => {
+		if (options.error)
+			options.error(options, "Request timeout");
 	}
 
 	xhr.open(method, url, true);

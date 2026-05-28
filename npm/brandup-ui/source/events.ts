@@ -12,10 +12,11 @@ export class EventEmitter {
 	}
 
 	once(eventName: EventName, callback: EventCallbackFunc, context?: EventContextInit) {
-		this.on(eventName, (...args: any[]) => {
+		const wrapper = (...args: any[]) => {
+			this.off(eventName, wrapper, context);
 			callback.apply(context || this, args);
-			this.off(eventName, callback, context);
-		}, context);
+		};
+		return this.on(eventName, wrapper, context);
 	}
 
 	off(eventName?: EventName | null, callback?: EventCallbackFunc | null, context?: EventContextInit | null) {
@@ -41,9 +42,9 @@ export class EventEmitter {
 
 			if (callback || context) {
 				currentCallbacks.forEach(c => {
-					if ((callback && c.callback === callback) || (!callback && !c.callback))
-						return;
-					if ((context && c.context === context) || (!context && !c.context))
+					const callbackMatch = !callback || c.callback === callback;
+					const contextMatch = !context || c.context === context;
+					if (callbackMatch && contextMatch)
 						return;
 
 					newCallbacks.push(c);
