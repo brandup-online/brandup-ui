@@ -40,14 +40,17 @@ function delay(time: number, abort?: AbortSignal): Promise<void> {
 	return new Promise<void>((resolve, reject) => {
 		abort?.throwIfAborted();
 
+		const onAbort = () => {
+			window.clearTimeout(timer);
+			reject(abort?.reason);
+		};
+
 		const timer = window.setTimeout(() => {
+			abort?.removeEventListener("abort", onAbort);
 			resolve();
 		}, time);
 
-		abort?.addEventListener("abort", () => {
-			window.clearTimeout(timer);
-			reject(abort.reason);
-		});
+		abort?.addEventListener("abort", onAbort, { once: true });
 	});
 }
 
@@ -58,19 +61,25 @@ function timeout<T = unknown>(promise: Promise<T>, timeout: number, abort?: Abor
 
 		abort?.throwIfAborted();
 
+		const onAbort = () => {
+			window.clearTimeout(timer);
+			reject(abort?.reason);
+		};
+
 		const timer = window.setTimeout(() => {
+			abort?.removeEventListener("abort", onAbort);
 			reject(TIMEOUT_REASON);
 		}, timeout);
 
-		abort?.addEventListener("abort", () => {
-			window.clearTimeout(timer);
-			reject(abort.reason);
-		});
+		abort?.addEventListener("abort", onAbort, { once: true });
 
 		promise
 			.then(result => resolve(result))
 			.catch(reason => reject(reason))
-			.finally(() => window.clearTimeout(timer));
+			.finally(() => {
+				window.clearTimeout(timer);
+				abort?.removeEventListener("abort", onAbort);
+			});
 	});
 }
 

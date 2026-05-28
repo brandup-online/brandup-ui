@@ -101,6 +101,6 @@ export async function request<TData = any, TState = any>(options: AjaxRequest<TS
 		if (options.error)
 			options.error(options, error);
 
-		throw new Error(`Error ajax request: ${(error && error.message) ? error.message : error}`);
+		throw error;
 	}
 }

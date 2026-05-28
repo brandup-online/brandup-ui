@@ -118,6 +118,45 @@ it('EventEmitter.off by callback', () => {
 	expect(Object.keys(component.events).length).toEqual(0);
 });
 
+it('EventEmitter.off by callback keeps other callbacks', () => {
+	const component = new Component();
+
+	let a = 0;
+	let b = 0;
+	const onA = () => a++;
+	const onB = () => b++;
+	component.on("event", onA);
+	component.on("event", onB);
+
+	component.off("event", onA);
+
+	expect(component.events["event"].length).toEqual(1);
+	expect(component.events["event"][0].callback).toEqual(onB);
+
+	component.trigger("event");
+	expect(a).toEqual(0);
+	expect(b).toEqual(1);
+});
+
+it('EventEmitter.once twice on same event are independent', () => {
+	const component = new Component();
+
+	let a = 0;
+	let b = 0;
+	component.once("event", () => a++);
+	component.once("event", () => b++);
+
+	component.trigger("event");
+	expect(a).toEqual(1);
+	expect(b).toEqual(1);
+
+	component.trigger("event");
+	expect(a).toEqual(1);
+	expect(b).toEqual(1);
+
+	expect(Object.keys(component.events).length).toEqual(0);
+});
+
 it('EventEmitter.off by only context', () => {
 	const component = new Component();
 

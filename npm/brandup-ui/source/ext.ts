@@ -1,4 +1,4 @@
-import { CommandEventArgs, UIElement } from "./element";
+import { UIElement } from "./element";
 
 declare global {
 	interface HTMLElement {
@@ -7,10 +7,6 @@ declare global {
 
 	interface Node {
 		readonly uielement: UIElement | undefined;
-	}
-
-	interface HTMLElementEventMap {
-		"uicommand": CustomEvent<CommandEventArgs>;
 	}
 }
 

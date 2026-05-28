@@ -38,3 +38,23 @@ it('FuncHelper timeout invalid', async () => {
 		resolve("test");
 	}), -1)).rejects.toThrow("Invalid timeout value.");
 });
+
+it('FuncHelper delay resolves', async () => {
+	await expect(FuncHelper.delay(20)).resolves.toBeUndefined();
+});
+
+it('FuncHelper delay rejects when already aborted', async () => {
+	const abort = new AbortController();
+	abort.abort("CANCEL");
+
+	await expect(FuncHelper.delay(50, abort.signal)).rejects.toEqual("CANCEL");
+});
+
+it('FuncHelper delay rejects when aborted during wait', async () => {
+	const abort = new AbortController();
+
+	const promise = FuncHelper.delay(1000, abort.signal);
+	abort.abort("CANCEL");
+
+	await expect(promise).rejects.toEqual("CANCEL");
+});

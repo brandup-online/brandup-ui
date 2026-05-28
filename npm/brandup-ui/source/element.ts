@@ -155,20 +155,16 @@ export abstract class UIElement extends EventEmitter {
 	}
 }
 
-const fundUiElementByCommand = (elem: HTMLElement, commandName: string): UIElement | null => {
-	while (elem) {
-		if (elem.dataset[UICONSTANTS.ElemAttributeName]) {
-			const uiElem: UIElement = (<any>elem)[UICONSTANTS.ElemPropertyName];
+const findUiElementByCommand = (elem: HTMLElement, commandName: string): UIElement | null => {
+	let current: HTMLElement | null = elem;
+	while (current) {
+		if (current.dataset[UICONSTANTS.ElemAttributeName]) {
+			const uiElem: UIElement = (<any>current)[UICONSTANTS.ElemPropertyName];
 			if (uiElem.hasCommand(commandName))
 				return uiElem;
 		}
 
-		if (typeof elem.parentElement === "undefined")
-			elem = elem.parentNode as HTMLElement;
-		else if (elem.parentElement)
-			elem = elem.parentElement;
-		else
-			break;
+		current = current.parentElement;
 	}
 
 	return null;
@@ -193,7 +189,7 @@ const commandClickHandler = (e: MouseEvent) => {
 	if (!commandName)
 		throw new Error("Command data attribute is not have value.");
 
-	const uiElem = fundUiElementByCommand(commandElem, commandName);
+	const uiElem = findUiElementByCommand(commandElem, commandName);
 	if (uiElem) {
 		const result = uiElem.__execCommand(commandName, commandElem);
 		if (result.status == "success" && result.context.transparent)
