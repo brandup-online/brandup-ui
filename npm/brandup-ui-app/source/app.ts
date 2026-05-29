@@ -1,10 +1,10 @@
 import { UIElement } from "@brandup/ui";
 import { EnvironmentModel, ApplicationModel, QueryParams } from "./types";
-import { Middleware, StartContext, StopContext, NavigateContext, SubmitContext, ContextData, SubmitOptions, NavigateOptions, NavigateAction } from "./middlewares/base";
+import { Middleware, StartContext, StopContext, NavigateContext, SubmitContext, ContextData, SubmitOptions, NavigateOptions, NavigateAction, NavigateSource } from "./middlewares/base";
 import { MiddlewareInvoker } from "./middlewares/invoker";
 import StateMiddleware from "./middlewares/state";
 import HyperLinkMiddleware from "./middlewares/hyperlink";
-import urlHelper from "./helpers/url";
+import urlHelper, { ParsedUrl } from "./helpers/url";
 import CONSTANTS from "./constants";
 import { Guid } from "@brandup/ui-helpers";
 
@@ -196,53 +196,15 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 				action = hasHash ? "hash" : "url-no-change";
 		}
 
-		let parentNav: ExecuteNav<this, TData> | undefined;
-		if (this.__execNav && this.__execNav.status === "work") {
-			parentNav = this.__execNav as ExecuteNav<this, TData>;
-
-			parentNav.abort.abort(NAV_OVERIDE_ERROR);
-			(<any>parentNav.context).overided = true;
-		}
-
-		const navIndex = parentNav ? parentNav.context.index + 1 : 1;
-
-		const navAbort = new AbortController();
-		const aborts: AbortSignal[] = [this.__abort.signal, navAbort.signal];
-		if (abort)
-			aborts.push(abort);
-		const complextAbort = AbortSignal.any(aborts);
+		const base = this.__beginNav<TData>(abort);
 
 		const context: NavigateContext<this, TData> = {
-			index: navIndex,
-			id: Guid.createGuid(),
-			source: isFirst ? "first" : "nav",
-			app: this,
-			abort: complextAbort,
-			current: this.__lastNav?.context as NavigateContext<this, TData>,
-			parent: parentNav?.context as NavigateContext<this, TData>,
-			overided: false,
-			action: action,
-			data,
-			url: navUrl.url,
-			origin: navUrl.origin,
-			pathAndQuery: navUrl.relative,
-			basePath: navUrl.basePath,
-			path: navUrl.path,
-			query: navUrl.query,
-			hash: navUrl.hash,
-			external: navUrl.external,
-			replace,
-			scope,
-			redirect: async (options?: NavigateOptions<TData> | string | null) => {
-				complextAbort.throwIfAborted();
-				const result = await this.nav<TData>(options);
-				complextAbort.throwIfAborted();
-				return result;
-			}
+			...this.__createContext<TData>(base, navUrl, isFirst ? "first" : "nav", action, data, replace),
+			scope
 		};
 
-		const currentNav: ExecuteNav<this, TData> = { method: "navigate", context, abort: navAbort, status: "work" };
-		return await this.__execNavigate(currentNav, parentNav) as NavigateContext<this, TData>;
+		const currentNav: ExecuteNav<this, TData> = { method: "navigate", context, abort: base.navAbort, status: "work" };
+		return await this.__execNavigate(currentNav, base.parentNav) as NavigateContext<this, TData>;
 	}
 
 	/**
@@ -356,55 +318,17 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 				if (query)
 					urlHelper.extendQuery(navUrl, query);
 
-				let parentNav: ExecuteNav<this, TData> | undefined;
-				if (this.__execNav && this.__execNav.status === "work") {
-					parentNav = this.__execNav as ExecuteNav<this, TData>;
+				const base = this.__beginNav<TData>(opt.abort);
 
-					parentNav.abort.abort(NAV_OVERIDE_ERROR);
-					(<any>parentNav.context).overided = true;
-				}
-
-				const navIndex = parentNav ? parentNav.context.index + 1 : 1;
-
-				const submitAbort = new AbortController();
-				const aborts: AbortSignal[] = [this.__abort.signal, submitAbort.signal];
-				if (opt.abort)
-					aborts.push(opt.abort);
-				const complextAbort = AbortSignal.any(aborts);
-
-				let context: SubmitContext<this, TData> = {
-					index: navIndex,
-					id: Guid.createGuid(),
-					source: "submit",
-					app: this,
-					abort: complextAbort,
-					current: this.__lastNav?.context as NavigateContext<this, TData>,
-					parent: parentNav?.context as NavigateContext<this, TData>,
-					overided: false,
-					action: "submit",
-					data,
+				const context: SubmitContext<this, TData> = {
+					...this.__createContext<TData>(base, navUrl, "submit", "submit", data, replace),
 					form,
 					button,
 					method,
-					enctype,
-					url: navUrl.url,
-					origin: navUrl.origin,
-					pathAndQuery: navUrl.relative,
-					basePath: navUrl.basePath,
-					path: navUrl.path,
-					query: navUrl.query,
-					hash: navUrl.hash,
-					external: navUrl.external,
-					replace,
-					redirect: async (options?: NavigateOptions<TData> | string | null) => {
-						complextAbort.throwIfAborted();
-						const result = await this.nav<TData>(options);
-						complextAbort.throwIfAborted();
-						return result;
-					}
+					enctype
 				};
 
-				const currentNav: ExecuteNav<this, TData> = { method: "submit", context, abort: submitAbort, status: "work" };
+				const currentNav: ExecuteNav<this, TData> = { method: "submit", context, abort: base.navAbort, status: "work" };
 				await this.__execNavigate(currentNav);
 			}
 		}
@@ -422,6 +346,57 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		console.log(`popstate: ${popUrl}`, event.state);
 
 		this.nav({ url: popUrl, data: { popstate: event.state } });
+	}
+
+	/** Detect parent (overriding) navigation and compose the abort signal shared by a new navigation. */
+	private __beginNav<TData extends ContextData>(abort?: AbortSignal): NavBase<this, TData> {
+		let parentNav: ExecuteNav<this, TData> | undefined;
+		if (this.__execNav && this.__execNav.status === "work") {
+			parentNav = this.__execNav as ExecuteNav<this, TData>;
+
+			parentNav.abort.abort(NAV_OVERIDE_ERROR);
+			(<any>parentNav.context).overided = true;
+		}
+
+		const navAbort = new AbortController();
+		const aborts: AbortSignal[] = [this.__abort.signal, navAbort.signal];
+		if (abort)
+			aborts.push(abort);
+
+		return { parentNav, navAbort, abort: AbortSignal.any(aborts) };
+	}
+
+	/** Build the navigation context fields shared by nav and submit. */
+	private __createContext<TData extends ContextData>(base: NavBase<this, TData>, navUrl: ParsedUrl, source: NavigateSource, action: NavigateAction, data: TData, replace: boolean): NavigateContext<this, TData> {
+		const { parentNav, abort } = base;
+
+		return {
+			index: parentNav ? parentNav.context.index + 1 : 1,
+			id: Guid.createGuid(),
+			source,
+			app: this,
+			abort,
+			current: this.__lastNav?.context as NavigateContext<this, TData>,
+			parent: parentNav?.context as NavigateContext<this, TData>,
+			overided: false,
+			action,
+			data,
+			url: navUrl.url,
+			origin: navUrl.origin,
+			pathAndQuery: navUrl.relative,
+			basePath: navUrl.basePath,
+			path: navUrl.path,
+			query: navUrl.query,
+			hash: navUrl.hash,
+			external: navUrl.external,
+			replace,
+			redirect: async (options?: NavigateOptions<TData> | string | null) => {
+				abort.throwIfAborted();
+				const result = await this.nav<TData>(options);
+				abort.throwIfAborted();
+				return result;
+			}
+		};
 	}
 
 	private async __execNavigate(nav: ExecuteNav<this>, parent?: ExecuteNav<this>) {
@@ -465,6 +440,12 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			throw reason;
 		}
 	}
+}
+
+interface NavBase<TApp extends Application = Application, TData extends ContextData = ContextData> {
+	parentNav?: ExecuteNav<TApp, TData>;
+	navAbort: AbortController;
+	abort: AbortSignal;
 }
 
 interface ExecuteNav<TApp extends Application = Application, TData extends ContextData = ContextData> {
