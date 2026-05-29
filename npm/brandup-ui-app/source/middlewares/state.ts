@@ -64,6 +64,8 @@ const StateMiddlewareFactory = (): Middleware => {
 			}
 		},
 		submit: async (context: SubmitContext, next: MiddlewareNext) => {
+			begin(context);
+
 			try {
 				await next();
 			}
