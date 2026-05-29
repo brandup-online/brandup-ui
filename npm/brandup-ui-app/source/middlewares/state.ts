@@ -33,6 +33,10 @@ const StateMiddlewareFactory = (): Middleware => {
 
 			try {
 				await next();
+
+				// on success the begin() is left open on purpose: the loading state
+				// must persist through "loaded" and the first navigation, which closes
+				// it (see the "first" branch in navigate). On error we close it here.
 			}
 			catch (reason) {
 				end(context);
@@ -57,10 +61,12 @@ const StateMiddlewareFactory = (): Middleware => {
 				await next();
 			}
 			finally {
+				end(context); // close the begin() of this navigation
+
+				// the first navigation also closes the loading opened by start(),
+				// which intentionally leaves its begin() open until the page is rendered
 				if (context.source == "first")
 					end(context);
-
-				end(context);
 			}
 		},
 		submit: async (context: SubmitContext, next: MiddlewareNext) => {
