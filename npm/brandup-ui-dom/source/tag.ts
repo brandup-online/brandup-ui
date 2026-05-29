@@ -5,7 +5,7 @@ function tag<TElement extends keyof HTMLElementTagNameMap>(tagName: TElement, op
 	const elem = document.createElement(tagName);
 
 	applyOptions(elem, options);
-	appendChild(elem, "beforeend", children);
+	appendChild(elem, children);
 
 	return elem as HTMLElementTagNameMap[TElement];
 }
@@ -17,7 +17,7 @@ const applyOptions = (elem: HTMLElement, options?: ElementOptions | CssClass | n
 	if (typeof options === "string" || Array.isArray(options))
 		helpers.addCssClass(elem, <CssClass>options);
 	else {
-		for (let key in options) {
+		for (const key in options) {
 			const value = options[key];
 			if (value === undefined)
 				continue;
@@ -56,12 +56,12 @@ const applyOptions = (elem: HTMLElement, options?: ElementOptions | CssClass | n
 					break;
 				}
 				default: {
-					if (typeof value === "object")
-						elem.setAttribute(key, value ? JSON.stringify(value) : "");
-					else if (typeof value === "string")
-						elem.setAttribute(key, value ? value as string : "");
+					if (value === null)
+						elem.setAttribute(key, "");
+					else if (typeof value === "object")
+						elem.setAttribute(key, JSON.stringify(value));
 					else
-						elem.setAttribute(key, value ? value.toString() : "");
+						elem.setAttribute(key, String(value));
 					break;
 				}
 			}
@@ -69,16 +69,16 @@ const applyOptions = (elem: HTMLElement, options?: ElementOptions | CssClass | n
 	}
 }
 
-const appendChild = (container: HTMLElement, where: InsertPosition, children?: TagChildrenLike) => {
-	if (!children)
+const appendChild = (container: HTMLElement, children?: TagChildrenLike) => {
+	if (children === null || children === undefined)
 		return;
 
 	if (children instanceof Array)
-		children.forEach(child => appendChild(container, where, child));
+		children.forEach(child => appendChild(container, child));
 	else if (children instanceof Element)
-		container.insertAdjacentElement(where, children);
+		container.append(children);
 	else if (children instanceof Promise)
-		children.then((child: TagChildrenPrimitive) => appendChild(container, where, child));
+		children.then((child: TagChildrenPrimitive) => appendChild(container, child));
 	else {
 		const typeName = typeof children;
 		let html: string;
@@ -92,12 +92,12 @@ const appendChild = (container: HTMLElement, where: InsertPosition, children?: T
 				break;
 			case "function":
 				const child = (<(elem: HTMLElement) => TagChildrenPrimitive>children)(container);
-				appendChild(container, where, child);
+				appendChild(container, child);
 				return;
 			default:
 				throw new Error(`Not support child type of ${typeName}.`);
 		}
-		container.insertAdjacentHTML(where, html);
+		container.insertAdjacentHTML("beforeend", html);
 	}
 };
 

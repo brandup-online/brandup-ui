@@ -42,6 +42,20 @@ it('DOM.tag with options', () => {
 	expect(true).toEqual(isClicked);
 });
 
+it('DOM.tag attribute values', () => {
+	const elem = DOM.tag("div", {
+		tabindex: 0,
+		draggable: false,
+		count: 10,
+		empty: null
+	});
+
+	expect("0").toEqual(elem.getAttribute("tabindex"));
+	expect("false").toEqual(elem.getAttribute("draggable"));
+	expect("10").toEqual(elem.getAttribute("count"));
+	expect("").toEqual(elem.getAttribute("empty"));
+});
+
 it('DOM.tag with single children', async () => {
 	let child: TagChildrenLike = "<b>test</b>";
 	let elem = DOM.tag("div", null, child);
@@ -50,6 +64,10 @@ it('DOM.tag with single children', async () => {
 	child = 10;
 	elem = DOM.tag("div", null, child);
 	expect("10").toEqual(elem.innerHTML);
+
+	child = 0;
+	elem = DOM.tag("div", null, child);
+	expect("0").toEqual(elem.innerHTML);
 
 	child = null;
 	elem = DOM.tag("div", null, child);
@@ -103,6 +121,10 @@ it('DOM.tag with many children', async () => {
 	child = 10;
 	elem = DOM.tag("div", null, [child]);
 	expect("10").toEqual(elem.innerHTML);
+
+	child = 0;
+	elem = DOM.tag("div", null, [child]);
+	expect("0").toEqual(elem.innerHTML);
 
 	child = null;
 	elem = DOM.tag("div", null, [child]);
