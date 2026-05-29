@@ -8,7 +8,7 @@ export class AjaxQueue {
 	private _destroyed = false;
 
 	constructor(options?: AjaxQueueOptions) {
-		this._options = options ? options : {};
+		this._options = options ?? {};
 	}
 
 	get length(): number { return this._requests.length; }

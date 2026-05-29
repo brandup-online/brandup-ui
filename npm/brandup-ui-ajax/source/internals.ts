@@ -52,8 +52,6 @@ const prepareRequest = (options: AjaxRequest, body: any): { headers: Record<stri
 				break;
 			case "FORM":
 				if (body instanceof HTMLFormElement) {
-					//const form = <HTMLFormElement>body;
-					//contentType = form.enctype ?? FORM_URL;
 					body = new FormData(body);
 				}
 				else if (body instanceof FormData)
