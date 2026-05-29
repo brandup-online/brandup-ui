@@ -9,12 +9,12 @@ export const ajaxRequest = (options: AjaxRequest) => {
 
 	if (options.disableCache) {
 		if (!query) query = {};
-		query["_"] = new Date().getTime().toString();
+		query["_"] = Date.now().toString();
 	}
 
 	url = helpers.addQuery(url, query);
 
-	const method = options.method ? options.method : "GET";
+	const method = options.method ? options.method.toUpperCase() : "GET";
 
 	if (options.data && method === "GET")
 		throw new Error("GET method is not support request with data.");
