@@ -4,8 +4,6 @@ import CONSTANTS from "../constants";
 export const HYPERLINK_MIDDLEWARE_NAME = "app-hyperlink";
 
 const HyperLinkMiddlewareFactory = (): Middleware => {
-	let __ctrlPressed = false;
-	const onKeyDownUp = (e: KeyboardEvent) => __ctrlPressed = e.ctrlKey;
 	let onClick: (e: MouseEvent) => void | undefined;
 
 	return {
@@ -33,7 +31,7 @@ const HyperLinkMiddlewareFactory = (): Middleware => {
 					elem = elem.parentElement;
 				}
 
-				if (!elem || __ctrlPressed || elem.getAttribute("target") === "_blank")
+				if (!elem || e.ctrlKey || e.metaKey || elem.getAttribute("target") === "_blank")
 					return;
 
 				e.preventDefault();
@@ -64,14 +62,9 @@ const HyperLinkMiddlewareFactory = (): Middleware => {
 					.catch(() => { })
 					.finally(() => elem.classList.remove(CONSTANTS.LoadingElementClass));
 			}, false);
-
-			window.addEventListener("keydown", onKeyDownUp, false);
-			window.addEventListener("keyup", onKeyDownUp, false);
 		},
 		stop: (_context: StopContext, next: MiddlewareNext) => {
 			window.removeEventListener("click", onClick, false);
-			window.removeEventListener("keydown", onKeyDownUp, false);
-			window.removeEventListener("keyup", onKeyDownUp, false);
 
 			return next();
 		}
