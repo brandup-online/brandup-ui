@@ -79,7 +79,7 @@ const parseUrl = (basePath: string, url: string | null): ParsedUrl => {
 	path = path.toLowerCase();
 
 	if (basePath) {
-		if (path.toLowerCase().startsWith(basePath.toLowerCase())) {
+		if (path.startsWith(basePath.toLowerCase())) {
 			path = path.substring(basePath.length);
 			if (!path)
 				path = '/';
@@ -128,7 +128,7 @@ const extendQuery = (url: ParsedUrl, query: QueryParams | URLSearchParams | Form
 		query.forEach((v, k) => url.query.append(k, v.toString()));
 	}
 	else {
-		for (let key in query) {
+		for (const key in query) {
 			const value = query[key];
 			if (!Array.isArray(value)) {
 				url.query.set(key, value);

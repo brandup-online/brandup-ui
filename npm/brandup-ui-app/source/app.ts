@@ -55,7 +55,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		this.onInitialize();
 
 		middlewares.forEach(middleware => {
-			var name = middleware.name;
+			const name = middleware.name;
 
 			if (this.__middlewares.hasOwnProperty(name))
 				throw new Error(`Middleware "${name}" already registered.`);
