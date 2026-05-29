@@ -340,3 +340,6 @@ ASALocalRun/
 /npm/*/source/**/*.js.map
 /npm/*/wwwroot/dist
 /npm/*/server
+
+# Claude Code
+.claude/
