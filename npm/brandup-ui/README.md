@@ -173,7 +173,7 @@ c.on("increment", by => console.log(by.toFixed(0))); // by: number
 // c.on("unknown", () => {});                          // ❌ unknown event
 ```
 
-`UIElement` is itself generic — `UIElement<TEvents>` merges `TEvents` with the built-in `command`/`destroy` events, so subclasses can add their own typed events:
+`UIElement` is itself generic — `UIElement<TEvents>` merges `TEvents` with the built-in `command`/`rendered`/`destroy` events, so subclasses can add their own typed events:
 
 ```ts
 class MyWidget extends UIElement<{ ready: () => void }> {

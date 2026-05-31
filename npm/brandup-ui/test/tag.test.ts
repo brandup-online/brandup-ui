@@ -38,17 +38,21 @@ class DeferredWidget extends UIElement {
 
 it('DOM.tag defers an unbound UIElement child until setElement, after _onRenderElement', () => {
 	const widget = new DeferredWidget();
-	const container = DOM.tag("div", null, widget);
+	const after = DOM.tag("hr");
+	const container = DOM.tag("div", null, widget, after);
 
-	// not bound yet → nothing appended
-	expect(container.children.length).toEqual(0);
+	// not bound yet → only the following child is present (placeholder reserves the slot)
+	expect(container.children.length).toEqual(1);
+	expect(container.firstElementChild).toEqual(after);
 
 	const span = DOM.tag("span", null, "later");
 	widget.bind(span);
 
-	// appended only after setElement, and only after _onRenderElement ran
+	// appended after setElement (after _onRenderElement) AND at its original position
 	expect(widget.parentDuringRender).toBeNull();
+	expect(container.children.length).toEqual(2);
 	expect(container.firstElementChild).toEqual(span);
+	expect(span.nextElementSibling).toEqual(after);
 });
 
 it('DOM.tag only tag name', () => {
