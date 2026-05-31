@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-			"cwd": "${workspaceFolder}/example",
+			"cwd": "${workspaceFolder}/npm/brandup-ui-example",
 			"command": "npm run start",
 			"name": "Example debug prod",
 			"request": "launch",
@@ -17,9 +17,10 @@
 			}
 		},
 		{
-			"cwd": "${workspaceFolder}/example",
+			"cwd": "${workspaceFolder}/npm/brandup-ui-example",
 			"command": "npm run start-dev",
 			"name": "Example debug dev",
+			"preLaunchTask": "watch example",
 			"request": "launch",
 			"type": "node-terminal",
 			"serverReadyAction": {
