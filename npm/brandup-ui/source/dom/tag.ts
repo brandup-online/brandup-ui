@@ -1,6 +1,7 @@
 import { ElementOptions, CssClass, TagChildrenLike, TagChildrenPrimitive, ElementEvents } from "./types";
 import { UIElement } from "../element";
 import { Binding } from "./bind";
+import { BindingEach, appendBindingEach } from "./bind-each";
 import { effect } from "../reactive";
 import { autoDisposeBinding } from "./binding-cleanup";
 import helpers from "./helpers";
@@ -115,6 +116,8 @@ const appendChild = (container: HTMLElement, children?: TagChildrenLike) => {
 	}
 	else if (children instanceof Binding)
 		appendBinding(container, children);
+	else if (children instanceof BindingEach)
+		appendBindingEach(container, children);
 	else if (children instanceof Promise)
 		children.then((child: TagChildrenPrimitive) => appendChild(container, child));
 	else {

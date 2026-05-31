@@ -349,6 +349,55 @@ const el = DOM.tag("div", null,
 state.name = "Bob"; // the text updates on the next tick
 ```
 
+### Binding an array property with `bindEach`
+
+`bindEach` is a reactive tag child — used exactly like `bind` — that renders a keyed list with minimal DOM updates. Each item is identified by a stable key; when the array changes, only new, removed, or reordered nodes are touched.
+
+```ts
+import { reactive, bindEach, bind, nextTick, DOM } from "@brandup/ui";
+
+const state = reactive({
+    users: [
+        { id: 1, name: "Alice" },
+        { id: 2, name: "Bob" },
+        { id: 3, name: "Charlie" },
+    ]
+});
+
+const list = DOM.tag("ul", "user-list",
+    bindEach(
+        () => state.users,          // reactive item source (tracked)
+        user => user.id,            // stable key — identifies each node across re-renders
+        user => DOM.tag("li", null, // render one item → Element (called once per key)
+            bind(() => user.name)   // bind() inside render for fine-grained per-item updates
+        )
+    )
+);
+```
+
+Array mutations are tracked — the list reconciles on the next tick:
+
+```ts
+state.users.push({ id: 4, name: "Diana" }); // inserts one new <li>
+state.users.splice(1, 1);                   // removes the <li> for id=2
+state.users.unshift(state.users.pop()!);    // moves last node to front, no re-render
+state.users = [{ id: 1, name: "Alice" }];   // full reassignment — removes all but id=1
+
+await nextTick(); // DOM is up to date
+```
+
+Because `render` is called **once per key** and runs **untracked**, reads inside it do not create dependencies on the list reconciler. Use `bind()` inside `render` so individual property changes update only the affected node — not the whole list:
+
+```ts
+// ✅  only the text node re-renders when user.name changes
+user => DOM.tag("li", null, bind(() => user.name))
+
+// ⚠️  name changes have no effect — render is untracked and never called again for existing keys
+user => DOM.tag("li", null, user.name)
+```
+
+The binding stops automatically when its container is removed from the document (same lifecycle as `bind`).
+
 ### Disposal
 
 Bindings hold a reactive effect; dispose them to avoid leaks. This is handled for you in the common cases:
