@@ -260,6 +260,9 @@ DOM.tag("div", null, (elem) => DOM.tag("span", null, "child"));
 
 // A Promise child (or a function returning a Promise) is appended once it resolves
 DOM.tag("div", null, fetch("/fragment").then(r => r.text()));
+
+// A UIElement child appends its bound element
+DOM.tag("div", null, new MyWidget(DOM.tag("span")));
 ```
 
 The full `ElementOptions` object:

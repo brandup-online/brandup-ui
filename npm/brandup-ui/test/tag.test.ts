@@ -1,4 +1,26 @@
-import { DOM, TagChildrenLike } from "../source/index";
+import { DOM, TagChildrenLike, UIElement } from "../source/index";
+
+class Widget extends UIElement {
+	typeName = "widget";
+	constructor(elem: HTMLElement) {
+		super();
+		this.setElement(elem);
+	}
+}
+
+it('DOM.tag accepts a UIElement child and appends its element', () => {
+	const widget = new Widget(DOM.tag("span", null, "hi"));
+
+	const container = DOM.tag("div", null, widget);
+
+	expect(container.firstElementChild).toEqual(widget.element);
+	expect("hi").toEqual(container.querySelector("span")?.innerHTML);
+
+	// also works nested in arrays and via factory functions
+	const many = DOM.tag("div", null, [new Widget(DOM.tag("b")), (_e: HTMLElement) => new Widget(DOM.tag("i"))]);
+	expect(many.querySelector("b")).not.toBeNull();
+	expect(many.querySelector("i")).not.toBeNull();
+});
 
 it('DOM.tag only tag name', () => {
 	const elem = DOM.tag("div");
