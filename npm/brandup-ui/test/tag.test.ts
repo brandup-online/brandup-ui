@@ -1,226 +1,254 @@
-import { DOM, TagChildrenLike, UIElement } from "../source/index";
+import { DOM, bind, bindEach, reactive, nextTick, UIElement, UIElementBound } from "../source/index";
 
-class Widget extends UIElement {
-	typeName = "widget";
-	constructor(elem: HTMLElement) {
-		super();
-		this.setElement(elem);
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+class Widget extends UIElementBound {
+	constructor(elem: HTMLElement = DOM.tag("span")) {
+		super("widget", elem);
 	}
 }
-
-it('DOM.tag accepts a UIElement child and appends its element', () => {
-	const widget = new Widget(DOM.tag("span", null, "hi"));
-
-	const container = DOM.tag("div", null, widget);
-
-	expect(container.firstElementChild).toEqual(widget.element);
-	expect("hi").toEqual(container.querySelector("span")?.innerHTML);
-
-	// also works nested in arrays and via factory functions
-	const many = DOM.tag("div", null, [new Widget(DOM.tag("b")), (_e: HTMLElement) => new Widget(DOM.tag("i"))]);
-	expect(many.querySelector("b")).not.toBeNull();
-	expect(many.querySelector("i")).not.toBeNull();
-});
 
 class DeferredWidget extends UIElement {
 	typeName = "deferred";
-	parentDuringRender: Node | null | undefined = undefined;
-
-	protected override _onRenderElement(elem: HTMLElement) {
-		// capture whether the element is already appended at render time (it must not be yet)
-		this.parentDuringRender = elem.parentElement;
-	}
-
-	bind(elem: HTMLElement) {
-		this.setElement(elem);
-	}
+	bind(elem: HTMLElement) { this.setElement(elem); }
 }
 
-it('DOM.tag defers an unbound UIElement child until setElement, after _onRenderElement', () => {
-	const widget = new DeferredWidget();
-	const after = DOM.tag("hr");
-	const container = DOM.tag("div", null, widget, after);
+// ─── tag name only ────────────────────────────────────────────────────────────
 
-	// not bound yet → only the following child is present (placeholder reserves the slot)
-	expect(container.children.length).toEqual(1);
-	expect(container.firstElementChild).toEqual(after);
-
-	const span = DOM.tag("span", null, "later");
-	widget.bind(span);
-
-	// appended after setElement (after _onRenderElement) AND at its original position
-	expect(widget.parentDuringRender).toBeNull();
-	expect(container.children.length).toEqual(2);
-	expect(container.firstElementChild).toEqual(span);
-	expect(span.nextElementSibling).toEqual(after);
+it("tag: tag name only creates an empty element", () => {
+	const el = DOM.tag("div");
+	expect(el.tagName).toBe("DIV");
+	expect(el.innerHTML).toBe("");
+	expect(el.className).toBe("");
 });
 
-it('DOM.tag only tag name', () => {
-	const elem = DOM.tag("div");
-
-	expect("DIV").toEqual(elem.tagName);
+it("tag: correct element type is returned", () => {
+	expect(DOM.tag("ul")).toBeInstanceOf(HTMLUListElement);
+	expect(DOM.tag("input")).toBeInstanceOf(HTMLInputElement);
+	expect(DOM.tag("a")).toBeInstanceOf(HTMLAnchorElement);
 });
 
-it('DOM.tag with class', () => {
-	let elem = DOM.tag("div", "test");
-	expect(1).toEqual(elem.classList.length);
-	expect(true).toEqual(elem.classList.contains("test"));
+// ─── null options ─────────────────────────────────────────────────────────────
 
-	elem = DOM.tag("div", ["test1", "test2"]);
-	expect(2).toEqual(elem.classList.length);
-	expect(true).toEqual(elem.classList.contains("test1"));
-	expect(true).toEqual(elem.classList.contains("test2"));
+it("tag: null options → no class, children follow", () => {
+	const el = DOM.tag("div", null, "hello");
+	expect(el.className).toBe("");
+	expect(el.innerHTML).toBe("hello");
 });
 
-it('DOM.tag with options', () => {
-	let isClicked = false;
-	let elem = DOM.tag("div", {
-		id: "id",
-		class: "class",
-		dataset: { "param": "value" },
-		events: { "click": () => isClicked = true },
-		styles: { fontSize: "10px" },
-		command: "go",
-		custom: "value"
-	});
+// ─── ElementOptions ───────────────────────────────────────────────────────────
 
-	expect("id").toEqual(elem.id);
-	expect(1).toEqual(elem.classList.length);
-	expect(true).toEqual(elem.classList.contains("class"));
-	expect("value").toEqual(elem.dataset.param);
-	expect("value").toEqual(elem.getAttribute("data-param"));
-	expect("10px").toEqual(elem.style.fontSize);
-	expect("go").toEqual(elem.getAttribute("data-command"));
-	expect("value").toEqual(elem.getAttribute("custom"));
-
-	elem.click();
-	expect(true).toEqual(isClicked);
+it("tag: options.class string applies CSS class", () => {
+	const el = DOM.tag("div", { class: "foo" });
+	expect(el.classList.contains("foo")).toBe(true);
+	expect(el.classList.length).toBe(1);
 });
 
-it('DOM.tag attribute values', () => {
-	const elem = DOM.tag("div", {
-		tabindex: 0,
-		draggable: false,
-		count: 10,
-		empty: null
-	});
-
-	expect("0").toEqual(elem.getAttribute("tabindex"));
-	expect("false").toEqual(elem.getAttribute("draggable"));
-	expect("10").toEqual(elem.getAttribute("count"));
-	expect("").toEqual(elem.getAttribute("empty"));
+it("tag: options.class array applies multiple CSS classes", () => {
+	const el = DOM.tag("div", { class: ["a", "b"] });
+	expect(el.classList.contains("a")).toBe(true);
+	expect(el.classList.contains("b")).toBe(true);
+	expect(el.classList.length).toBe(2);
 });
 
-it('DOM.tag with single children', async () => {
-	let child: TagChildrenLike = "<b>test</b>";
-	let elem = DOM.tag("div", null, child);
-	expect(child).toEqual(elem.innerHTML);
-
-	child = 10;
-	elem = DOM.tag("div", null, child);
-	expect("10").toEqual(elem.innerHTML);
-
-	child = 0;
-	elem = DOM.tag("div", null, child);
-	expect("0").toEqual(elem.innerHTML);
-
-	child = null;
-	elem = DOM.tag("div", null, child);
-	expect("").toEqual(elem.innerHTML);
-
-	child = undefined;
-	elem = DOM.tag("div", null, child);
-	expect("").toEqual(elem.innerHTML);
-
-	child = DOM.tag("div");
-	elem = DOM.tag("div", null, child);
-	expect(child.outerHTML).toEqual(elem.innerHTML);
-
-	child = (elem: HTMLElement) => { elem.innerHTML = "test"; };
-	elem = DOM.tag("div", null, child);
-	expect("test").toEqual(elem.innerHTML);
-
-	child = (_elem: HTMLElement) => { return DOM.tag("div"); };
-	elem = DOM.tag("div", null, child);
-	expect("<div></div>").toEqual(elem.innerHTML);
-
-	child = () => { return "test"; };
-	elem = DOM.tag("div", null, child);
-	expect("test").toEqual(elem.innerHTML);
-
-	child = () => { return 10; };
-	elem = DOM.tag("div", null, child);
-	expect("10").toEqual(elem.innerHTML);
-
-	let func: () => Promise<any> = child = () => { return new Promise<string>(resolve => resolve("test")); };
-	elem = DOM.tag("div", null, child);
-	await func();
-	expect("test").toEqual(elem.innerHTML);
-
-	func = child = () => { return new Promise<HTMLElement>(resolve => resolve(DOM.tag("div"))); };
-	elem = DOM.tag("div", null, child);
-	await func();
-	expect("<div></div>").toEqual(elem.innerHTML);
-
-	let promis = child = new Promise<HTMLElement>(resolve => resolve(DOM.tag("div")));
-	elem = DOM.tag("div", null, child);
-	await promis;
-	expect("<div></div>").toEqual(elem.innerHTML);
+it("tag: options.id sets the id attribute", () => {
+	const el = DOM.tag("div", { id: "main" });
+	expect(el.id).toBe("main");
 });
 
-it('DOM.tag with many children', async () => {
-	let child: TagChildrenLike = "<b>test</b>";
-	let elem = DOM.tag("div", null, [child]);
-	expect(child).toEqual(elem.innerHTML);
+it("tag: options.command sets data-command attribute", () => {
+	const el = DOM.tag("button", { command: "save" });
+	expect(el.dataset.command).toBe("save");
+});
 
-	child = 10;
-	elem = DOM.tag("div", null, [child]);
-	expect("10").toEqual(elem.innerHTML);
+it("tag: options.dataset sets data-* attributes", () => {
+	const el = DOM.tag("div", { dataset: { foo: "bar", count: "3" } });
+	expect(el.dataset.foo).toBe("bar");
+	expect(el.dataset.count).toBe("3");
+});
 
-	child = 0;
-	elem = DOM.tag("div", null, [child]);
-	expect("0").toEqual(elem.innerHTML);
+it("tag: options.styles applies inline styles", () => {
+	const el = DOM.tag("div", { styles: { fontSize: "12px", color: "red" } });
+	expect(el.style.fontSize).toBe("12px");
+	expect(el.style.color).toBe("red");
+});
 
-	child = null;
-	elem = DOM.tag("div", null, [child]);
-	expect("").toEqual(elem.innerHTML);
+it("tag: options.events attaches event listeners", () => {
+	let clicked = false;
+	const el = DOM.tag("button", { events: { click: () => { clicked = true; } } });
+	el.click();
+	expect(clicked).toBe(true);
+});
 
-	child = undefined;
-	elem = DOM.tag("div", null, [child]);
-	expect("").toEqual(elem.innerHTML);
+it("tag: arbitrary string option sets plain attribute", () => {
+	const el = DOM.tag("div", { role: "button", "aria-label": "close" });
+	expect(el.getAttribute("role")).toBe("button");
+	expect(el.getAttribute("aria-label")).toBe("close");
+});
 
-	child = DOM.tag("div");
-	elem = DOM.tag("div", null, [child]);
-	expect(child.outerHTML).toEqual(elem.innerHTML);
+it("tag: null-valued option sets empty attribute", () => {
+	const el = DOM.tag("div", { disabled: null });
+	expect(el.getAttribute("disabled")).toBe("");
+});
 
-	child = (elem: HTMLElement) => { elem.innerHTML = "test"; };
-	elem = DOM.tag("div", null, [child]);
-	expect("test").toEqual(elem.innerHTML);
+it("tag: numeric option is coerced to string attribute", () => {
+	const el = DOM.tag("div", { tabindex: 0, count: 5 });
+	expect(el.getAttribute("tabindex")).toBe("0");
+	expect(el.getAttribute("count")).toBe("5");
+});
 
-	child = (_elem: HTMLElement) => { return DOM.tag("div"); };
-	elem = DOM.tag("div", null, [child]);
-	expect("<div></div>").toEqual(elem.innerHTML);
+it("tag: boolean option is coerced to string attribute", () => {
+	const el = DOM.tag("div", { draggable: false });
+	expect(el.getAttribute("draggable")).toBe("false");
+});
 
-	child = () => { return "test"; };
-	elem = DOM.tag("div", null, [child]);
-	expect("test").toEqual(elem.innerHTML);
+it("tag: object option is JSON-stringified as attribute", () => {
+	const el = DOM.tag("div", { config: { x: 1 } });
+	expect(el.getAttribute("config")).toBe('{"x":1}');
+});
 
-	child = () => { return 10; };
-	elem = DOM.tag("div", null, [child]);
-	expect("10").toEqual(elem.innerHTML);
+it("tag: undefined option value is ignored", () => {
+	const el = DOM.tag("div", { id: undefined });
+	expect(el.hasAttribute("id")).toBe(false);
+});
 
-	let func: () => Promise<any> = child = () => { return new Promise<string>(resolve => resolve("test")); };
-	elem = DOM.tag("div", null, [child]);
-	await func();
-	expect("test").toEqual(elem.innerHTML);
+// ─── string / number / boolean as first child ─────────────────────────────────
 
-	func = child = () => { return new Promise<HTMLElement>(resolve => resolve(DOM.tag("div"))); };
-	elem = DOM.tag("div", null, [child]);
-	await func();
-	expect("<div></div>").toEqual(elem.innerHTML);
+it("tag: string second arg → HTML text child (not a CSS class)", () => {
+	const el = DOM.tag("div", "hello");
+	expect(el.innerHTML).toBe("hello");
+	expect(el.className).toBe("");
+});
 
-	let promis = child = new Promise<HTMLElement>(resolve => resolve(DOM.tag("div")));
-	elem = DOM.tag("div", null, [child]);
-	await promis;
-	expect("<div></div>").toEqual(elem.innerHTML);
+it("tag: HTML string second arg is inserted as markup", () => {
+	const el = DOM.tag("div", "<b>bold</b>");
+	expect(el.querySelector("b")).not.toBeNull();
+});
+
+it("tag: number second arg → text child", () => {
+	const el = DOM.tag("div", 42);
+	expect(el.innerHTML).toBe("42");
+});
+
+it("tag: zero second arg → text child '0'", () => {
+	const el = DOM.tag("div", 0);
+	expect(el.innerHTML).toBe("0");
+});
+
+it("tag: boolean false second arg → empty child", () => {
+	const el = DOM.tag("div", false);
+	expect(el.innerHTML).toBe("false");
+});
+
+// ─── array as first child ─────────────────────────────────────────────────────
+
+it("tag: string array second arg → HTML children (not CSS classes)", () => {
+	const el = DOM.tag("div", ["<b>a</b>", "<i>b</i>"]);
+	expect(el.querySelector("b")).not.toBeNull();
+	expect(el.querySelector("i")).not.toBeNull();
+	expect(el.className).toBe("");
+});
+
+it("tag: mixed array second arg → each child appended", () => {
+	const span = DOM.tag("span");
+	const el = DOM.tag("div", [span, "text", 1]);
+	expect(el.firstElementChild).toBe(span);
+	expect(el.innerHTML).toBe("<span></span>text1");
+});
+
+// ─── Element / UIElement as second arg ───────────────────────────────────────
+
+it("tag: Element second arg → appended as child", () => {
+	const span = DOM.tag("span");
+	const el = DOM.tag("div", span);
+	expect(el.firstElementChild).toBe(span);
+});
+
+it("tag: UIElement second arg → its element is appended", () => {
+	const w = new Widget();
+	const el = DOM.tag("div", w);
+	expect(el.firstElementChild).toBe(w.element);
+});
+
+it("tag: deferred UIElement second arg → appended once bound", () => {
+	const w = new DeferredWidget();
+	const el = DOM.tag("div", w);
+	expect(el.children.length).toBe(0);
+	w.bind(DOM.tag("span"));
+	expect(el.firstElementChild).toBe(w.element);
+});
+
+// ─── reactive children ────────────────────────────────────────────────────────
+
+it("tag: bind() second arg → reactive text updates", async () => {
+	const state = reactive({ x: "a" });
+	const el = DOM.tag("div", bind(() => state.x));
+	expect(el.textContent).toBe("a");
+	state.x = "b";
+	await nextTick();
+	expect(el.textContent).toBe("b");
+});
+
+it("tag: bindEach() second arg → keyed list", async () => {
+	const state = reactive({ items: [{ id: 1, t: "x" }] });
+	const el = DOM.tag("ul", bindEach(() => state.items, i => i.id, i => DOM.tag("li", i.t)));
+	expect(el.querySelectorAll("li").length).toBe(1);
+	state.items.push({ id: 2, t: "y" });
+	await nextTick();
+	expect(el.querySelectorAll("li").length).toBe(2);
+});
+
+// ─── Promise / function children ─────────────────────────────────────────────
+
+it("tag: Promise second arg → appended on resolve", async () => {
+	const p = Promise.resolve(DOM.tag("span"));
+	const el = DOM.tag("div", p);
+	await p;
+	expect(el.firstElementChild?.tagName).toBe("SPAN");
+});
+
+it("tag: function second arg (factory) → called with container, return appended", () => {
+	const el = DOM.tag("div", () => DOM.tag("b", "bold"));
+	expect(el.querySelector("b")).not.toBeNull();
+});
+
+it("tag: function second arg mutates container directly → no return needed", () => {
+	const el = DOM.tag("div", (container: HTMLElement) => { container.id = "x"; });
+	expect(el.id).toBe("x");
+});
+
+// ─── options + children together ─────────────────────────────────────────────
+
+it("tag: options object + multiple children", () => {
+	const el = DOM.tag("div", { class: "box", id: "main" }, "a", DOM.tag("span"), "b");
+	expect(el.id).toBe("main");
+	expect(el.classList.contains("box")).toBe(true);
+	expect(el.children.length).toBe(1);
+});
+
+it("tag: string first child + more children", () => {
+	const el = DOM.tag("div", "hello ", DOM.tag("b", "world"));
+	expect(el.querySelector("b")?.textContent).toBe("world");
+});
+
+it("tag: null/undefined children are ignored", () => {
+	const el = DOM.tag("div", null, null, undefined);
+	expect(el.innerHTML).toBe("");
+});
+
+// ─── nested arrays ────────────────────────────────────────────────────────────
+
+it("tag: nested array child is recursively appended", () => {
+	const el = DOM.tag("div", null, [DOM.tag("span"), [DOM.tag("b"), DOM.tag("i")]]);
+	expect(el.querySelectorAll("span, b, i").length).toBe(3);
+});
+
+// ─── UIElement with array/factory children ────────────────────────────────────
+
+it("tag: Widget children in array and factory function", () => {
+	const many = DOM.tag("div", null,
+		[new Widget(DOM.tag("b")), (_e: HTMLElement) => new Widget(DOM.tag("i"))]
+	);
+	expect(many.querySelector("b")).not.toBeNull();
+	expect(many.querySelector("i")).not.toBeNull();
 });

@@ -7,34 +7,34 @@ import { autoDisposeBinding } from "./binding-cleanup";
 import helpers from "./helpers";
 
 /** Returns `true` when `value` should be treated as options (or absent options), `false` when it is the first child. */
-const isOptionsArg = (value: unknown): value is ElementOptions | CssClass | null | undefined => {
+const isOptionsArg = (value: unknown): value is ElementOptions | null | undefined => {
 	if (value === null || value === undefined) return true;
-	if (typeof value === "string") return true;
-	if (typeof value === "number" || typeof value === "boolean") return false;
+	if (typeof value !== "object") return false; // string, number, boolean, function → child
+	if (Array.isArray(value)) return false; // array → children
 	if (value instanceof Element || value instanceof UIElement || value instanceof Binding || value instanceof BindingEach || value instanceof Promise) return false;
-	if (typeof value === "function") return false;
-	if (Array.isArray(value)) return (value as unknown[]).every(v => typeof v === "string"); // string[] → CssClass
 	return true; // plain object → ElementOptions
 };
 
-// Overload 1: first non-name arg is unambiguously a child → options omitted
+// Overload 1: second arg is a child (string, number, Element, Binding, array, etc.) — options skipped
 function tag<T extends keyof HTMLElementTagNameMap>(tagName: T, firstChild: TagFirstChild, ...children: TagChildrenLike[]): HTMLElementTagNameMap[T];
-// Overload 2: options explicitly provided (null, CssClass string/array, or ElementOptions object)
-function tag<T extends keyof HTMLElementTagNameMap>(tagName: T, options: ElementOptions | CssClass | null, ...children: TagChildrenLike[]): HTMLElementTagNameMap[T];
+// Overload 2: options explicitly provided (null or ElementOptions plain object)
+function tag<T extends keyof HTMLElementTagNameMap>(tagName: T, options: ElementOptions | null, ...children: TagChildrenLike[]): HTMLElementTagNameMap[T];
 // Overload 3: tag name only
 function tag<T extends keyof HTMLElementTagNameMap>(tagName: T): HTMLElementTagNameMap[T];
 /**
  * Creates an HTML element, optionally applying options and appending children.
  *
- * The second argument is **options** when it is `null`, a CSS class string/array, or a plain object ({@link ElementOptions}).
- * It is treated as the **first child** when it is a {@link TagFirstChild} value (Element, UIElement, Binding, BindingEach, Promise, function, number, or boolean) — allowing `tag("ul", bindEach(...))` without a leading `null`.
- * Strings remain ambiguous and are always treated as CSS class — pass `null` first if you need an HTML string as the first child.
+ * The second argument is **options** when it is `null` or a plain {@link ElementOptions} object.
+ * It is treated as the **first child** for any {@link TagFirstChild} value — strings, numbers,
+ * elements, bindings, arrays, etc. — so `tag("div", "hello")` appends "hello" as HTML text,
+ * and `tag("ul", bindEach(...))` works without a leading `null`.
+ * To apply a CSS class use `{ class: "name" }` in options.
  */
-function tag<T extends keyof HTMLElementTagNameMap>(tagName: T, optionsOrChild?: ElementOptions | CssClass | TagFirstChild | null, ...rest: TagChildrenLike[]): HTMLElementTagNameMap[T] {
+function tag<T extends keyof HTMLElementTagNameMap>(tagName: T, optionsOrChild?: ElementOptions | TagFirstChild | null, ...rest: TagChildrenLike[]): HTMLElementTagNameMap[T] {
 	const elem = document.createElement(tagName);
 
 	if (isOptionsArg(optionsOrChild)) {
-		applyOptions(elem, optionsOrChild as ElementOptions | CssClass | null);
+		applyOptions(elem, optionsOrChild as ElementOptions | null);
 		appendChild(elem, rest);
 	} else {
 		appendChild(elem, optionsOrChild !== undefined ? [optionsOrChild as TagChildrenLike, ...rest] : rest);

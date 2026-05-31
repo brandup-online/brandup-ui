@@ -3,10 +3,9 @@ import { Binding } from "./bind";
 import { BindingEach } from "./bind-each";
 
 /**
- * Values that are unambiguously a {@link tag} child and never options: DOM elements,
- * reactive bindings, promises, factory functions, and raw primitives.
+ * Values that are unambiguously a {@link tag} child and never options.
  * Passing one of these as the second argument to `tag` skips the options parameter.
- * Strings and string arrays are excluded because they are also valid as {@link CssClass}.
+ * `null` and `undefined` are excluded — they serve as "no options" in position 2.
  */
 export type TagFirstChild =
 	| Element
@@ -15,8 +14,10 @@ export type TagFirstChild =
 	| BindingEach<any>
 	| Promise<TagChildrenPrimitive>
 	| ((elem: HTMLElement) => TagChildrenPrimitive | TagChildrenPrimitive[] | void)
+	| string
 	| number
-	| boolean;
+	| boolean
+	| Array<TagChildrenLike>;
 
 /** Options used to configure an element created by {@link tag}. Recognized keys (`id`, `class`, `command`, `dataset`, `events`, `styles`) are handled specially; any other key is applied as a plain attribute. */
 export interface ElementOptions {
