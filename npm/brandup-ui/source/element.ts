@@ -56,16 +56,16 @@ export abstract class UIElement extends EventEmitter {
 	}
 
 	hasCommand(name: string) {
-		return this.__commands && name.toLowerCase() in this.__commands;
+		return !!this.__commands && name.toLowerCase() in this.__commands;
 	}
 
 	/** @internal */
 	__execCommand(name: string, target: HTMLElement): CommandResult {
-		if (this.__destroyed || !this.__element || !this.__commands)
-			throw new Error("UIElement is not set HTMLElement.");
+		if (this.__destroyed || !this.__element)
+			throw new Error("UIElement is destroyed or has no element.");
 
 		const key = name.toLowerCase();
-		const command = this.__commands[key];
+		const command = this.__commands?.[key];
 		if (!command)
 			throw new Error(`Command "${name}" is not registered.`);
 
@@ -78,39 +78,38 @@ export abstract class UIElement extends EventEmitter {
 			return { status: "already", context };
 		command.isExecuting = true;
 
-		if (!this._onCanExecCommand(name, target)) {
-			delete command.isExecuting;
-			return { status: "disallow", context };
-		}
-
-		if (command.canExecute && !command.canExecute(context)) {
-			delete command.isExecuting;
-			return { status: "disallow", context };
-		}
-
-		this.trigger("command", { element: this, name: command.name });
-
-		let isAsync: boolean | undefined;
+		// keep isExecuting cleanup inside finally so a throw in the
+		// guards/trigger/execute can never leave the command stuck.
+		let isAsync = false;
 		try {
+			if (!this._onCanExecCommand(name, target))
+				return { status: "disallow", context };
+
+			if (command.canExecute && !command.canExecute(context))
+				return { status: "disallow", context };
+
+			this.trigger("command", { element: this, name: command.name });
+
 			const commandResult = command.execute(context);
 
-			if (commandResult && commandResult instanceof Promise) {
+			if (commandResult instanceof Promise) {
 				isAsync = true;
 
 				target.classList.add(UICONSTANTS.CommandExecutingCssClassName);
 				commandResult
+					.catch(() => { }) // command owns its errors; just avoid unhandled rejection
 					.finally(() => {
 						target.classList.remove(UICONSTANTS.CommandExecutingCssClassName);
 						delete command.isExecuting;
 					});
 			}
+
+			return { status: "success", context };
 		}
 		finally {
 			if (!isAsync)
 				delete command.isExecuting;
 		}
-
-		return { status: "success", context: context };
 	}
 
 	protected _onRenderElement(_elem: HTMLElement) { }
@@ -120,7 +119,7 @@ export abstract class UIElement extends EventEmitter {
 	}
 
 	onDestroy(callback: VoidFunction | UIElement | Element) {
-		if (!this.__element || !callback)
+		if (this.__destroyed || !this.__element || !callback)
 			return;
 
 		if (callback instanceof UIElement)
