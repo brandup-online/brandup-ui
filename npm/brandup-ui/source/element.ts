@@ -1,8 +1,29 @@
 import { EventEmitter } from "./events";
 import UICONSTANTS from "./constants";
 
-/** Wraps an `HTMLElement` and binds business logic, commands and events to it. */
-export abstract class UIElement extends EventEmitter {
+/** Built-in events triggered by every {@link UIElement}. */
+export interface UIElementEvents {
+	/** Triggered right before a command handler runs. */
+	command: (args: CommandEventArgs) => void;
+	/** Triggered when the element is destroyed. */
+	destroy: (sender: UIElement<any>) => void;
+}
+
+/** Merge the built-in {@link UIElementEvents} with a subclass event map (built-in keys take precedence). */
+type WithUIEvents<TEvents> = {
+	[K in keyof UIElementEvents | keyof TEvents]:
+		K extends keyof UIElementEvents ? UIElementEvents[K]
+		: K extends keyof TEvents ? TEvents[K]
+		: never;
+};
+
+/**
+ * Wraps an `HTMLElement` and binds business logic, commands and events to it.
+ *
+ * The optional `TEvents` event map is merged with {@link UIElementEvents}, so subclasses
+ * can declare their own typed events in addition to the built-in `command`/`destroy`.
+ */
+export abstract class UIElement<TEvents = {}> extends EventEmitter<WithUIEvents<TEvents>> {
 	private __element?: HTMLElement;
 	private __events?: { [key: string]: EventInit | null };
 	private __commands?: { [key: string]: CommandInit };
@@ -113,7 +134,7 @@ export abstract class UIElement extends EventEmitter {
 			if (command.canExecute && !command.canExecute(context))
 				return { status: "disallow", context };
 
-			this.trigger("command", { element: this, name: command.name });
+			this.__raise("command", { element: this, name: command.name });
 
 			const commandResult = command.execute(context);
 
@@ -141,6 +162,11 @@ export abstract class UIElement extends EventEmitter {
 	 * Hook invoked when an element is bound via `setElement`. Override to render or wire up the element.
 	 * @param _elem The newly bound element.
 	 */
+	/** Trigger a built-in event. Typed by {@link UIElementEvents}; bypasses the generic trigger overload internally. */
+	private __raise<K extends keyof UIElementEvents>(name: K, ...args: Parameters<UIElementEvents[K]>): void {
+		(this.trigger as unknown as (n: string, ...a: any[]) => void)(name, ...args);
+	}
+
 	protected _onRenderElement(_elem: HTMLElement) { }
 
 	/**
@@ -180,7 +206,7 @@ export abstract class UIElement extends EventEmitter {
 			return;
 		this.__destroyed = true;
 
-		this.trigger("destroy", this);
+		this.__raise("destroy", this);
 		super.stopEvents();
 
 		const elem = this.__element;

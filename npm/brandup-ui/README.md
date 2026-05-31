@@ -137,15 +137,47 @@ Before executing a command, `UIElement` triggers the `command` event with `Comma
 `UIElement` extends the `EventEmitter` class.
 
 ```ts
-class EventEmitter {
-    on(eventName: EventName, callback: EventCallbackFunc, context?: any): this;
-    once(eventName: EventName, callback: EventCallbackFunc, context?: any): this;
-    off(eventName?: EventName | null, callback?: EventCallbackFunc | null, context?: any | null): this;
+class EventEmitter<TEvents = EventMap> {
+    on<K extends keyof TEvents & string>(eventName: K, callback: TEvents[K], context?: any): this;
+    once<K extends keyof TEvents & string>(eventName: K, callback: TEvents[K], context?: any): this;
+    off<K extends keyof TEvents & string>(eventName?: K | "all" | null, callback?: TEvents[K] | EventCallbackFunc | null, context?: any | null): this;
 
-    protected listenTo(source: EventEmitter, eventName: EventName, callback: EventCallbackFunc): this;
-    protected listenToOnce(source: EventEmitter, eventName: EventName, callback: EventCallbackFunc): this;
-    protected stopListening(source?: EventEmitter, eventName?: EventName, callback?: EventCallbackFunc): this;
-    protected trigger(eventName: string, ...args: any[]): this;
+    protected listenTo(source: EventEmitter<any>, eventName: string, callback: EventCallbackFunc): this;
+    protected listenToOnce(source: EventEmitter<any>, eventName: string, callback: EventCallbackFunc): this;
+    protected stopListening(source?: EventEmitter<any>, eventName?: string, callback?: EventCallbackFunc): this;
+
+    protected trigger<K extends keyof TEvents & string>(eventName: K, ...args: Parameters<TEvents[K]>): this;
+}
+```
+
+### Typed events
+
+The optional `TEvents` type parameter is an **event map** (`{ eventName: (args) => void }`) that gives a subclass strongly-typed event names, callback signatures and `trigger` arguments. It defaults to a loose map, so untyped usage keeps working.
+
+```ts
+interface CounterEvents {
+    increment: (by: number) => void;
+    reset: () => void;
+}
+
+class Counter extends EventEmitter<CounterEvents> {
+    add(n: number) {
+        this.trigger("increment", n);   // ✅ ok
+        // this.trigger("increment", "x"); // ❌ string is not number
+        // this.trigger("nope");           // ❌ unknown event
+    }
+}
+
+const c = new Counter();
+c.on("increment", by => console.log(by.toFixed(0))); // by: number
+// c.on("unknown", () => {});                          // ❌ unknown event
+```
+
+`UIElement` is itself generic — `UIElement<TEvents>` merges `TEvents` with the built-in `command`/`destroy` events, so subclasses can add their own typed events:
+
+```ts
+class MyWidget extends UIElement<{ ready: () => void }> {
+    // on/trigger accept "command", "destroy" AND "ready"
 }
 ```
 

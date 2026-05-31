@@ -1,7 +1,13 @@
 let ListenCounter = 1;
 
-/** Minimal event emitter with support for one-off listeners and cross-emitter listening. */
-export class EventEmitter {
+/**
+ * Minimal event emitter with support for one-off listeners and cross-emitter listening.
+ *
+ * The optional `TEvents` type parameter is an event map (`{ eventName: (args) => void }`)
+ * that gives subclasses strongly-typed event names, callback signatures and `trigger` arguments.
+ * When omitted it defaults to a loose map, so untyped usage keeps working.
+ */
+export class EventEmitter<TEvents = EventMap> {
 	private _events?: { [key: EventName]: EventCallback[] };
 	private _listenId?: string;
 	private _listeningTo?: { [id: string]: EventListening };
@@ -12,7 +18,9 @@ export class EventEmitter {
 	 * @param callback Handler invoked when the event is triggered.
 	 * @param context Optional `this`/context bound to the handler and used for removal matching.
 	 */
-	on(eventName: EventName, callback: EventCallbackFunc, context?: EventContextInit) {
+	on<K extends keyof TEvents & string>(eventName: K, callback: TEvents[K], context?: EventContextInit): this;
+	on(eventName: "all", callback: EventCallbackFunc, context?: EventContextInit): this;
+	on(eventName: string, callback: any, context?: EventContextInit): this {
 		const events = this._getOrCreateEvents(eventName);
 		events.push({ callback, context: context || undefined, ctx: context || this });
 		return this;
@@ -24,12 +32,14 @@ export class EventEmitter {
 	 * @param callback Handler invoked once when the event is triggered.
 	 * @param context Optional `this`/context bound to the handler and used for removal matching.
 	 */
-	once(eventName: EventName, callback: EventCallbackFunc, context?: EventContextInit) {
+	once<K extends keyof TEvents & string>(eventName: K, callback: TEvents[K], context?: EventContextInit): this;
+	once(eventName: "all", callback: EventCallbackFunc, context?: EventContextInit): this;
+	once(eventName: string, callback: any, context?: EventContextInit): this {
 		const wrapper = (...args: any[]) => {
-			this.off(eventName, wrapper, context);
+			this.off(<any>eventName, wrapper, context);
 			callback.apply(context || this, args);
 		};
-		return this.on(eventName, wrapper, context);
+		return this.on(<any>eventName, wrapper, context);
 	}
 
 	/**
@@ -39,7 +49,8 @@ export class EventEmitter {
 	 * @param callback Handler to remove, or omit to match all handlers.
 	 * @param context Context to remove, or omit to match all contexts.
 	 */
-	off(eventName?: EventName | null, callback?: EventCallbackFunc | null, context?: EventContextInit | null) {
+	off<K extends keyof TEvents & string>(eventName?: K | "all" | null, callback?: TEvents[K] | EventCallbackFunc | null, context?: EventContextInit | null): this;
+	off(eventName?: string | null, callback?: any, context?: EventContextInit | null): this {
 		if (!eventName && !callback && !context)
 			throw new Error("Require off arguments.");
 
@@ -84,7 +95,7 @@ export class EventEmitter {
 	 * @param eventName Event name to listen for.
 	 * @param callback Handler invoked when the event is triggered.
 	 */
-	protected listenTo(source: EventEmitter, eventName: EventName, callback: EventCallbackFunc) {
+	protected listenTo(source: EventEmitter<any>, eventName: string, callback: EventCallbackFunc): this {
 		this._addListeningTo(source, eventName);
 		source.on(eventName, callback, this);
 		return this;
@@ -96,7 +107,7 @@ export class EventEmitter {
 	 * @param eventName Event name to listen for.
 	 * @param callback Handler invoked once when the event is triggered.
 	 */
-	protected listenToOnce(source: EventEmitter, eventName: EventName, callback: EventCallbackFunc) {
+	protected listenToOnce(source: EventEmitter<any>, eventName: string, callback: EventCallbackFunc): this {
 		this._addListeningTo(source, eventName);
 		source.once(eventName, callback, this);
 		return this;
@@ -109,7 +120,7 @@ export class EventEmitter {
 	 * @param eventName Limit to a specific event, or omit for all.
 	 * @param callback Limit to a specific handler, or omit for all.
 	 */
-	protected stopListening(source?: EventEmitter, eventName?: EventName, callback?: EventCallbackFunc) {
+	protected stopListening(source?: EventEmitter<any>, eventName?: string, callback?: EventCallbackFunc): this {
 		if (!this._listeningTo)
 			return this;
 
@@ -141,7 +152,7 @@ export class EventEmitter {
 		return this;
 	}
 
-	private _addListeningTo(source: EventEmitter, eventName: EventName) {
+	private _addListeningTo(source: EventEmitter<any>, eventName: EventName) {
 		const listeningTo = this._listeningTo || (this._listeningTo = {});
 		const listenId = source._listenId || (source._listenId = `l${ListenCounter++}`);
 
@@ -173,7 +184,8 @@ export class EventEmitter {
 	 * @param eventName Event name to trigger (`"all"` is reserved and not allowed).
 	 * @param args Arguments forwarded to each handler.
 	 */
-	protected trigger(eventName: string, ...args: any[]) {
+	protected trigger<K extends keyof TEvents & string>(eventName: K, ...args: TEvents[K] extends (...a: infer A) => any ? A : never): this;
+	protected trigger(eventName: string, ...args: any[]): this {
 		eventName = eventName.toLowerCase();
 
 		if (eventName === "all")
@@ -224,6 +236,8 @@ export class EventEmitter {
 	}
 }
 
+/** Map of event name to its handler signature; used as the `TEvents` parameter of {@link EventEmitter}. */
+export type EventMap = Record<string, (...args: any[]) => void>;
 /** Event name; the special value `"all"` matches every triggered event. */
 export type EventName = "all" | string;
 /** Event handler signature; receives the arguments passed to `trigger`. */
@@ -238,6 +252,6 @@ interface EventCallback {
 }
 
 interface EventListening {
-	emitter: EventEmitter;
+	emitter: EventEmitter<any>;
 	events: EventName[];
 }
