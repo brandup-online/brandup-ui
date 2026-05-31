@@ -10,6 +10,7 @@
 			"ESNext"
 		],
 		"outDir": "./out",
+		"rootDir": ".",
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
 		"noImplicitAny": true,
