@@ -124,17 +124,17 @@ WordHelper.getWordEnd(5, "товар", "", "а", "ов"); // товаров
 
 ## Guid helpers
 
-`Guid` generates and exposes GUID values.
+`Guid` generates and exposes UUID values.
 
 ```TypeScript
 import { Guid } from "@brandup/ui-helpers";
 
-const id = Guid.createGuid(); // e.g. "3F2A1B4C-9D8E-..."
+const id = Guid.createGuid(); // e.g. "3f2a1b4c-9d8e-4a23-b123-456789abcdef"
 Guid.empty;                   // "00000000-0000-0000-0000-000000000000"
 ```
 
-- `createGuid()` — a new random upper-case GUID string (uses `Math.random`, not for cryptographic use).
-- `empty` — the all-zero GUID constant.
+- `createGuid()` — a new RFC 4122 UUID v4 string (lowercase, uses `crypto.randomUUID()`).
+- `empty` — the all-zero UUID constant.
 
 ## Func helpers
 

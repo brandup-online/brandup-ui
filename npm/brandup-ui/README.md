@@ -290,37 +290,51 @@ const DOM = {
     empty(container: Element | null | undefined): void;
 
     // Creating elements
-    tag<T extends keyof HTMLElementTagNameMap>(tagName: T, options?: ElementOptions | CssClass | null, ...children: TagChildrenLike[]): HTMLElementTagNameMap[T];
+    tag<T extends keyof HTMLElementTagNameMap>(tagName: T, options?: ElementOptions | null, ...children: TagChildrenLike[]): HTMLElementTagNameMap[T];
+    tag<T extends keyof HTMLElementTagNameMap>(tagName: T, firstChild: TagFirstChild, ...children: TagChildrenLike[]): HTMLElementTagNameMap[T];
 };
 ```
 
 ### Creating HTML elements
 
-`DOM.tag` creates an element from a tag name. The second argument is either a CSS class string/array (`CssClass`) or an `ElementOptions` object. The remaining arguments are children (`TagChildrenLike`).
+`DOM.tag` creates an element from a tag name. The remaining arguments are children or options:
+
+- **Options** — pass `null` (no options) or an `ElementOptions` plain object as the second argument.
+- **Children** — any other value in the second position (string, number, `Element`, `Binding`, `BindingEach`, `Promise`, function, array) is treated as the **first child**, so the options argument can be omitted entirely.
 
 ```ts
-// Class as a string or an array
-DOM.tag("div", "css-class-name");
-DOM.tag("div", ["class-a", "class-b"]);
+// No options, no children
+DOM.tag("div");
 
-// Children: a string is inserted as HTML, a number as text, an element as-is
-DOM.tag("div", "css-class-name", "<p>test</p>");
-DOM.tag("div", "css-class-name", DOM.tag("p", null, "test"));
+// Options object (id, class, dataset, styles, events, arbitrary attributes)
+DOM.tag("div", { class: "box", id: "main" });
 
-// Multiple children, including nested arrays
-DOM.tag("ul", null, [
-    DOM.tag("li", null, "1"),
-    DOM.tag("li", null, "2")
-]);
+// null → no options, children follow
+DOM.tag("div", null, "<p>test</p>");
 
-// A function child receives the element being created and can return a new child
-DOM.tag("div", null, (elem) => DOM.tag("span", null, "child"));
+// String as second arg → inserted as HTML child (NOT a CSS class)
+DOM.tag("div", "<b>hello</b>");
+DOM.tag("p", "plain text");
 
-// A Promise child (or a function returning a Promise) is appended once it resolves
-DOM.tag("div", null, fetch("/fragment").then(r => r.text()));
+// Number or boolean as second arg → text child
+DOM.tag("span", 42);
 
-// A UIElement child appends its bound element
-DOM.tag("div", null, new MyWidget(DOM.tag("span")));
+// Element/UIElement child — no null needed
+DOM.tag("div", DOM.tag("span", "child"));
+DOM.tag("div", new MyWidget(DOM.tag("span")));
+
+// Multiple children
+DOM.tag("ul", null, DOM.tag("li", "1"), DOM.tag("li", "2"));
+
+// Children in an array
+DOM.tag("ul", [DOM.tag("li", "1"), DOM.tag("li", "2")]);
+
+// Factory function: receives the container element
+DOM.tag("div", (elem) => { elem.id = "x"; });
+DOM.tag("div", () => DOM.tag("span", "child"));
+
+// Promise child — appended once it resolves
+DOM.tag("div", fetch("/fragment").then(r => r.text()));
 ```
 
 The full `ElementOptions` object:
