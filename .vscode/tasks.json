@@ -1,0 +1,33 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "watch example",
+			"type": "shell",
+			"command": "npm run watch",
+			"options": {
+				"cwd": "${workspaceFolder}/npm/brandup-ui-example"
+			},
+			"isBackground": true,
+			"presentation": {
+				"reveal": "silent",
+				"panel": "dedicated"
+			},
+			"problemMatcher": {
+				"owner": "webpack",
+				"fileLocation": "absolute",
+				"pattern": {
+					"regexp": "^ERROR in (.*?)(?::(\\d+):(\\d+))?$",
+					"file": 1,
+					"line": 2,
+					"column": 3
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "(compiling|Compilation .*starting|webpack .+ building)",
+					"endsPattern": "webpack .+ compiled"
+				}
+			}
+		}
+	]
+}

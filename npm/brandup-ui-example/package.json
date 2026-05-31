@@ -40,10 +40,11 @@
 		"webpack-manifest-plugin": "^5.0.1"
 	},
 	"scripts": {
-		"build": "tsc ./src/backend/program.ts --outDir ./server --ignoreConfig && cross-env NODE_ENV=production webpack --config webpack.config.js",
+		"build": "tsc ./src/backend/program.ts --outDir ./server --ignoreConfig --module commonjs && cross-env NODE_ENV=production webpack --config webpack.config.js",
 		"dev-build": "cross-env NODE_ENV=development webpack --config webpack.config.js",
 		"watch": "cross-env NODE_ENV=development webpack --config webpack.config.js --watch",
-		"start": "node ./server/program.js --port=8316"
+		"start": "node ./server/program.js --port=8316",
+		"start-dev": "cross-env NODE_ENV=development node ./server/program.js --port=8316"
 	},
 	"files": [
 		"server",

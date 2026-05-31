@@ -9,7 +9,11 @@
 			"DOM",
 			"ESNext"
 		],
-		"baseUrl": "./src",
+		"paths": {
+			"*": [
+				"./src/*"
+			]
+		},
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
 		"noImplicitAny": true,
@@ -27,8 +31,7 @@
 		"allowSyntheticDefaultImports": true
 	},
 	"include": [
-		"source",
-		"test"
+		"src"
 	],
 	"exclude": [
 		"node_modules",
