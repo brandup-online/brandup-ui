@@ -61,7 +61,7 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 		}
 
 		if (context.basePath != context.app.env.basePath) {
-			// Если базовый путь изменился, то перезагружаем страницу
+			// If the base path changed, reload the page
 			console.log(`Change base path from "${context.app.env.basePath}" to "${context.basePath}"`);
 			location.href = context.url;
 			return;
@@ -190,14 +190,14 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 			let replace = context.replace;
 
 			if (context.data.popstate) {
-				/* Если навигация из события popstate, то принулительно перезаписываем состояние. */
+				/* If the navigation comes from a popstate event, force replacing the state. */
 				console.warn(`nav from popstate`, context.data.popstate);
 				replace = true;
 			}
 
 			if (context.current?.scope != context.scope || context.current?.source === "first") {
-				// Если изменилась область навигации или предыдущая бала первой, то 
-				// не нужно перезаписывать текущую страницу
+				// If the navigation scope changed or the previous navigation was the first,
+				// there is no need to replace the current page
 				replace = false;
 			}
 

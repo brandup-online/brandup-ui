@@ -12,11 +12,11 @@ npm i @brandup/ui@latest
 
 ## UIElement
 
-`UIElement` - wrapper для `HTMLElement`, который позволяет привязать к нему свою бизнес логику.
+`UIElement` is a wrapper for `HTMLElement` that lets you attach your own business logic to it.
 
-Возможности:
-- Обработка комманд, объявленных в разметке `HTMLElement`, который связан с `UIElement`.
-- Подписка на события через `EventEmitter`, от которого наследуется `UIElement`.
+Features:
+- Handling of commands declared in the markup of the `HTMLElement` that is bound to the `UIElement`.
+- Subscribing to events through `EventEmitter`, which `UIElement` extends.
 
 ```ts
 abstract class UIElement extends EventEmitter {
@@ -40,7 +40,7 @@ abstract class UIElement extends EventEmitter {
 }
 ```
 
-`UIElement` — абстрактный класс. Наследник задаёт `typeName` и привязывает DOM-элемент через `setElement`. Привязать элемент можно только один раз; повторная привязка (или привязка чужого элемента) бросает исключение.
+`UIElement` is an abstract class. A subclass sets `typeName` and binds a DOM element via `setElement`. An element can be bound only once; binding again (or binding an element that already belongs to another instance) throws an exception.
 
 ```ts
 import { UIElement } from "@brandup/ui";
@@ -54,22 +54,22 @@ class MyWidget extends UIElement {
     }
 
     protected _onRenderElement(elem: HTMLElement) {
-        // инициализация разметки
+        // initialize the markup
     }
 }
 ```
 
-Расширение `HTMLElement.prototype.ui` позволяет привязать `UIElement` через фабрику и вернуть сам элемент:
+The `HTMLElement.prototype.ui` extension lets you bind a `UIElement` through a factory and returns the element itself:
 
 ```ts
 document.getElementById("widget")!.ui(elem => new MyWidget(elem));
 ```
 
-Привязанный `UIElement` доступен на узле через свойство `node.uielement`.
+The bound `UIElement` is available on the node through the `node.uielement` property.
 
 ## UI commands
 
-`UIElement` позволяет регистрировать обработчики комманд, которые объявляются в разметке через атрибут `data-command`.
+`UIElement` lets you register command handlers, which are declared in the markup through the `data-command` attribute.
 
 ```html
 <button data-command="send">Send</button>
@@ -81,7 +81,7 @@ this.registerCommand("send", (context: CommandContext) => {
 });
 ```
 
-Можно регистрировать асинхронные обработчики команд — достаточно вернуть `Promise`:
+You can register asynchronous command handlers — just return a `Promise`:
 
 ```ts
 this.registerCommand("command1-async", (context: CommandContext) => {
@@ -95,7 +95,7 @@ this.registerCommand("command1-async", (context: CommandContext) => {
 });
 ```
 
-Третий аргумент `canExecute` позволяет ограничить выполнение команды:
+The third argument, `canExecute`, lets you restrict execution of the command:
 
 ```ts
 this.registerCommand(
@@ -105,11 +105,11 @@ this.registerCommand(
 );
 ```
 
-Команды срабатывают по событию `click`. Поиск обработчика идёт вверх по DOM от элемента с атрибутом `data-command` до ближайшего `UIElement`, в котором эта команда зарегистрирована.
+Commands are triggered by the `click` event. The handler is looked up by walking up the DOM from the element with the `data-command` attribute to the nearest `UIElement` in which that command is registered.
 
-Во время выполнения асинхронной команды у целевого элемента добавляется CSS-класс **executing** (удаляется по завершении `Promise`).
+While an asynchronous command is running, the **executing** CSS class is added to the target element (and removed once the `Promise` settles).
 
-Сигнатуры типов команд:
+Command type signatures:
 
 ```ts
 type CommandExecuteFunction = (context: CommandContext) => void | Promise<void | any>;
@@ -130,11 +130,11 @@ interface CommandResult {
 }
 ```
 
-Перед выполнением команды `UIElement` триггерит событие `command` с аргументами `CommandEventArgs` (`{ element, name }`).
+Before executing a command, `UIElement` triggers the `command` event with `CommandEventArgs` arguments (`{ element, name }`).
 
 ## UI Events
 
-`UIElement` наследуется от класса `EventEmitter`.
+`UIElement` extends the `EventEmitter` class.
 
 ```ts
 class EventEmitter {
@@ -149,33 +149,33 @@ class EventEmitter {
 }
 ```
 
-Подписка и отписка на события:
+Subscribing to and unsubscribing from events:
 
 ```ts
 widget.on("command", (args: CommandEventArgs) => {
     console.log("executing", args.name);
 });
 
-// одноразовый обработчик
+// one-time handler
 widget.once("destroy", () => console.log("destroyed"));
 
-// отписка (фильтры можно опускать — пропущенный фильтр совпадает с любым)
+// unsubscribe (filters can be omitted — an omitted filter matches anything)
 widget.off("command");
 ```
 
-Специальное имя события `"all"` получает каждое триггеримое событие.
+The special event name `"all"` receives every triggered event.
 
-Защищённые методы `listenTo` / `listenToOnce` подписывают один эмиттер на события другого и отслеживают подписку, чтобы её можно было освободить через `stopListening`. При `destroy()` все подписки `UIElement` снимаются автоматически.
+The protected `listenTo` / `listenToOnce` methods subscribe one emitter to another's events and track the subscription so it can be released via `stopListening`. On `destroy()`, all of a `UIElement`'s subscriptions are removed automatically.
 
 ## Constants
 
-Имена DOM-атрибутов, свойств и CSS-классов экспортируются как пространство имён `UICONSTANTS`:
+The names of DOM attributes, properties, and CSS classes are exported as the `UICONSTANTS` namespace:
 
 ```ts
 import { UICONSTANTS } from "@brandup/ui";
 
-UICONSTANTS.ElemAttributeName;              // "uiElement"   — data-атрибут с typeName
-UICONSTANTS.ElemPropertyName;               // "uielement"   — свойство на DOM-элементе со ссылкой на UIElement
-UICONSTANTS.CommandAttributeName;           // "command"     — data-атрибут команды
-UICONSTANTS.CommandExecutingCssClassName;   // "executing"   — класс на время выполнения async-команды
+UICONSTANTS.ElemAttributeName;              // "uiElement"   — data attribute holding the typeName
+UICONSTANTS.ElemPropertyName;               // "uielement"   — property on the DOM element referencing the UIElement
+UICONSTANTS.CommandAttributeName;           // "command"     — data attribute of the command
+UICONSTANTS.CommandExecutingCssClassName;   // "executing"   — class applied while an async command is running
 ```

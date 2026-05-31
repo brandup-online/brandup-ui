@@ -12,7 +12,7 @@ npm i @brandup/ui-dom@latest
 
 ## DOM helper
 
-Методы для простой работы с DOM моделью. Все функции доступны через объект `DOM`.
+Methods for working with the DOM with ease. All functions are available through the `DOM` object.
 
 ```ts
 import { DOM } from "@brandup/ui-dom";
@@ -20,7 +20,7 @@ import { DOM } from "@brandup/ui-dom";
 
 ```ts
 const DOM = {
-    // Поиск элементов
+    // Finding elements
     getById<T extends HTMLElement = HTMLElement>(id: string): T | null;
     getByClass<T extends HTMLElement = HTMLElement>(container: Element, className: string): T | null;
     getByName<T extends HTMLElement = HTMLElement>(name: string): T | null;
@@ -29,67 +29,67 @@ const DOM = {
     queryElement<T extends HTMLElement = HTMLElement>(container: Element, query: string): T | null;
     queryElements<T extends HTMLElement = HTMLElement>(container: Element, query: string): NodeListOf<T>;
 
-    // Перемещение по соседним элементам
+    // Navigating sibling elements
     nextElement<T extends HTMLElement = HTMLElement>(current: Element): T | null;
     prevElement<T extends HTMLElement = HTMLElement>(current: Element): T | null;
     nextElementByClass<T extends HTMLElement = HTMLElement>(current: Element, className: string): T | null;
     prevElementByClass<T extends HTMLElement = HTMLElement>(current: Element, className: string): T | null;
 
-    // CSS классы
+    // CSS classes
     addClass(container: Element | null | undefined, selectors: string, cssClass: CssClass): void;
     removeClass(container: Element | null | undefined, selectors: string, cssClass: CssClass): void;
 
-    // Очистка
+    // Clearing
     empty(container: Element | null | undefined): void;
 
-    // Создание элементов
+    // Creating elements
     tag<T extends keyof HTMLElementTagNameMap>(tagName: T, options?: ElementOptions | CssClass | null, ...children: TagChildrenLike[]): HTMLElementTagNameMap[T];
 };
 ```
 
 ### Creation HTML elements
 
-`DOM.tag` создаёт элемент по имени тега. Второй аргумент — либо строка/массив CSS классов (`CssClass`), либо объект `ElementOptions`. Остальные аргументы — дети (`TagChildrenLike`).
+`DOM.tag` creates an element from a tag name. The second argument is either a CSS class string/array (`CssClass`) or an `ElementOptions` object. The remaining arguments are children (`TagChildrenLike`).
 
 ```ts
-// Класс строкой или массивом
+// Class as a string or an array
 DOM.tag("div", "css-class-name");
 DOM.tag("div", ["class-a", "class-b"]);
 
-// Дети: строка вставляется как HTML, число как текст, элемент как есть
+// Children: a string is inserted as HTML, a number as text, an element as-is
 DOM.tag("div", "css-class-name", "<p>test</p>");
 DOM.tag("div", "css-class-name", DOM.tag("p", null, "test"));
 
-// Несколько детей, в том числе вложенные массивы
+// Multiple children, including nested arrays
 DOM.tag("ul", null, [
     DOM.tag("li", null, "1"),
     DOM.tag("li", null, "2")
 ]);
 
-// Ребёнок-функция получает создаваемый элемент и может вернуть нового ребёнка
+// A function child receives the element being created and can return a new child
 DOM.tag("div", null, (elem) => DOM.tag("span", null, "child"));
 
-// Ребёнок-Promise (или функция, возвращающая Promise) добавляется по готовности
+// A Promise child (or a function returning a Promise) is appended once it resolves
 DOM.tag("div", null, fetch("/fragment").then(r => r.text()));
 ```
 
-Полный объект `ElementOptions`:
+The full `ElementOptions` object:
 
 ```ts
 interface ElementOptions {
-    id?: string;                  // атрибут id
-    class?: CssClass;             // CSS класс(ы): строка или массив строк
+    id?: string;                  // id attribute
+    class?: CssClass;             // CSS class(es): a string or an array of strings
     command?: string;             // data-command
-    dataset?: ElementData;        // произвольные data-* атрибуты
-    events?: ElementEvents;       // обработчики событий по имени в нижнем регистре
-    styles?: ElementStyles;       // inline-стили (Partial<CSSStyleDeclaration>)
-    [name: string]:               // любой другой ключ — обычный атрибут:
+    dataset?: ElementData;        // arbitrary data-* attributes
+    events?: ElementEvents;       // event handlers keyed by lowercase name
+    styles?: ElementStyles;       // inline styles (Partial<CSSStyleDeclaration>)
+    [name: string]:               // any other key is a plain attribute:
         | string | number | boolean | object | null | undefined;
-    // null → пустой атрибут, object → JSON.stringify, undefined → игнорируется
+    // null → empty attribute, object → JSON.stringify, undefined → ignored
 }
 ```
 
-Пример с полным набором опций:
+An example using the full set of options:
 
 ```ts
 DOM.tag("button", {
@@ -99,8 +99,8 @@ DOM.tag("button", {
     dataset: { role: "action" },     // data-role="action"
     styles: { color: "red" },
     events: { click: (e) => console.log(e) },
-    type: "button",                  // произвольный атрибут
-    disabled: null                   // пустой атрибут disabled
+    type: "button",                  // arbitrary attribute
+    disabled: null                   // empty disabled attribute
 }, "Send");
 ```
 
