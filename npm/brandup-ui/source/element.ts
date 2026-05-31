@@ -28,6 +28,7 @@ export abstract class UIElement<TEvents = {}> extends EventEmitter<WithUIEvents<
 	private __events?: { [key: string]: EventInit | null };
 	private __commands?: { [key: string]: CommandInit };
 	private __destroyed?: boolean;
+	private __elementCallbacks?: ((elem: HTMLElement) => void)[];
 
 	/** Unique type name of this UI element; also written to the element's data attribute. */
 	abstract typeName: string;
@@ -54,6 +55,29 @@ export abstract class UIElement<TEvents = {}> extends EventEmitter<WithUIEvents<
 		elem.dataset[UICONSTANTS.ElemAttributeName] = this.typeName;
 
 		this._onRenderElement(elem);
+
+		if (this.__elementCallbacks) {
+			const callbacks = this.__elementCallbacks;
+			delete this.__elementCallbacks;
+			callbacks.forEach(callback => callback(elem));
+		}
+	}
+
+	/**
+	 * Invoke a callback with the bound element: immediately if it is already set,
+	 * otherwise once `setElement` binds it (after `_onRenderElement`).
+	 * @param callback Receives the bound element.
+	 */
+	whenElement(callback: (elem: HTMLElement) => void): this {
+		if (this.__destroyed)
+			return this;
+
+		if (this.__element)
+			callback(this.__element);
+		else
+			(this.__elementCallbacks || (this.__elementCallbacks = [])).push(callback);
+
+		return this;
 	}
 
 	// static members
@@ -218,6 +242,7 @@ export abstract class UIElement<TEvents = {}> extends EventEmitter<WithUIEvents<
 		delete this.__element;
 		delete this.__events;
 		delete this.__commands;
+		delete this.__elementCallbacks;
 	}
 }
 
