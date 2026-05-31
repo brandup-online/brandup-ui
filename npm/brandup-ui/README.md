@@ -33,7 +33,7 @@ abstract class UIElement extends EventEmitter {
     protected _onRenderElement(elem: HTMLElement): void;
     protected _onCanExecCommand(name: string, elem: HTMLElement): boolean;
 
-    onDestroy(callback: VoidFunction | UIElement | Element): void;
+
     effectScope(): EffectScope;
     destroy(): void;
 

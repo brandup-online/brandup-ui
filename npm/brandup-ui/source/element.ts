@@ -187,23 +187,6 @@ export abstract class UIElement<TEvents = {}> extends EventEmitter<WithUIEvents<
 		return true;
 	}
 
-	/**
-	 * Register cleanup that runs when this element is destroyed.
-	 * @param callback A function to call, another `UIElement` to destroy, or an `Element` to remove.
-	 */
-	onDestroy(callback: VoidFunction | UIElement | Element) {
-		if (this.__destroyed || !this.__element || !callback)
-			return;
-
-		if (callback instanceof UIElement)
-			callback.listenTo(this, "destroy", () => callback.destroy());
-		else if (callback instanceof Element)
-			this.on("destroy", () => callback.remove());
-		else if (typeof callback === "function")
-			this.on("destroy", () => callback());
-		else
-			throw new Error("Unsupported callback type.");
-	}
 
 	/**
 	 * Create an {@link EffectScope} whose reactive effects are stopped automatically when

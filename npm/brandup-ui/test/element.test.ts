@@ -6,13 +6,13 @@ it('UIElement check instanceof', () => {
 	expect(true).toEqual(elem instanceof UIElement);
 });
 
-it('UIElement onDestroy', () => {
+it('UIElement on destroy callback', () => {
 	const elem = new Test();
 	const elem2 = new Test();
 
-	elem.onDestroy(elem2);
+	elem.on("destroy", () => elem2.destroy());
 	let isDestroy = false;
-	elem.onDestroy(() => { isDestroy = true });
+	elem.on("destroy", () => { isDestroy = true });
 
 	expect(elem2.element).toBeDefined();
 
