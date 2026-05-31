@@ -87,11 +87,11 @@ export abstract class UIElement<TEvents = {}> extends EventEmitter<WithUIEvents<
 
 		const commands = this.__commands || (this.__commands = {});
 
-		const nornalizedName = name.toLowerCase();
-		if (nornalizedName in commands)
+		const normalizedName = name.toLowerCase();
+		if (normalizedName in commands)
 			throw new Error(`Command "${name}" already registered.`);
 
-		commands[nornalizedName] = {
+		commands[normalizedName] = {
 			name: name,
 			execute,
 			canExecute
@@ -294,7 +294,7 @@ const commandClickHandler = (e: MouseEvent) => {
 
 	const commandName = commandElem.dataset[UICONSTANTS.CommandAttributeName];
 	if (!commandName)
-		throw new Error("Command data attribute is not have value.");
+		throw new Error("Command data attribute does not have a value.");
 
 	const uiElem = findUiElementByCommand(commandElem, commandName);
 	if (uiElem) {
@@ -310,7 +310,13 @@ const commandClickHandler = (e: MouseEvent) => {
 	e.stopImmediatePropagation();
 }
 
-window.addEventListener("click", commandClickHandler, false);
+const __uiAbortController = new AbortController();
+window.addEventListener("click", commandClickHandler, { signal: __uiAbortController.signal });
+
+/** Remove the global click handler registered by brandup-ui. Call on app teardown or HMR disposal. */
+export function destroyUI(): void {
+	__uiAbortController.abort();
+}
 
 interface CommandInit {
 	name: string;

@@ -207,7 +207,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			action = "first";
 		else {
 			const isChangedUrl = this.__lastNav?.context.url.toLowerCase() !== navUrl.url.toLowerCase();
-			const hasHash = !!this.__lastNav?.context.hash || !!navUrl.hash;
+			const hasHash = !!navUrl.hash;
 
 			if (isChangedUrl)
 				action = "url-change"; // url changed

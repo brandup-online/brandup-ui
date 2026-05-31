@@ -57,10 +57,8 @@ const prepareRequest = (options: AjaxRequest, body: any): { headers: Record<stri
 				else if (body instanceof FormData)
 					contentType = FORM_URL;
 
-				if (contentType == FORM_URL)
+				if (contentType === FORM_URL)
 					body = helpers.encodeForm(body);
-				else if (contentType == FORM_DATA)
-					contentType = null;
 
 				break;
 			case "FORMDATA":

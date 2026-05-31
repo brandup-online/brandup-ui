@@ -5,7 +5,7 @@ import { request } from "./request";
 export class AjaxQueue {
 	private _options: AjaxQueueOptions;
 	private _requests: Array<RequestTask> = [];
-	private _curent: RequestTask | null = null;
+	private _current: RequestTask | null = null;
 	private _destroyed = false;
 
 	/** @param options Optional queue-wide hooks. */
@@ -16,7 +16,7 @@ export class AjaxQueue {
 	/** Number of requests waiting in the queue (excluding the one currently executing). */
 	get length(): number { return this._requests.length; }
 	/** `true` when nothing is queued and no request is currently executing. */
-	get isFree(): boolean { return !this._requests.length && !this._curent; }
+	get isFree(): boolean { return !this._requests.length && !this._current; }
 	/** `true` when no requests are waiting in the queue (a request may still be executing). */
 	get isEmpty(): boolean { return !this._requests.length; }
 
@@ -31,9 +31,9 @@ export class AjaxQueue {
 		if (this._destroyed)
 			throw new Error("AjaxQueue is destroyed.");
 
-		this._requests.push({ request, cancel: abortSignal, abort: new AbortController() });
+		this._requests.push({ request, cancel: abortSignal });
 
-		if (!this._curent)
+		if (!this._current)
 			this.__execute();
 	}
 
@@ -76,8 +76,8 @@ export class AjaxQueue {
 	reset(cancelCurrentRequest = false) {
 		this._requests = [];
 
-		const current = this._curent;
-		this._curent = null;
+		const current = this._current;
+		this._current = null;
 
 		if (cancelCurrentRequest && current)
 			current.abort?.abort("ResetAjaxQueue");
@@ -91,9 +91,9 @@ export class AjaxQueue {
 
 		this._requests = [];
 
-		if (this._curent) {
-			this._curent.abort?.abort("DestroyAjaxQueue");
-			this._curent = null;
+		if (this._current) {
+			this._current.abort?.abort("DestroyAjaxQueue");
+			this._current = null;
 		}
 	}
 
@@ -101,10 +101,10 @@ export class AjaxQueue {
 		if (this._destroyed)
 			return;
 
-		if (this._curent)
+		if (this._current)
 			throw new Error("AjaxQueue currently is executing.");
 
-		const task = this._curent = this._requests.shift() ?? null;
+		const task = this._current = this._requests.shift() ?? null;
 
 		if (task) {
 			if (this._options.canRequest && this._options.canRequest(task.request) === false) {
@@ -142,7 +142,7 @@ export class AjaxQueue {
 		if (this._destroyed)
 			return;
 
-		this._curent = null;
+		this._current = null;
 		this.__execute();
 	}
 }
