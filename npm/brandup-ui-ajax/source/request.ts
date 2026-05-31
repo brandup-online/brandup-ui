@@ -27,7 +27,7 @@ export async function request<TData = any, TState = any>(options: AjaxRequest<TS
 		const response = await fetch(url, {
 			method,
 			headers: new Headers(prepared.headers),
-			cache: options.disableCache ? "no-cache" : "default",
+			cache: options.disableCache ? "no-store" : "default",
 			mode,
 			credentials,
 			redirect: "follow",
