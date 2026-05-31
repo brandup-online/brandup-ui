@@ -1,5 +1,9 @@
 import { CssClass } from "./types";
 
+/**
+ * @internal
+ * Adds one or more CSS classes to a single element. A string is split on spaces. No-op when `cssClass` is falsy.
+ */
 const addCssClass = (elem: Element, cssClass: CssClass) => {
 	if (!cssClass)
 		return;
@@ -10,6 +14,10 @@ const addCssClass = (elem: Element, cssClass: CssClass) => {
 	elem.classList.add(...cssClass);
 };
 
+/**
+ * @internal
+ * Removes one or more CSS classes from a single element. A string is split on spaces. No-op when `cssClass` is falsy.
+ */
 const removeCssClass = (elem: Element, cssClass: CssClass) => {
 	if (!cssClass)
 		return;

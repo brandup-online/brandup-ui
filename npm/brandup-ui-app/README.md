@@ -31,13 +31,14 @@ interface ExampleApplicationModel extends ApplicationModel {
 export class ExampleApplication extends Application<ExampleApplicationModel> {
 }
 
-const builder = new ApplicationBuilder<ExampleApplicationModel>();
+const appModel: ExampleApplicationModel = {};
+
+const builder = new ApplicationBuilder<ExampleApplicationModel>(appModel);
 builder
 	.useApp(ExampleApplication)
 	.useMiddleware(pages);
 
-const appModel: ExampleApplicationModel = {};
-const app = builder.build<ExampleApplicationModel>({ basePath: "/" }, appModel);
+const app = builder.build({ basePath: "/" });
 
 app.run({ /*optional context params*/ })
 	.then(context: StartContext => { })
@@ -136,7 +137,7 @@ export interface PagesMiddleware {
 export default () => new PagesMiddlewareImpl();
 ```
 
-Example SPA navigation middleware: [example/src/frontend/middlewares/pages.ts](/example/src/frontend/middlewares/pages.ts)
+Example SPA navigation middleware: [npm/brandup-ui-example/src/frontend/middlewares/pages.ts](/npm/brandup-ui-example/src/frontend/middlewares/pages.ts)
 
 ### Access to middleware
 

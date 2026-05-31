@@ -1,6 +1,13 @@
 import { ElementOptions, CssClass, TagChildrenLike, TagChildrenPrimitive, ElementEvents } from "./types";
 import helpers from "./helpers";
 
+/**
+ * Creates an HTML element of the given tag name, applies the supplied options and appends the children.
+ * @param tagName Tag name of the element to create (e.g. `"div"`).
+ * @param options Either an {@link ElementOptions} object, a {@link CssClass} shorthand (string or array applied as classes), or `null` for none.
+ * @param children Children to append; each may be an element, string/number (rendered as HTML), promise, factory function or nested array. See {@link TagChildrenLike}.
+ * @returns The newly created element, typed by `tagName`.
+ */
 function tag<TElement extends keyof HTMLElementTagNameMap>(tagName: TElement, options?: ElementOptions | CssClass | null, ...children: TagChildrenLike[]): HTMLElementTagNameMap[TElement] {
 	const elem = document.createElement(tagName);
 
@@ -10,6 +17,11 @@ function tag<TElement extends keyof HTMLElementTagNameMap>(tagName: TElement, op
 	return elem as HTMLElementTagNameMap[TElement];
 }
 
+/**
+ * Applies element options to an existing element. A string or array is treated as a {@link CssClass}; otherwise each {@link ElementOptions} key is applied (`id`, `styles`, `class`, `command`, `dataset`, `events`, or a plain attribute). `undefined` values are skipped.
+ * @param elem Target element to mutate.
+ * @param options Options object, {@link CssClass} shorthand, or `null`/`undefined` for none.
+ */
 const applyOptions = (elem: HTMLElement, options?: ElementOptions | CssClass | null) => {
 	if (!options)
 		return;
@@ -69,6 +81,12 @@ const applyOptions = (elem: HTMLElement, options?: ElementOptions | CssClass | n
 	}
 }
 
+/**
+ * Appends one or more children to a container, recursively resolving arrays, promises and factory functions. Elements are appended as-is; strings/numbers/booleans are inserted as HTML; `null`/`undefined` are ignored.
+ * @param container Element to append the children to.
+ * @param children Child or children to append. See {@link TagChildrenLike}.
+ * @throws Error When a child resolves to an unsupported type.
+ */
 const appendChild = (container: HTMLElement, children?: TagChildrenLike) => {
 	if (children === null || children === undefined)
 		return;

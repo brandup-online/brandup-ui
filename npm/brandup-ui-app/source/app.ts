@@ -8,7 +8,9 @@ import urlHelper, { ParsedUrl } from "./helpers/url";
 import CONSTANTS from "./constants";
 import { Guid } from "@brandup/ui-helpers";
 
+/** Type name of the base {@link Application} class. */
 export const APP_TYPENAME = "brandup-ui-app";
+/** Reason value thrown when a navigation is overridden (e.g. by a redirect). */
 export const NAV_OVERIDE_ERROR = "NavigationOveride";
 
 /**
@@ -30,6 +32,10 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	private __execNav?: ExecuteNav<this, ContextData>; // current navigation invoking
 	private __lastNav?: ExecuteNav<this, ContextData>; // last success navigation
 
+	/**
+	 * @param env Application environment.
+	 * @param model Application model.
+	 */
 	constructor(env: EnvironmentModel, model: TModel, ..._args: any[]) {
 		super();
 
@@ -41,6 +47,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		this.__abort = new AbortController();
 	}
 
+	/** Type name of the application. */
 	get typeName(): string { return APP_TYPENAME; }
 	/** Current navigation context. */
 	get current(): NavigateContext<this> | undefined { return this.__lastNav?.context; }
@@ -67,21 +74,32 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		});
 	}
 
-	/** Initialize application instance. */
+	/**
+	 * Initialize application instance. Override to register additional middlewares.
+	 * Registers the built-in state and hyperlink middlewares by default.
+	 */
 	protected onInitialize() {
 		this.invoker.next(StateMiddleware());
 		this.invoker.next(HyperLinkMiddleware());
 	}
 
-	/** Begin run application. */
+	/**
+	 * Called at the beginning of application run, before middlewares start.
+	 * Override to perform async setup work.
+	 * @returns Promise resolved when starting work is complete.
+	 */
 	protected onStarting(): Promise<void> { return Promise.resolve(); }
 
-	/** Complate run application. */
+	/**
+	 * Called after the application has fully started.
+	 * Override to perform async work after start.
+	 * @returns Promise resolved when post-start work is complete.
+	 */
 	protected onStared(): Promise<void> { return Promise.resolve(); }
 
 	/**
-	 * Get middleware by type.
-	 * @param type Type of middleware.
+	 * Get registered middleware by its unique name.
+	 * @param name Unique name of middleware.
 	 * @returns Middleware instance.
 	 */
 	middleware<T extends Middleware>(name: string): T {
@@ -226,6 +244,11 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		window.location.reload();
 	}
 
+	/**
+	 * Destroy application: abort pending navigations, run the middleware "stop" chain and release listeners.
+	 * @param contextData Stop context data.
+	 * @returns Promise of the stop context.
+	 */
 	override async destroy<TData extends ContextData = ContextData>(contextData?: TData | null): Promise<StopContext<this, TData>> {
 		if (this.__abort.signal.aborted)
 			return Promise.reject(new Error('Application already destroyed.'));

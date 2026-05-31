@@ -10,11 +10,47 @@ Install NPM package [@brandup/ui-helpers](https://www.npmjs.com/package/@brandup
 npm i @brandup/ui-helpers@latest
 ```
 
+## Helper groups
+
+The package exposes the following named helper groups, plus a set of global prototype/static extensions:
+
+| Import | Module |
+| --- | --- |
+| `ObjectHelper` | object property access by path |
+| `TypeHelper` | runtime type checks |
+| `FuncHelper` | timing / async helpers |
+| `WordHelper` | word pluralization |
+| `Guid` | GUID generation |
+| (extensions) | `String.prototype.format`, `Object.prop`, `Object.hasProp` |
+| (string) | `formatText` |
+
+```TypeScript
+import { ObjectHelper, TypeHelper, FuncHelper, WordHelper, Guid, formatText } from "@brandup/ui-helpers";
+```
+
 ## String helpers
 
-### Format text
+`formatText` substitutes `{...}` placeholders in a template.
 
-Format with model values:
+Format with model values (placeholders are dot-separated property paths):
+
+```TypeScript
+import { formatText } from "@brandup/ui-helpers";
+
+const result = formatText("Hello, {name}", { name: "Dmitry" }); // Hello, Dmitry
+```
+
+Format with positional arguments (placeholders are zero-based indexes):
+
+```TypeScript
+const result = formatText("Hello, {0}", "Dmitry"); // Hello, Dmitry
+```
+
+## Extensions
+
+Importing the package augments built-in prototypes with convenience methods.
+
+### Format text
 
 ```TypeScript
 const text = "Hello, {name}";
@@ -27,8 +63,6 @@ Format with arguments:
 const text = "Hello, {0}";
 const result = text.format("Dmitry"); // Hello, Dmitry
 ```
-
-## Object helpers
 
 ### Get value by property path
 
@@ -43,3 +77,84 @@ const value = Object.prop(model, "header.value"); // return "Item"
 
 const hasValue = Object.hasProp(model, "header.value"); // return true
 ```
+
+## Object helpers
+
+`ObjectHelper` reads nested values by a dot-separated path.
+
+```TypeScript
+import { ObjectHelper } from "@brandup/ui-helpers";
+
+const model = { header: { value: "Item" } };
+
+ObjectHelper.getProperty(model, "header.value"); // "Item"
+ObjectHelper.hasProperty(model, "header.value"); // true
+```
+
+- `getProperty(obj, path)` — returns the resolved value, or `null`/`undefined` when missing.
+- `hasProperty(obj, path)` — returns `true` if every segment of the path exists.
+
+## Type helpers
+
+`TypeHelper` provides runtime type checks.
+
+```TypeScript
+import { TypeHelper } from "@brandup/ui-helpers";
+
+TypeHelper.isFunction(() => {}); // true
+TypeHelper.isString("text");     // true
+```
+
+- `isFunction(value)` — `true` if the value is a function.
+- `isString(value)` — `true` for string primitives and `String` instances.
+
+## Word helpers
+
+`WordHelper.getWordEnd` picks a grammatical ending that agrees with a count (Russian-style pluralization).
+
+```TypeScript
+import { WordHelper } from "@brandup/ui-helpers";
+
+WordHelper.getWordEnd(1, "товар", "", "а", "ов"); // товар
+WordHelper.getWordEnd(3, "товар", "", "а", "ов"); // товара
+WordHelper.getWordEnd(5, "товар", "", "а", "ов"); // товаров
+```
+
+- `getWordEnd(count, word, one?, two?, five?)` — appends `one` for counts ending in 1, `two` for 2–4, and `five` for 0/5–9 and 11–20.
+
+## Guid helpers
+
+`Guid` generates and exposes GUID values.
+
+```TypeScript
+import { Guid } from "@brandup/ui-helpers";
+
+const id = Guid.createGuid(); // e.g. "3F2A1B4C-9D8E-..."
+Guid.empty;                   // "00000000-0000-0000-0000-000000000000"
+```
+
+- `createGuid()` — a new random upper-case GUID string (uses `Math.random`, not for cryptographic use).
+- `empty` — the all-zero GUID constant.
+
+## Func helpers
+
+`FuncHelper` contains timing and async utilities.
+
+```TypeScript
+import { FuncHelper } from "@brandup/ui-helpers";
+
+// Resolve after 500ms (cancellable via AbortSignal)
+await FuncHelper.delay(500);
+
+// Keep a loading state visible for at least 1000ms
+const data = await FuncHelper.minWaitAsync(() => loadData(), 1000);
+
+// Reject with FuncHelper.TIMEOUT_REASON if the request takes longer than 5000ms
+const result = await FuncHelper.timeout(fetch("/api"), 5000);
+```
+
+- `minWait(func, minTime?)` — wraps a callback so it runs no sooner than `minTime` ms after wrapping.
+- `minWaitAsync(func, minTime?, abort?)` — awaits an async operation, padding so it settles no sooner than `minTime` ms.
+- `delay(time, abort?)` — a promise resolved after `time` ms; rejects on abort.
+- `timeout(promise, timeout, abort?)` — races `promise` against `timeout` ms; rejects with `TIMEOUT_REASON` on timeout.
+- `TIMEOUT_REASON` — the rejection reason used by `timeout`.

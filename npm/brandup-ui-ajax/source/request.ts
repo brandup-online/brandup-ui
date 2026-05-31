@@ -2,7 +2,19 @@ import { AjaxRequest, AjaxResponse, ResponseType } from "./types";
 import * as helpers from "./helpers";
 import internals from "./internals";
 
-/** Request with fetch. */
+/**
+ * Performs an AJAX request using the Fetch API.
+ *
+ * The response body is parsed according to its `Content-Type`: JSON, `text/html`,
+ * `text/plain`, otherwise a `Blob`. `disableCache` maps to `cache: "no-store"`.
+ * The request is aborted when its `timeout` elapses (defaults to 30000 ms), or when
+ * `options.abort` or the `abortSignal` argument signals.
+ *
+ * @param options Request options. `GET`/`HEAD` requests must not carry `data`.
+ * @param abortSignal Optional additional signal used to cancel the request.
+ * @returns The parsed response. `options.success` is also invoked before resolving.
+ * @throws On network/abort/timeout errors, or for unsupported (opaque) response types; `options.error` is invoked before re-throwing.
+ */
 export async function request<TData = any, TState = any>(options: AjaxRequest<TState>, abortSignal?: AbortSignal): Promise<AjaxResponse<TData, TState>> {
 	let { mode, credentials = "include" } = options;
 	let url = options.url || location.href;

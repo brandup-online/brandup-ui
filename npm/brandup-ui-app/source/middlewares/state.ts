@@ -1,8 +1,14 @@
 import { InvokeContext, Middleware, MiddlewareNext, NavigateContext, StartContext, StopContext, SubmitContext } from "./base";
 import CONSTANTS from "../constants";
 
+/** Unique name of the built-in state middleware. */
 export const STATE_MIDDLEWARE_NAME = "app-state";
 
+/**
+ * Create the built-in state middleware that toggles loading/loaded/ready CSS state
+ * classes on the application element during start, load, navigation and submit.
+ * @returns The state middleware instance.
+ */
 const StateMiddlewareFactory = (): Middleware => {
 	let counter: number = 0;
 
