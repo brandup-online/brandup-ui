@@ -91,8 +91,8 @@ ObjectHelper.getProperty(model, "header.value"); // "Item"
 ObjectHelper.hasProperty(model, "header.value"); // true
 ```
 
-- `getProperty(obj, path)` — returns the resolved value, or `null`/`undefined` when missing.
-- `hasProperty(obj, path)` — returns `true` if every segment of the path exists.
+- `getProperty(obj, path)` — returns the resolved value; `null` when `obj` is falsy, `undefined` when any path segment is missing or a mid-path value is `null`/primitive.
+- `hasProperty(obj, path)` — returns `true` if every segment of the path exists; safely returns `false` when a mid-path value is `null` or a primitive.
 
 ## Type helpers
 
@@ -149,12 +149,26 @@ await FuncHelper.delay(500);
 // Keep a loading state visible for at least 1000ms
 const data = await FuncHelper.minWaitAsync(() => loadData(), 1000);
 
-// Reject with FuncHelper.TIMEOUT_REASON if the request takes longer than 5000ms
+// Reject with TimeoutError if the request takes longer than 5000ms
 const result = await FuncHelper.timeout(fetch("/api"), 5000);
+```
+
+Detect a timeout by checking the error type:
+
+```TypeScript
+import { FuncHelper } from "@brandup/ui-helpers";
+
+try {
+    const result = await FuncHelper.timeout(fetch("/api"), 5000);
+} catch (e) {
+    if (e instanceof FuncHelper.TimeoutError) {
+        console.log("Request timed out");
+    }
+}
 ```
 
 - `minWait(func, minTime?)` — wraps a callback so it runs no sooner than `minTime` ms after wrapping.
 - `minWaitAsync(func, minTime?, abort?)` — awaits an async operation, padding so it settles no sooner than `minTime` ms.
 - `delay(time, abort?)` — a promise resolved after `time` ms; rejects on abort.
-- `timeout(promise, timeout, abort?)` — races `promise` against `timeout` ms; rejects with `TIMEOUT_REASON` on timeout.
-- `TIMEOUT_REASON` — the rejection reason used by `timeout`.
+- `timeout(promise, timeout, abort?)` — races `promise` against `timeout` ms; rejects with a `TimeoutError` on timeout. Throws synchronously if `timeout ≤ 0`.
+- `TimeoutError` — error class thrown by `timeout` when the time limit is exceeded.

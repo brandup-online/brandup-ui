@@ -18,7 +18,7 @@ const minWait = (func: (...args: any[]) => void, minTime?: number) => {
 	const ret = (...args: any[]) => {
 		const rightTime = getRightTime(beginTime, minTime);
 		if (rightTime)
-			window.setTimeout(() => func(...args), rightTime);
+			setTimeout(() => func(...args), rightTime);
 		else
 			func(...args);
 	};
@@ -76,11 +76,11 @@ function delay(time: number, abort?: AbortSignal): Promise<void> {
 		abort?.throwIfAborted();
 
 		const onAbort = () => {
-			window.clearTimeout(timer);
+			clearTimeout(timer);
 			reject(abort?.reason);
 		};
 
-		const timer = window.setTimeout(() => {
+		const timer = setTimeout(() => {
 			abort?.removeEventListener("abort", onAbort);
 			resolve();
 		}, time);
@@ -93,7 +93,7 @@ function delay(time: number, abort?: AbortSignal): Promise<void> {
  * Races a promise against a timeout.
  *
  * Resolves/rejects with the original promise if it settles in time. If the timeout elapses
- * first the returned promise rejects with {@link TIMEOUT_REASON}. Aborting via `abort`
+ * first the returned promise rejects with a {@link TimeoutError}. Aborting via `abort`
  * rejects with the signal's reason.
  *
  * @typeParam T Resolved value type of the wrapped promise.
@@ -101,23 +101,23 @@ function delay(time: number, abort?: AbortSignal): Promise<void> {
  * @param timeout Timeout in milliseconds; must be greater than `0`.
  * @param abort Optional signal used to cancel the wait.
  * @returns A promise mirroring `promise` unless the timeout or abort fires first.
- * @throws Error When `timeout` is not greater than `0`.
+ * @throws {Error} When `timeout` is not greater than `0`.
  */
 function timeout<T = unknown>(promise: Promise<T>, timeout: number, abort?: AbortSignal): Promise<T> {
-	return new Promise<T>((resolve, reject) => {
-		if (timeout <= 0)
-			throw new Error("Invalid timeout value.");
+	if (timeout <= 0)
+		throw new Error("Invalid timeout value.");
 
+	return new Promise<T>((resolve, reject) => {
 		abort?.throwIfAborted();
 
 		const onAbort = () => {
-			window.clearTimeout(timer);
+			clearTimeout(timer);
 			reject(abort?.reason);
 		};
 
-		const timer = window.setTimeout(() => {
+		const timer = setTimeout(() => {
 			abort?.removeEventListener("abort", onAbort);
-			reject(TIMEOUT_REASON);
+			reject(new TimeoutError());
 		}, timeout);
 
 		abort?.addEventListener("abort", onAbort, { once: true });
@@ -126,14 +126,19 @@ function timeout<T = unknown>(promise: Promise<T>, timeout: number, abort?: Abor
 			.then(result => resolve(result))
 			.catch(reason => reject(reason))
 			.finally(() => {
-				window.clearTimeout(timer);
+				clearTimeout(timer);
 				abort?.removeEventListener("abort", onAbort);
 			});
 	});
 }
 
-/** Rejection reason used by {@link timeout} when the time limit is exceeded. */
-export const TIMEOUT_REASON = "Timeout";
+/** Thrown by {@link timeout} when the time limit is exceeded. */
+export class TimeoutError extends Error {
+	constructor() {
+		super("Timeout");
+		this.name = "TimeoutError";
+	}
+}
 
 export {
 	minWait,

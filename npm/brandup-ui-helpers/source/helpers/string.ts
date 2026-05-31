@@ -15,7 +15,7 @@ import { getProperty } from "./object";
  * formatText("Hello, {name}", { name: "Dmitry" }); // "Hello, Dmitry"
  * formatText("Hello, {0}", "Dmitry");              // "Hello, Dmitry"
  */
-function formatText(template: string, ...args: any[]): any {
+function formatText(template: string, ...args: any[]): string {
 	if (!args.length) return template;
 
 	const obj = typeof args[0] === "object" ? args[0] : null;
