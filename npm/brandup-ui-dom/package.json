@@ -1,6 +1,6 @@
 {
 	"name": "@brandup/ui-dom",
-	"description": "Basic DOM framework.",
+	"description": "DEPRECATED: merged into @brandup/ui. This package only re-exports @brandup/ui for backward compatibility.",
 	"keywords": [
 		"brandup",
 		"typescript",
@@ -22,6 +22,9 @@
 	},
 	"license": "Apache-2.0",
 	"version": "1.0.0",
+	"dependencies": {
+		"@brandup/ui": "file:../brandup-ui"
+	},
 	"main": "dist/cjs/index.js",
 	"module": "dist/mjs/index.js",
 	"types": "dist/types.d.ts",

@@ -1,4 +1,4 @@
-import { DOM } from "@brandup/ui-dom";
+import { DOM } from "@brandup/ui";
 import { ApplicationBuilder } from "../../source/builder";
 
 const setLocation = (url: string) => {

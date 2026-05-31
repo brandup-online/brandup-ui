@@ -1,4 +1,4 @@
-import { DOM } from "@brandup/ui-dom";
+import { DOM } from "@brandup/ui";
 import { Application } from "../source/app";
 import { ApplicationModel } from "../source/types";
 import { ApplicationBuilder } from "../source/builder";

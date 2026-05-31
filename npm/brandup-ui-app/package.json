@@ -27,7 +27,6 @@
 	"version": "1.0.0",
 	"dependencies": {
 		"@brandup/ui": "file:../brandup-ui",
-		"@brandup/ui-dom": "file:../brandup-ui-dom",
 		"@brandup/ui-helpers": "file:../brandup-ui-helpers"
 	},
 	"devDependencies": {
