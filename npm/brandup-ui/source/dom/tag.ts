@@ -1,5 +1,8 @@
 import { ElementOptions, CssClass, TagChildrenLike, TagChildrenPrimitive, ElementEvents } from "./types";
 import { UIElement } from "../element";
+import { Binding } from "./bind";
+import { effect } from "../reactive";
+import { autoDisposeBinding } from "./binding-cleanup";
 import helpers from "./helpers";
 
 /**
@@ -83,7 +86,7 @@ const applyOptions = (elem: HTMLElement, options?: ElementOptions | CssClass | n
 }
 
 /**
- * Appends one or more children to a container, recursively resolving arrays, promises and factory functions. Elements are appended as-is; a {@link UIElement} appends its bound element (or defers until `setElement` binds one); strings/numbers/booleans are inserted as HTML; `null`/`undefined` are ignored.
+ * Appends one or more children to a container, recursively resolving arrays, promises and factory functions. Elements are appended as-is; a {@link UIElement} appends its bound element (or defers until `setElement` binds one); a reactive {@link Binding} renders and live-updates in place; strings/numbers/booleans are inserted as HTML; `null`/`undefined` are ignored.
  * @param container Element to append the children to.
  * @param children Child or children to append. See {@link TagChildrenLike}.
  * @throws Error When a child resolves to an unsupported type.
@@ -110,6 +113,8 @@ const appendChild = (container: HTMLElement, children?: TagChildrenLike) => {
 			});
 		}
 	}
+	else if (children instanceof Binding)
+		appendBinding(container, children);
 	else if (children instanceof Promise)
 		children.then((child: TagChildrenPrimitive) => appendChild(container, child));
 	else {
@@ -132,6 +137,44 @@ const appendChild = (container: HTMLElement, children?: TagChildrenLike) => {
 		}
 		container.insertAdjacentHTML("beforeend", html);
 	}
+};
+
+/**
+ * Renders a reactive {@link Binding} child and keeps it up to date: a reactive
+ * effect re-evaluates the binding and updates the DOM in place — reusing a text
+ * node for text values and swapping the node when an element/UIElement is returned.
+ */
+const appendBinding = (container: HTMLElement, binding: Binding) => {
+	let current: ChildNode = document.createTextNode("");
+	let textNode: Text | null = current as Text;
+	container.append(current);
+
+	const eff = effect(() => {
+		const value = binding.compute();
+
+		if (value instanceof Element || value instanceof UIElement) {
+			const next: ChildNode = (value instanceof UIElement ? value.element : value) ?? document.createComment("");
+			current.replaceWith(next);
+			current = next;
+			textNode = null;
+		}
+		else {
+			// null/undefined/false render as empty text
+			const text = (value === null || value === undefined || value === false) ? "" : String(value);
+			if (textNode && textNode === current) {
+				textNode.textContent = text;
+			}
+			else {
+				const next = document.createTextNode(text);
+				current.replaceWith(next);
+				current = next;
+				textNode = next;
+			}
+		}
+	});
+
+	// stop the effect when the rendered node is removed from the document
+	autoDisposeBinding(() => current, eff);
 };
 
 export {

@@ -1,4 +1,5 @@
 export * from "./types"
+export * from "./bind"
 import * as DomHelpers from "./dom"
 import * as TagHelpers from "./tag"
 
