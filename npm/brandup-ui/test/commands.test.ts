@@ -1,4 +1,34 @@
-import { UIElement, CommandResult } from "../source/index";
+import { UIElement, UIElementBound, CommandResult } from "../source/index";
+
+class BoundWidget extends UIElementBound {
+	constructor(elem: HTMLElement) {
+		super("bound-widget", elem);
+	}
+}
+
+it("UIElementBound binds the element in the constructor (element is always defined)", () => {
+	const root = document.createElement("div");
+	document.body.appendChild(root);
+
+	const w = new BoundWidget(root);
+
+	// element is HTMLElement, not undefined — usable without ?./!
+	const el: HTMLElement = w.element;
+	expect(el).toEqual(root);
+	expect(w.typeName).toEqual("bound-widget");
+	expect(UIElement.hasElement(root)).toBeTruthy();
+
+	let called = 0;
+	w.registerCommand("go", () => { called++; });
+
+	const btn = document.createElement("button");
+	btn.dataset.command = "go";
+	w.element.appendChild(btn);
+	btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+	expect(called).toEqual(1);
+
+	document.body.removeChild(root);
+});
 
 class TestElem extends UIElement {
 	typeName = "test";

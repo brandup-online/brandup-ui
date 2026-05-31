@@ -225,6 +225,30 @@ export abstract class UIElement<TEvents = {}> extends EventEmitter<WithUIEvents<
 	}
 }
 
+/**
+ * A {@link UIElement} whose DOM element is bound in the constructor, so its `element`
+ * is always defined (typed `HTMLElement`, never `undefined`). Subclasses pass their
+ * `typeName` and the element to `super`.
+ *
+ * Use {@link UIElement} directly when the element is bound later (e.g. an application
+ * that binds its element on run).
+ */
+export abstract class UIElementBound<TEvents = {}> extends UIElement<TEvents> {
+	private __typeName: string;
+
+	/** @param typeName Unique type name of this element. @param elem Element to bind. */
+	constructor(typeName: string, elem: HTMLElement) {
+		super();
+		this.__typeName = typeName; // set before setElement (no field-initializer race)
+		this.setElement(elem);
+	}
+
+	get typeName(): string { return this.__typeName; }
+
+	/** The bound DOM element; always defined since it is set in the constructor. */
+	override get element(): HTMLElement { return super.element as HTMLElement; }
+}
+
 const findUiElementByCommand = (elem: HTMLElement, commandName: string): UIElement | null => {
 	let current: HTMLElement | null = elem;
 	while (current) {

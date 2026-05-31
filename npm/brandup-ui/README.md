@@ -67,6 +67,23 @@ document.getElementById("widget")!.ui(elem => new MyWidget(elem));
 
 The bound `UIElement` is available on the node through the `node.uielement` property.
 
+### Element bound at construction
+
+On the base `UIElement`, `element` is `HTMLElement | undefined` because the element may be bound later (an `Application`, for example, binds its element on run). When a component always receives its element in the constructor, extend `UIElementBound` instead — it binds the element immediately, so `element` is typed `HTMLElement` (never `undefined`):
+
+```ts
+import { UIElementBound } from "@brandup/ui";
+
+class MyWidget extends UIElementBound {
+    constructor(elem: HTMLElement) {
+        super("MyWidget", elem); // typeName + element
+    }
+}
+
+const w = new MyWidget(document.createElement("div"));
+w.element.focus(); // element: HTMLElement — no ?./!
+```
+
 ## UI commands
 
 `UIElement` lets you register command handlers, which are declared in the markup through the `data-command` attribute.
