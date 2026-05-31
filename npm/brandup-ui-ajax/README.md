@@ -12,7 +12,7 @@ npm i @brandup/ui-ajax@latest
 
 ## AJAX request
 
-Simplify async ajax request method.
+Simplify async ajax request method. `request` is the `fetch`-based, promise-returning API.
 
 ```
 import { request } from "@brandup/ui-ajax";
@@ -21,10 +21,13 @@ await request({
 		url?: string | null;
 		query?: QueryData | null;
 		method?: AJAXMethod | null;
+		mode?: RequestMode;
+		credentials?: RequestCredentials;
 		timeout?: number | null;
 		headers?: { [key: string]: string } | null;
 		type?: AJAXReqestType | null;
 		data?: string | object | Blob | FormData | HTMLFormElement | null;
+		abort?: AbortSignal;
 		success?: ResponseDelegate | null;
 		error?: ErrorDelegate | null;
 		disableCache?: boolean | null;
@@ -42,15 +45,49 @@ await request({
 	.catch(reason => console.error(reason));
 ```
 
+The response body is parsed by `Content-Type`: JSON, `text/html`, `text/plain`, otherwise a `Blob`. The default `timeout` is `30000` ms and `credentials` defaults to `"include"`.
+
 ### Request cancellation
+
+A request is aborted when its `timeout` elapses, when the `abort` option signals, or when the second `abortSignal` argument signals.
 
 ```
 import { request } from "@brandup/ui-ajax";
 
 const cancellation = new AbortController();
 
-await request({ }, cancellation.signal)
+await request({ /* request options */ }, cancellation.signal)
 	.catch(reason => console.error(reason));
+
+cancellation.abort();
+```
+
+### Disable cache
+
+Set `disableCache: true` to bypass HTTP caching. In `request` (fetch) this sends `cache: "no-store"`; in `ajaxRequest` (XHR) it appends a `_=<timestamp>` cache-busting query parameter.
+
+```
+await request({ url: "/api/data", disableCache: true });
+```
+
+## AJAX request with XMLHttpRequest
+
+`ajaxRequest` is the `XMLHttpRequest`-based API. It always sends credentials, delivers results via the `success`/`error` callbacks (it does not return a promise), and returns the underlying `XMLHttpRequest` so the call can be aborted. Unlike `request`, there is no `blob` response type.
+
+```
+import { ajaxRequest } from "@brandup/ui-ajax";
+
+const xhr = ajaxRequest({
+	url: "/api/data",
+	method: "POST",
+	data: { name: "value" },
+	success: response => {
+		// response.status, response.data, response.type, ...
+	},
+	error: (request, reason) => console.error(reason)
+});
+
+xhr.abort(); // cancel the request
 ```
 
 ## Queue requests
@@ -66,11 +103,28 @@ const queue = new AjaxQueue({
 	errorRequest?: (response: AjaxRequest, reason?: any) => void;
 });
 
-queue.push({ request options });
+queue.push({ /* request options */ }); // enqueue a request (fire and forget)
 
-queue.reset(); // clear queue without abort current request
+queue.push({ /* request options */ }, abortSignal); // with per-request cancellation
+
+queue.reset(); // clear queue without aborting current request
 
 queue.reset(true); // abort current request and clear queue
 
-queue.destroy();
+queue.destroy(); // clear queue, abort current request; further push() throws
+```
+
+Queue state can be inspected via `queue.length` (waiting requests), `queue.isEmpty` (nothing waiting) and `queue.isFree` (nothing waiting and nothing executing).
+
+### Awaiting a queued request
+
+`enque` queues a request like `push`, but returns a promise that resolves with the response (or rejects with the failure reason). The request's own `success`/`error` callbacks are still invoked.
+
+```
+import { AjaxQueue } from "@brandup/ui-ajax";
+
+const queue = new AjaxQueue();
+
+const response = await queue.enque({ url: "/api/data" });
+// response.status, response.data, ...
 ```

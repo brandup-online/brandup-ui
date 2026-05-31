@@ -1,18 +1,25 @@
 import { EventEmitter } from "./events";
 import UICONSTANTS from "./constants";
 
+/** Wraps an `HTMLElement` and binds business logic, commands and events to it. */
 export abstract class UIElement extends EventEmitter {
 	private __element?: HTMLElement;
 	private __events?: { [key: string]: EventInit | null };
 	private __commands?: { [key: string]: CommandInit };
 	private __destroyed?: boolean;
 
+	/** Unique type name of this UI element; also written to the element's data attribute. */
 	abstract typeName: string;
 
 	// Element members
 
+	/** The bound DOM element, or `undefined` until `setElement` is called. */
 	get element(): HTMLElement | undefined { return this.__element; }
 
+	/**
+	 * Bind a DOM element to this instance and run render logic. Can be called only once.
+	 * @param elem Element to bind; throws if already bound or owned by another `UIElement`.
+	 */
 	protected setElement(elem: HTMLElement) {
 		if (!elem)
 			throw new Error("Not set value elem.");
@@ -30,12 +37,23 @@ export abstract class UIElement extends EventEmitter {
 
 	// static members
 
+	/**
+	 * Whether the given element is already bound to a `UIElement`.
+	 * @param elem Element to test.
+	 */
 	static hasElement(elem: HTMLElement) {
 		return !!elem.dataset[UICONSTANTS.ElemAttributeName];
 	}
 
 	// Command members
 
+	/**
+	 * Register a handler for a command declared in markup via the `data-command` attribute.
+	 * @param name Command name (case-insensitive); throws if already registered.
+	 * @param execute Handler run when the command fires; may return a `Promise` for async commands.
+	 * @param canExecute Optional predicate gating whether the command may run.
+	 * @returns This instance for chaining.
+	 */
 	registerCommand(name: string, execute: CommandExecuteFunction, canExecute?: CommandCanExecuteFunction) {
 		if (this.__destroyed)
 			return this;
@@ -55,11 +73,18 @@ export abstract class UIElement extends EventEmitter {
 		return this;
 	}
 
+	/**
+	 * Whether a command with the given name is registered.
+	 * @param name Command name (case-insensitive).
+	 */
 	hasCommand(name: string) {
 		return !!this.__commands && name.toLowerCase() in this.__commands;
 	}
 
-	/** @internal */
+	/**
+	 * Execute a registered command against a target element.
+	 * @internal
+	 */
 	__execCommand(name: string, target: HTMLElement): CommandResult {
 		if (this.__destroyed || !this.__element)
 			throw new Error("UIElement is destroyed or has no element.");
@@ -112,12 +137,26 @@ export abstract class UIElement extends EventEmitter {
 		}
 	}
 
+	/**
+	 * Hook invoked when an element is bound via `setElement`. Override to render or wire up the element.
+	 * @param _elem The newly bound element.
+	 */
 	protected _onRenderElement(_elem: HTMLElement) { }
 
+	/**
+	 * Hook deciding whether a command may execute. Override to add element-wide gating.
+	 * @param _name Command name being executed.
+	 * @param _elem Target element of the command.
+	 * @returns `true` to allow execution (default), `false` to disallow.
+	 */
 	protected _onCanExecCommand(_name: string, _elem: HTMLElement): boolean {
 		return true;
 	}
 
+	/**
+	 * Register cleanup that runs when this element is destroyed.
+	 * @param callback A function to call, another `UIElement` to destroy, or an `Element` to remove.
+	 */
 	onDestroy(callback: VoidFunction | UIElement | Element) {
 		if (this.__destroyed || !this.__element || !callback)
 			return;
@@ -132,8 +171,10 @@ export abstract class UIElement extends EventEmitter {
 			throw new Error("Unsupported callback type.");
 	}
 
+	/** Returns the `typeName` of this element. */
 	override toString(): string { return this.typeName; }
 
+	/** Destroy the element: trigger the `destroy` event, release events/commands and detach from the DOM element. */
 	destroy() {
 		if (this.__destroyed)
 			return;
@@ -211,14 +252,20 @@ interface CommandInit {
 	isExecuting?: boolean;
 }
 
+/** Command handler; returning a `Promise` marks the command as async (adds the `executing` CSS class while pending). */
 export type CommandExecuteFunction = (context: CommandContext) => void | Promise<void | any>;
+/** Predicate deciding whether a command may run for the given context. */
 export type CommandCanExecuteFunction = (context: CommandContext) => boolean;
 
+/** Arguments of the `command` event triggered before a command executes. */
 export interface CommandEventArgs {
+	/** UIElement that owns the command. */
 	element: UIElement;
+	/** Name of the command being executed. */
 	name: string;
 }
 
+/** Context passed to command execute/canExecute handlers. */
 export interface CommandContext {
 	/** HTMLElement on which the command is executed */
 	target: HTMLElement;
@@ -228,9 +275,13 @@ export interface CommandContext {
 	transparent?: boolean;
 }
 
+/** Outcome of an attempted command execution. */
 export interface CommandResult {
+	/** Execution status. */
 	status: CommandExecStatus;
+	/** Context the command ran with. */
 	context: CommandContext;
 }
 
+/** Command execution status: `disallow` (gated out), `already` (re-entrant call ignored) or `success`. */
 export type CommandExecStatus = "disallow" | "already" | "success";

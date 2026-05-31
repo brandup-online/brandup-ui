@@ -1,16 +1,29 @@
 let ListenCounter = 1;
 
+/** Minimal event emitter with support for one-off listeners and cross-emitter listening. */
 export class EventEmitter {
 	private _events?: { [key: EventName]: EventCallback[] };
 	private _listenId?: string;
 	private _listeningTo?: { [id: string]: EventListening };
 
+	/**
+	 * Subscribe to an event.
+	 * @param eventName Event name, or `"all"` to receive every event.
+	 * @param callback Handler invoked when the event is triggered.
+	 * @param context Optional `this`/context bound to the handler and used for removal matching.
+	 */
 	on(eventName: EventName, callback: EventCallbackFunc, context?: EventContextInit) {
 		const events = this._getOrCreateEvents(eventName);
 		events.push({ callback, context: context || undefined, ctx: context || this });
 		return this;
 	}
 
+	/**
+	 * Subscribe to an event for a single invocation; the handler is removed after it fires once.
+	 * @param eventName Event name, or `"all"` to receive every event.
+	 * @param callback Handler invoked once when the event is triggered.
+	 * @param context Optional `this`/context bound to the handler and used for removal matching.
+	 */
 	once(eventName: EventName, callback: EventCallbackFunc, context?: EventContextInit) {
 		const wrapper = (...args: any[]) => {
 			this.off(eventName, wrapper, context);
@@ -19,6 +32,13 @@ export class EventEmitter {
 		return this.on(eventName, wrapper, context);
 	}
 
+	/**
+	 * Remove event subscriptions. At least one argument is required.
+	 * Listeners matching all provided filters are removed; omitted filters match anything.
+	 * @param eventName Event name to remove, or omit to match all events.
+	 * @param callback Handler to remove, or omit to match all handlers.
+	 * @param context Context to remove, or omit to match all contexts.
+	 */
 	off(eventName?: EventName | null, callback?: EventCallbackFunc | null, context?: EventContextInit | null) {
 		if (!eventName && !callback && !context)
 			throw new Error("Require off arguments.");
@@ -58,18 +78,37 @@ export class EventEmitter {
 		return this;
 	}
 
+	/**
+	 * Listen to an event on another emitter, tracking the subscription so it can be released via `stopListening`.
+	 * @param source Emitter to subscribe to.
+	 * @param eventName Event name to listen for.
+	 * @param callback Handler invoked when the event is triggered.
+	 */
 	protected listenTo(source: EventEmitter, eventName: EventName, callback: EventCallbackFunc) {
 		this._addListeningTo(source, eventName);
 		source.on(eventName, callback, this);
 		return this;
 	}
 
+	/**
+	 * Listen once to an event on another emitter; the subscription is tracked and auto-removed after it fires.
+	 * @param source Emitter to subscribe to.
+	 * @param eventName Event name to listen for.
+	 * @param callback Handler invoked once when the event is triggered.
+	 */
 	protected listenToOnce(source: EventEmitter, eventName: EventName, callback: EventCallbackFunc) {
 		this._addListeningTo(source, eventName);
 		source.once(eventName, callback, this);
 		return this;
 	}
 
+	/**
+	 * Release subscriptions previously established with `listenTo`/`listenToOnce`.
+	 * Omitted arguments broaden the match (e.g. no `source` releases all tracked emitters).
+	 * @param source Limit to a specific emitter, or omit for all.
+	 * @param eventName Limit to a specific event, or omit for all.
+	 * @param callback Limit to a specific handler, or omit for all.
+	 */
 	protected stopListening(source?: EventEmitter, eventName?: EventName, callback?: EventCallbackFunc) {
 		if (!this._listeningTo)
 			return this;
@@ -129,6 +168,11 @@ export class EventEmitter {
 		delete this._events;
 	}
 
+	/**
+	 * Trigger an event, invoking all matching handlers plus any `"all"` listeners.
+	 * @param eventName Event name to trigger (`"all"` is reserved and not allowed).
+	 * @param args Arguments forwarded to each handler.
+	 */
 	protected trigger(eventName: string, ...args: any[]) {
 		eventName = eventName.toLowerCase();
 
@@ -173,14 +217,18 @@ export class EventEmitter {
 		return events[eventName];
 	}
 
+	/** Release every subscription: both events this emitter listens to and listeners registered on it. */
 	protected stopEvents() {
 		this.stopListening();
 		this.stopAllListeners();
 	}
 }
 
+/** Event name; the special value `"all"` matches every triggered event. */
 export type EventName = "all" | string;
+/** Event handler signature; receives the arguments passed to `trigger`. */
 export type EventCallbackFunc = (...args: any[]) => void;
+/** Arbitrary context bound as `this` to a handler and used to match it on removal. */
 export type EventContextInit = any;
 
 interface EventCallback {

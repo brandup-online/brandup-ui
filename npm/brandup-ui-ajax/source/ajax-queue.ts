@@ -1,20 +1,32 @@
 import { AjaxRequest, AjaxResponse } from "./types";
 import { request } from "./request";
 
+/** Queue that executes AJAX requests one at a time, in the order they were added. */
 export class AjaxQueue {
 	private _options: AjaxQueueOptions;
 	private _requests: Array<RequestTask> = [];
 	private _curent: RequestTask | null = null;
 	private _destroyed = false;
 
+	/** @param options Optional queue-wide hooks. */
 	constructor(options?: AjaxQueueOptions) {
 		this._options = options ?? {};
 	}
 
+	/** Number of requests waiting in the queue (excluding the one currently executing). */
 	get length(): number { return this._requests.length; }
+	/** `true` when nothing is queued and no request is currently executing. */
 	get isFree(): boolean { return !this._requests.length && !this._curent; }
+	/** `true` when no requests are waiting in the queue (a request may still be executing). */
 	get isEmpty(): boolean { return !this._requests.length; }
 
+	/**
+	 * Adds a request to the queue. Starts executing immediately if the queue is idle.
+	 *
+	 * @param request Request options; its `success`/`error` callbacks are invoked as usual.
+	 * @param abortSignal Optional signal used to cancel this specific request.
+	 * @throws If the queue has been destroyed.
+	 */
 	push(request: AjaxRequest, abortSignal?: AbortSignal) {
 		if (this._destroyed)
 			throw new Error("AjaxQueue is destroyed.");
@@ -25,6 +37,16 @@ export class AjaxQueue {
 			this.__execute();
 	}
 
+	/**
+	 * Adds a request to the queue and returns a promise for its response.
+	 *
+	 * Wraps {@link push}; the request's own `success`/`error` callbacks are still invoked,
+	 * then the promise resolves with the response or rejects with the failure reason.
+	 *
+	 * @param request Request options.
+	 * @param abortSignal Optional signal used to cancel this specific request.
+	 * @returns A promise resolving with the {@link AjaxResponse}.
+	 */
 	enque<TResponse = any>(request: AjaxRequest, abortSignal?: AbortSignal) {
 		const { success, error } = request;
 
@@ -46,6 +68,11 @@ export class AjaxQueue {
 		});
 	}
 
+	/**
+	 * Clears all queued (not-yet-started) requests.
+	 *
+	 * @param cancelCurrentRequest When `true`, also aborts the request currently executing.
+	 */
 	reset(cancelCurrentRequest = false) {
 		this._requests = [];
 
@@ -56,6 +83,7 @@ export class AjaxQueue {
 			current.abort?.abort("ResetAjaxQueue");
 	}
 
+	/** Destroys the queue: clears pending requests and aborts the current one. Subsequent {@link push} calls throw. */
 	destroy() {
 		if (this._destroyed)
 			return;
@@ -119,9 +147,13 @@ export class AjaxQueue {
 	}
 }
 
+/** Queue-wide hooks invoked for every request processed by an {@link AjaxQueue}. */
 export interface AjaxQueueOptions {
+	/** Called before a request is sent; returning `false` skips it (it is dropped without being sent). */
 	canRequest?: (request: AjaxRequest) => void | boolean;
+	/** Called after a request completes successfully. */
 	successRequest?: (request: AjaxRequest, response: AjaxResponse) => void;
+	/** Called when a request fails or is aborted. */
 	errorRequest?: (response: AjaxRequest, reason?: any) => void;
 }
 

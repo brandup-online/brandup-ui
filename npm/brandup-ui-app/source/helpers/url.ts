@@ -1,5 +1,11 @@
 import { QueryParams } from "../types";
 
+/**
+ * Parse a url into its components relative to the application base path.
+ * @param basePath Application base path.
+ * @param url Url to parse. If null, the current `window.location` is used.
+ * @returns Parsed url parts.
+ */
 const parseUrl = (basePath: string, url: string | null): ParsedUrl => {
 	const loc = window.location;
 	let origin: string = loc.origin;
@@ -157,6 +163,14 @@ const rebuildUrl = (parsedUrl: ParsedUrl) => {
 	parsedUrl.full = parsedUrl.hash ? `${parsedUrl.url}#${parsedUrl.hash}` : parsedUrl.url;
 };
 
+/**
+ * Build a relative url from a base path with optional path, query and hash.
+ * @param basePath Application base path.
+ * @param path Optional path appended to the base path.
+ * @param query Optional query parameters.
+ * @param hash Optional hash.
+ * @returns Relative url with base path.
+ */
 const buildUrl = (basePath: string, path?: string, query?: QueryParams | URLSearchParams | FormData, hash?: string) => {
 	let url = basePath;
 	if (url == '/')
@@ -211,18 +225,29 @@ const buildUrl = (basePath: string, path?: string, query?: QueryParams | URLSear
 	return url;
 };
 
+/** Parsed url components. */
 export interface ParsedUrl {
-	full: string; // origin, path, query and hash
-	url: string; // origin, path and query, but without hash
-	relative: string; // path and query, but without hash
+	/** Origin, path, query and hash. */
+	full: string;
+	/** Origin, path and query, but without hash. */
+	url: string;
+	/** Path and query, but without hash. */
+	relative: string;
+	/** Scheme, host and port. */
 	origin: string;
+	/** Base path. */
 	basePath: string;
+	/** Path of the url. */
 	path: string;
+	/** Query parameters of the url. */
 	query: URLSearchParams;
+	/** Hash of the url, without the leading `#`. */
 	hash: string | null;
-	external: boolean; // origin is different of location.href
+	/** True if the origin differs from the current page origin. */
+	external: boolean;
 }
 
+/** Url helper functions. */
 export default {
 	parseUrl,
 	extendQuery,

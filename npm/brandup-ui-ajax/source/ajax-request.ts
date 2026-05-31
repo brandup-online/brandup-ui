@@ -2,7 +2,18 @@ import { AjaxRequest, ResponseType, ResponseHeaders } from "./types";
 import * as helpers from "./helpers";
 import internals from "./internals";
 
-/** Request with XMLHttpRequest. */
+/**
+ * Performs an AJAX request using `XMLHttpRequest`, always with credentials.
+ *
+ * The response body is parsed by `Content-Type` into JSON, `text/plain` or `text/html`;
+ * unlike the fetch-based {@link request}, there is no `blob` response type. `disableCache`
+ * appends a `_=<timestamp>` cache-busting query parameter (rather than `cache: "no-store"`).
+ * Results and errors are delivered through `options.success` / `options.error`; this
+ * function does not return a promise.
+ *
+ * @param options Request options. `GET` requests must not carry `data`. `timeout` of `0` disables the timeout.
+ * @returns The underlying `XMLHttpRequest`, which can be used to `abort()` the request.
+ */
 export const ajaxRequest = (options: AjaxRequest) => {
 	let url = options.url || location.href;
 	let { query } = options;

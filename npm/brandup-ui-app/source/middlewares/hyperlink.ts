@@ -1,8 +1,15 @@
 import { Middleware, MiddlewareNext, StartContext, StopContext } from "./base";
 import CONSTANTS from "../constants";
 
+/** Unique name of the built-in hyperlink middleware. */
 export const HYPERLINK_MIDDLEWARE_NAME = "app-hyperlink";
 
+/**
+ * Create the built-in hyperlink middleware that intercepts clicks on application links
+ * (anchors with the `applink` class or elements with `data-nav-url`) and routes them through
+ * application navigation. Honors meta/ctrl-click and `target="_blank"` to open in a new tab.
+ * @returns The hyperlink middleware instance.
+ */
 const HyperLinkMiddlewareFactory = (): Middleware => {
 	let onClick: (e: MouseEvent) => void | undefined;
 
