@@ -314,12 +314,11 @@ const commandClickHandler = (e: MouseEvent) => {
 	e.stopImmediatePropagation();
 }
 
-const __uiAbortController = new AbortController();
-window.addEventListener("click", commandClickHandler, { signal: __uiAbortController.signal });
+window.addEventListener("click", commandClickHandler);
 
 /** Remove the global click handler registered by brandup-ui. Call on app teardown or HMR disposal. */
 export function destroyUI(): void {
-	__uiAbortController.abort();
+	window.removeEventListener("click", commandClickHandler);
 }
 
 interface CommandInit {

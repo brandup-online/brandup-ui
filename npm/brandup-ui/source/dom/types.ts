@@ -1,5 +1,6 @@
 import { UIElement } from "../element";
 import { Binding } from "./bind";
+import { BindingEach } from "./bind-each";
 
 /** Options used to configure an element created by {@link tag}. Recognized keys (`id`, `class`, `command`, `dataset`, `events`, `styles`) are handled specially; any other key is applied as a plain attribute. */
 export interface ElementOptions {
@@ -35,7 +36,7 @@ export type ElementEvents = {
 /** Inline style declaration: a partial set of writable `CSSStyleDeclaration` properties. */
 export type ElementStyles = Partial<CSSStyleDeclaration>;
 
-/** A value accepted as a {@link tag} child: a primitive, a reactive {@link Binding}, a promise of one, a factory function receiving the container element, or a (possibly nested) array of any of these. */
-export type TagChildrenLike = TagChildrenPrimitive | Binding | Promise<TagChildrenPrimitive> | ((elem: HTMLElement) => Promise<TagChildrenPrimitive> | Promise<TagChildrenPrimitive[]> | TagChildrenPrimitive | TagChildrenPrimitive[] | void) | Array<TagChildrenLike>;
+/** A value accepted as a {@link tag} child: a primitive, a reactive {@link Binding}, a keyed-list {@link BindingEach}, a promise of one, a factory function receiving the container element, or a (possibly nested) array of any of these. */
+export type TagChildrenLike = TagChildrenPrimitive | Binding | BindingEach | Promise<TagChildrenPrimitive> | ((elem: HTMLElement) => Promise<TagChildrenPrimitive> | Promise<TagChildrenPrimitive[]> | TagChildrenPrimitive | TagChildrenPrimitive[] | void) | Array<TagChildrenLike>;
 /** A single concrete child value: an existing `Element`, a {@link UIElement} (its bound element is appended), a string/number rendered as HTML, or `null`/`undefined` (ignored). */
 export type TagChildrenPrimitive = Element | UIElement<any> | string | number | null | undefined;

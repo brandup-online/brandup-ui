@@ -34,6 +34,7 @@ abstract class UIElement extends EventEmitter {
     protected _onCanExecCommand(name: string, elem: HTMLElement): boolean;
 
     onDestroy(callback: VoidFunction | UIElement | Element): void;
+    effectScope(): EffectScope;
     destroy(): void;
 
     toString(): string;
@@ -216,6 +217,46 @@ The special event name `"all"` receives every triggered event.
 
 The protected `listenTo` / `listenToOnce` methods subscribe one emitter to another's events and track the subscription so it can be released via `stopListening`. On `destroy()`, all of a `UIElement`'s subscriptions are removed automatically.
 
+## UIElement lifecycle
+
+### destroy()
+
+`destroy()` cleans up the element completely:
+
+- Fires the `"destroy"` event.
+- Stops all event subscriptions.
+- **Cascades** to every nested `UIElement` found in the subtree (deepest descendants first), so you never need to destroy children manually.
+- Stops all reactive `bind`/`bindEach` effects rendered inside the element.
+- Detaches the `UIElement` from its DOM node (clears the `data-uiElement` attribute and the `uielement` property).
+
+```ts
+const parent = new ParentWidget(parentElem); // contains child UIElements
+parent.destroy(); // automatically destroys all nested UIElements too
+```
+
+### Auto-destroy on DOM removal
+
+When a bound element is removed from the document **after having been connected to it**, `destroy()` is called automatically. This works for all nested UIElements too — removing a parent node triggers the full destroy cascade.
+
+```ts
+const w = new MyWidget(elem);
+document.body.appendChild(elem);
+
+elem.remove(); // destroy() fires automatically on next microtask
+```
+
+If the element was never connected to the document (e.g. built in memory and then discarded), auto-destroy does **not** fire — only mounted-then-removed elements are watched.
+
+### Global click handler cleanup
+
+The library registers one global `click` listener on `window` to handle commands. Call `destroyUI()` to remove it on app teardown or during HMR disposal:
+
+```ts
+import { destroyUI } from "@brandup/ui";
+
+destroyUI();
+```
+
 ## DOM helpers
 
 > Previously published as the separate `@brandup/ui-dom` package, now merged into `@brandup/ui`.
@@ -303,7 +344,7 @@ interface ElementOptions {
 A small fine-grained reactivity layer (Vue/MobX-style) with auto-tracking, plus `DOM.tag` bindings that update the DOM in place.
 
 ```ts
-import { reactive, effect, computed, bind, DOM } from "@brandup/ui";
+import { reactive, effect, computed, nextTick, untrack, bind, bindEach, DOM } from "@brandup/ui";
 ```
 
 ### reactive / effect / computed
@@ -327,11 +368,23 @@ state.first = "Augusta"; // schedules the effect and invalidates `full`
 - **Batched**: effect re-runs are coalesced on the microtask queue, so multiple synchronous writes trigger a single run. Await `nextTick()` to observe the result:
 
 ```ts
-import { nextTick } from "@brandup/ui";
-
 state.first = "A";
 state.last = "B";
 await nextTick(); // effects have now re-run once
+```
+
+### untrack
+
+`untrack(fn)` runs a function **without** recording any reactive reads as dependencies. Use it when you need to read reactive state inside an effect without creating a dependency on that read:
+
+```ts
+import { untrack } from "@brandup/ui";
+
+effect(() => {
+    const items = state.list;          // tracked — effect re-runs when list changes
+    const config = untrack(() => state.config); // not tracked — config changes won't re-run this effect
+    render(items, config);
+});
 ```
 
 ### Binding DOM with `bind`
@@ -400,10 +453,11 @@ The binding stops automatically when its container is removed from the document 
 
 ### Disposal
 
-Bindings hold a reactive effect; dispose them to avoid leaks. This is handled for you in the common cases:
+Bindings hold a reactive effect that must be stopped to avoid leaks. This is handled automatically in common cases:
 
-- **`UIElement.destroy()`** automatically stops every binding rendered inside its `element` subtree — no extra wiring needed.
-- A binding also **stops itself** once its node has been mounted into the document and then removed.
+- **`UIElement.destroy()`** stops every `bind`/`bindEach` effect in the subtree and cascades to nested UIElements — no manual wiring needed.
+- A binding **stops itself** once its node has been mounted into the document and then removed from it.
+- Removing a bound element from the document also calls `destroy()` automatically (see [UIElement lifecycle](#uielement-lifecycle)).
 
 ```ts
 class Widget extends UIElementBound {
@@ -413,20 +467,30 @@ class Widget extends UIElementBound {
     }
 }
 const w = new Widget(document.createElement("div"));
-// ...
-w.destroy(); // the bind() inside the element is stopped automatically
+w.destroy(); // stops bind() effects, cascades to nested UIElements
 ```
 
-For effects/bindings outside a `UIElement`, or for explicit grouping, use an `EffectScope`:
+For effects and bindings outside a `UIElement`, or to group them explicitly, use `EffectScope`:
 
 ```ts
 import { effectScope } from "@brandup/ui";
 
 const scope = effectScope();
 const view = scope.run(() => DOM.tag("div", null, bind(() => state.name)));
-scope.stop(); // stop every effect/binding created in the scope
+scope.stop(); // stops every effect/binding created inside the scope
+```
 
-// UIElement.effectScope() returns a scope already tied to destroy()
+`UIElement.effectScope()` returns a scope that is stopped automatically when the element is destroyed:
+
+```ts
+class Widget extends UIElementBound {
+    constructor(elem: HTMLElement) {
+        super("widget", elem);
+        this.effectScope().run(() => {
+            elem.append(DOM.tag("span", null, bind(() => state.name)));
+        });
+    }
+}
 ```
 
 ## Constants
