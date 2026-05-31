@@ -26,6 +26,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	private __isRuned?: boolean;
 	private __middlewares: { [key: string]: Middleware } = {};
 	private __globalSubmit?: (e: SubmitEvent) => void;
+	private __onPopStateHandler?: (e: PopStateEvent) => void;
 	private __execNav?: ExecuteNav<this, ContextData>; // current navigation invoking
 	private __lastNav?: ExecuteNav<this, ContextData>; // last success navigation
 
@@ -132,7 +133,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 			this.__abort.signal.throwIfAborted();
 
-			window.addEventListener("popstate", (e: PopStateEvent) => this.__onPopState(context, e));
+			window.addEventListener("popstate", this.__onPopStateHandler = (e: PopStateEvent) => this.__onPopState(context, e));
 
 			element.addEventListener("submit", this.__globalSubmit = (e: SubmitEvent) => {
 				const form = e.target as HTMLFormElement;
@@ -227,7 +228,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 	override async destroy<TData extends ContextData = ContextData>(contextData?: TData | null): Promise<StopContext<this, TData>> {
 		if (this.__abort.signal.aborted)
-			return Promise.reject('Application already destroyed.');
+			return Promise.reject(new Error('Application already destroyed.'));
 		this.__abort.abort();
 
 		console.info("app destroy begin");
@@ -239,6 +240,9 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 		if (this.__globalSubmit)
 			this.element?.removeEventListener("submit", this.__globalSubmit);
+
+		if (this.__onPopStateHandler)
+			window.removeEventListener("popstate", this.__onPopStateHandler);
 
 		const destroyAbort = new AbortController();
 
@@ -311,8 +315,14 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 		try {
 
-			if (method === "GET")
-				await this.nav({ url, query: new FormData(form), data: data, replace, abort: opt.abort });
+			if (method === "GET") {
+				const getUrl = urlHelper.parseUrl(this.env.basePath, url);
+				urlHelper.extendQuery(getUrl, new FormData(form));
+				if (query)
+					urlHelper.extendQuery(getUrl, query);
+
+				await this.nav({ url: getUrl.url, data: data, replace, abort: opt.abort });
+			}
 			else {
 				const navUrl = urlHelper.parseUrl(this.env.basePath, url);
 				if (query)
@@ -329,7 +339,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 				};
 
 				const currentNav: ExecuteNav<this, TData> = { method: "submit", context, abort: base.navAbort, status: "work" };
-				await this.__execNavigate(currentNav);
+				await this.__execNavigate(currentNav, base.parentNav);
 			}
 		}
 		finally {
@@ -345,7 +355,8 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 		console.log(`popstate: ${popUrl}`, event.state);
 
-		this.nav({ url: popUrl, data: { popstate: event.state } });
+		this.nav({ url: popUrl, data: { popstate: event.state } })
+			.catch(() => { });
 	}
 
 	/** Detect parent (overriding) navigation and compose the abort signal shared by a new navigation. */
@@ -355,7 +366,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			parentNav = this.__execNav as ExecuteNav<this, TData>;
 
 			parentNav.abort.abort(NAV_OVERIDE_ERROR);
-			(<any>parentNav.context).overided = true;
+			(parentNav.context as { overided: boolean }).overided = true;
 		}
 
 		const navAbort = new AbortController();
