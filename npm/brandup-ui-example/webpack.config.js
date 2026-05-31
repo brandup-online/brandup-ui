@@ -19,7 +19,7 @@ var splitChunks = {
             enforce: true
         },
         styles: {
-            test: /\.(css|scss|less)$/, // нужно чтобы import`ы на одинаковые файла less не дублировались на выходе
+            test: /\.(css|scss|less)$/, // needed so imports of the same less file are not duplicated in the output
             reuseExistingChunk: true,
             enforce: true
         },

@@ -210,7 +210,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			const hasHash = !!this.__lastNav?.context.hash || !!navUrl.hash;
 
 			if (isChangedUrl)
-				action = "url-change"; // если изменился url
+				action = "url-change"; // url changed
 			else
 				action = hasHash ? "hash" : "url-no-change";
 		}
