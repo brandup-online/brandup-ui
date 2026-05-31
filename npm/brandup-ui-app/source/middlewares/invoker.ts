@@ -3,16 +3,16 @@ import { Middleware, MiddlewareMethod, MiddlewareNext, InvokeContext } from "./b
 export class MiddlewareInvoker {
 	readonly middleware: Middleware;
 	private __next?: MiddlewareInvoker;
+	private __tail: MiddlewareInvoker = this;
 
 	constructor(middleware: Middleware) {
 		this.middleware = middleware;
 	}
 
 	next(middleware: Middleware) {
-		if (this.__next)
-			this.__next.next(middleware);
-		else
-			this.__next = new MiddlewareInvoker(middleware);
+		const invoker = new MiddlewareInvoker(middleware);
+		this.__tail.__next = invoker;
+		this.__tail = invoker;
 	}
 
 	invoke<TContext extends InvokeContext>(method: string, context: TContext): Promise<void> {

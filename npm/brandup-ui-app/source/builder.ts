@@ -23,10 +23,11 @@ export class ApplicationBuilder<TModel extends ApplicationModel> {
 	}
 
 	build(env: EnvironmentModel, ...args: any[]) {
-		if (!env.basePath || env.basePath == '/')
-			env.basePath = '';
+		const appEnv: EnvironmentModel = { ...env };
+		if (!appEnv.basePath || appEnv.basePath == '/')
+			appEnv.basePath = '';
 
-		const app = new this.__appType(env, this.__model, ...args);
+		const app = new this.__appType(appEnv, this.__model, ...args);
 		app.initialize(this.__middlewares);
 		return app;
 	}
