@@ -22,6 +22,35 @@ it('DOM.tag accepts a UIElement child and appends its element', () => {
 	expect(many.querySelector("i")).not.toBeNull();
 });
 
+class DeferredWidget extends UIElement {
+	typeName = "deferred";
+	parentDuringRender: Node | null | undefined = undefined;
+
+	protected override _onRenderElement(elem: HTMLElement) {
+		// capture whether the element is already appended at render time (it must not be yet)
+		this.parentDuringRender = elem.parentElement;
+	}
+
+	bind(elem: HTMLElement) {
+		this.setElement(elem);
+	}
+}
+
+it('DOM.tag defers an unbound UIElement child until setElement, after _onRenderElement', () => {
+	const widget = new DeferredWidget();
+	const container = DOM.tag("div", null, widget);
+
+	// not bound yet → nothing appended
+	expect(container.children.length).toEqual(0);
+
+	const span = DOM.tag("span", null, "later");
+	widget.bind(span);
+
+	// appended only after setElement, and only after _onRenderElement ran
+	expect(widget.parentDuringRender).toBeNull();
+	expect(container.firstElementChild).toEqual(span);
+});
+
 it('DOM.tag only tag name', () => {
 	const elem = DOM.tag("div");
 
