@@ -119,6 +119,44 @@ it("command runs via DOM click resolving through ancestors", () => {
 	document.body.removeChild(root);
 });
 
+it("throwing canExecute does not leave the command stuck", () => {
+	const e = new TestElem();
+	let shouldThrow = true;
+	let called = 0;
+	e.registerCommand("cmd", () => { called++; }, () => {
+		if (shouldThrow)
+			throw new Error("guard error");
+		return true;
+	});
+
+	const target = document.createElement("button");
+	expect(() => e.exec("cmd", target)).toThrow("guard error");
+
+	// must not be stuck in isExecuting after the throw
+	shouldThrow = false;
+	const result = e.exec("cmd", target);
+	expect(result.status).toEqual("success");
+	expect(called).toEqual(1);
+});
+
+it("async command rejection clears executing state and stays reusable", async () => {
+	const e = new TestElem();
+	let rejectFn!: (reason?: any) => void;
+	e.registerCommand("cmd", () => new Promise<void>((_resolve, reject) => { rejectFn = reject; }));
+
+	const target = document.createElement("button");
+	const result = e.exec("cmd", target);
+	expect(result.status).toEqual("success");
+	expect(target.classList.contains("executing")).toBeTruthy();
+
+	rejectFn(new Error("boom"));
+	await flush();
+
+	// executing class removed, command not stuck, no unhandled rejection
+	expect(target.classList.contains("executing")).toBeFalsy();
+	expect(e.exec("cmd", target).status).toEqual("success");
+});
+
 it("registerCommand after destroy is a no-op", () => {
 	const e = new TestElem();
 	e.destroy();
