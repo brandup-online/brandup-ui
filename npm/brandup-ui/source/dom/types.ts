@@ -2,6 +2,22 @@ import { UIElement } from "../element";
 import { Binding } from "./bind";
 import { BindingEach } from "./bind-each";
 
+/**
+ * Values that are unambiguously a {@link tag} child and never options: DOM elements,
+ * reactive bindings, promises, factory functions, and raw primitives.
+ * Passing one of these as the second argument to `tag` skips the options parameter.
+ * Strings and string arrays are excluded because they are also valid as {@link CssClass}.
+ */
+export type TagFirstChild =
+	| Element
+	| UIElement<any>
+	| Binding
+	| BindingEach<any>
+	| Promise<TagChildrenPrimitive>
+	| ((elem: HTMLElement) => TagChildrenPrimitive | TagChildrenPrimitive[] | void)
+	| number
+	| boolean;
+
 /** Options used to configure an element created by {@link tag}. Recognized keys (`id`, `class`, `command`, `dataset`, `events`, `styles`) are handled specially; any other key is applied as a plain attribute. */
 export interface ElementOptions {
 	/** Value for the element's `id` attribute. */
