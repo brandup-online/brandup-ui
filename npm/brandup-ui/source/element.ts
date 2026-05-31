@@ -1,4 +1,6 @@
 import { EventEmitter } from "./events";
+import { effectScope as createEffectScope, EffectScope } from "./reactive";
+import { disposeBindingsWithin } from "./dom/binding-cleanup";
 import UICONSTANTS from "./constants";
 
 /** Built-in events triggered by every {@link UIElement}. */
@@ -201,6 +203,16 @@ export abstract class UIElement<TEvents = {}> extends EventEmitter<WithUIEvents<
 			throw new Error("Unsupported callback type.");
 	}
 
+	/**
+	 * Create an {@link EffectScope} whose reactive effects are stopped automatically when
+	 * this element is destroyed. Use it to scope `bind`/`effect` to the element's lifetime.
+	 */
+	effectScope(): EffectScope {
+		const scope = createEffectScope();
+		this.on("destroy", () => scope.stop());
+		return scope;
+	}
+
 	/** Returns the `typeName` of this element. */
 	override toString(): string { return this.typeName; }
 
@@ -215,6 +227,7 @@ export abstract class UIElement<TEvents = {}> extends EventEmitter<WithUIEvents<
 
 		const elem = this.__element;
 		if (elem) {
+			disposeBindingsWithin(elem); // stop reactive bindings rendered inside this element
 			delete elem.dataset[UICONSTANTS.ElemAttributeName];
 			delete (<any>elem)[UICONSTANTS.ElemPropertyName];
 		}

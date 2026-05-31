@@ -298,6 +298,88 @@ interface ElementOptions {
 }
 ```
 
+## Reactivity
+
+A small fine-grained reactivity layer (Vue/MobX-style) with auto-tracking, plus `DOM.tag` bindings that update the DOM in place.
+
+```ts
+import { reactive, effect, computed, bind, DOM } from "@brandup/ui";
+```
+
+### reactive / effect / computed
+
+`reactive(obj)` returns a deep reactive proxy: reads are tracked and writes notify the effects that read them.
+
+```ts
+const state = reactive({ first: "Ada", last: "Lovelace", tags: ["math"] });
+
+// effect re-runs when any property it reads changes
+effect(() => console.log(state.first));
+
+// computed: lazily cached, recomputes only when its dependencies change
+const full = computed(() => `${state.first} ${state.last}`);
+
+state.first = "Augusta"; // schedules the effect and invalidates `full`
+```
+
+- **Deep**: nested objects and arrays are reactive (`state.tags.push(...)` is tracked).
+- **Dynamic dependencies**: an effect only depends on the properties it actually reads on its last run (`useA ? a : b` re-subscribes).
+- **Batched**: effect re-runs are coalesced on the microtask queue, so multiple synchronous writes trigger a single run. Await `nextTick()` to observe the result:
+
+```ts
+import { nextTick } from "@brandup/ui";
+
+state.first = "A";
+state.last = "B";
+await nextTick(); // effects have now re-run once
+```
+
+### Binding DOM with `bind`
+
+`bind(() => expr)` is a reactive `tag` child. The expression is tracked and re-rendered in place when its reactive state changes — text values reuse a text node (rendered via `textContent`, so safe from HTML injection), element/`UIElement` values swap the node.
+
+```ts
+const state = reactive({ name: "Alice", online: true });
+
+const el = DOM.tag("div", null,
+    "Hi, ", bind(() => state.name), "! ",
+    bind(() => state.online ? DOM.tag("b", null, "online") : "offline")
+);
+
+state.name = "Bob"; // the text updates on the next tick
+```
+
+### Disposal
+
+Bindings hold a reactive effect; dispose them to avoid leaks. This is handled for you in the common cases:
+
+- **`UIElement.destroy()`** automatically stops every binding rendered inside its `element` subtree — no extra wiring needed.
+- A binding also **stops itself** once its node has been mounted into the document and then removed.
+
+```ts
+class Widget extends UIElementBound {
+    constructor(elem: HTMLElement) {
+        super("widget", elem);
+        elem.append(DOM.tag("span", null, bind(() => state.name)));
+    }
+}
+const w = new Widget(document.createElement("div"));
+// ...
+w.destroy(); // the bind() inside the element is stopped automatically
+```
+
+For effects/bindings outside a `UIElement`, or for explicit grouping, use an `EffectScope`:
+
+```ts
+import { effectScope } from "@brandup/ui";
+
+const scope = effectScope();
+const view = scope.run(() => DOM.tag("div", null, bind(() => state.name)));
+scope.stop(); // stop every effect/binding created in the scope
+
+// UIElement.effectScope() returns a scope already tied to destroy()
+```
+
 ## Constants
 
 The names of DOM attributes, properties, and CSS classes are exported as the `UICONSTANTS` namespace:
