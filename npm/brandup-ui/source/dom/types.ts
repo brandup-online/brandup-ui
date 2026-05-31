@@ -1,3 +1,5 @@
+import { UIElement } from "../element";
+
 /** Options used to configure an element created by {@link tag}. Recognized keys (`id`, `class`, `command`, `dataset`, `events`, `styles`) are handled specially; any other key is applied as a plain attribute. */
 export interface ElementOptions {
 	/** Value for the element's `id` attribute. */
@@ -34,5 +36,5 @@ export type ElementStyles = Partial<CSSStyleDeclaration>;
 
 /** A value accepted as a {@link tag} child: a primitive, a promise of one, a factory function receiving the container element, or a (possibly nested) array of any of these. */
 export type TagChildrenLike = TagChildrenPrimitive | Promise<TagChildrenPrimitive> | ((elem: HTMLElement) => Promise<TagChildrenPrimitive> | Promise<TagChildrenPrimitive[]> | TagChildrenPrimitive | TagChildrenPrimitive[] | void) | Array<TagChildrenLike>;
-/** A single concrete child value: an existing `Element`, a string/number rendered as HTML, or `null`/`undefined` (ignored). */
-export type TagChildrenPrimitive = Element | string | number | null | undefined;
+/** A single concrete child value: an existing `Element`, a {@link UIElement} (its bound element is appended), a string/number rendered as HTML, or `null`/`undefined` (ignored). */
+export type TagChildrenPrimitive = Element | UIElement<any> | string | number | null | undefined;

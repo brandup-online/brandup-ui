@@ -1,4 +1,5 @@
 import { ElementOptions, CssClass, TagChildrenLike, TagChildrenPrimitive, ElementEvents } from "./types";
+import { UIElement } from "../element";
 import helpers from "./helpers";
 
 /**
@@ -82,7 +83,7 @@ const applyOptions = (elem: HTMLElement, options?: ElementOptions | CssClass | n
 }
 
 /**
- * Appends one or more children to a container, recursively resolving arrays, promises and factory functions. Elements are appended as-is; strings/numbers/booleans are inserted as HTML; `null`/`undefined` are ignored.
+ * Appends one or more children to a container, recursively resolving arrays, promises and factory functions. Elements (and the bound element of a {@link UIElement}) are appended as-is; strings/numbers/booleans are inserted as HTML; `null`/`undefined` are ignored.
  * @param container Element to append the children to.
  * @param children Child or children to append. See {@link TagChildrenLike}.
  * @throws Error When a child resolves to an unsupported type.
@@ -95,6 +96,10 @@ const appendChild = (container: HTMLElement, children?: TagChildrenLike) => {
 		children.forEach(child => appendChild(container, child));
 	else if (children instanceof Element)
 		container.append(children);
+	else if (children instanceof UIElement) {
+		if (children.element)
+			container.append(children.element);
+	}
 	else if (children instanceof Promise)
 		children.then((child: TagChildrenPrimitive) => appendChild(container, child));
 	else {
