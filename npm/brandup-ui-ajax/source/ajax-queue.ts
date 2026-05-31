@@ -47,7 +47,7 @@ export class AjaxQueue {
 	 * @param abortSignal Optional signal used to cancel this specific request.
 	 * @returns A promise resolving with the {@link AjaxResponse}.
 	 */
-	enque<TResponse = any>(request: AjaxRequest, abortSignal?: AbortSignal) {
+	enqueue<TResponse = any>(request: AjaxRequest, abortSignal?: AbortSignal) {
 		const { success, error } = request;
 
 		return new Promise<AjaxResponse<TResponse>>((resolve, reject) => {
@@ -66,6 +66,11 @@ export class AjaxQueue {
 
 			this.push(request, abortSignal);
 		});
+	}
+
+	/** @deprecated Renamed to {@link enqueue}. */
+	enque<TResponse = any>(request: AjaxRequest, abortSignal?: AbortSignal) {
+		return this.enqueue<TResponse>(request, abortSignal);
 	}
 
 	/**
@@ -108,12 +113,12 @@ export class AjaxQueue {
 
 		if (task) {
 			if (this._options.canRequest && this._options.canRequest(task.request) === false) {
-				this.__next();
+				this.__next(task);
 				return;
 			}
 
 			if (task.request.abort?.aborted || task.cancel?.aborted)
-				task.result = Promise.reject("cancelled");
+				task.result = Promise.reject(new Error("Request cancelled"));
 			else {
 				task.abort = new AbortController();
 				task.result = request(task.request, task.cancel ? AbortSignal.any([task.abort.signal, task.cancel]) : task.abort.signal);
@@ -134,12 +139,17 @@ export class AjaxQueue {
 					if (this._options.errorRequest)
 						this._options.errorRequest(task.request, reason);
 				})
-				.finally(() => this.__next());
+				.finally(() => this.__next(task));
 		}
 	}
 
-	private __next() {
+	// completedTask is the task that finished — if _current already changed
+	// (e.g. reset(true) was called and a new push() started a new task), bail out
+	// to avoid clearing the new task's reference or double-executing the queue.
+	private __next(completedTask: RequestTask) {
 		if (this._destroyed)
+			return;
+		if (this._current !== completedTask)
 			return;
 
 		this._current = null;

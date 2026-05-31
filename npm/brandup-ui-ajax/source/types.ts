@@ -1,7 +1,9 @@
 /** HTTP method for an AJAX request. Common verbs are suggested, but any custom string is allowed. */
 export type AJAXMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | string;
 /** Request body kind. Controls the `Content-Type`/`Accept` headers and how `data` is serialized. When omitted it is auto-detected from `data`. */
-export type AJAXReqestType = "NONE" | "JSON" | "XML" | "FORM" | "FORMDATA" | "TEXT" | "BLOB";
+export type AJAXRequestType = "NONE" | "JSON" | "XML" | "FORM" | "FORMDATA" | "TEXT" | "BLOB";
+/** @deprecated Renamed to {@link AJAXRequestType}. */
+export type AJAXReqestType = AJAXRequestType;
 /** Resolved kind of the response body, derived from the response `Content-Type`. `"blob"` only occurs for the fetch-based {@link request}; `ajaxRequest` (XHR) never returns blob. */
 export type ResponseType = "none" | "json" | "blob" | "text" | "html";
 
@@ -30,7 +32,7 @@ export interface AjaxRequest<TState = any> {
 	/** Additional request headers. Entries with empty values are skipped. */
 	headers?: { [key: string]: string } | null;
 	/** Body serialization kind. Auto-detected from `data` when omitted. */
-	type?: AJAXReqestType | null;
+	type?: AJAXRequestType | null;
 	/** Request body. Not allowed for `GET` (and `HEAD` in {@link request}). */
 	data?: string | object | Blob | FormData | HTMLFormElement | null;
 	/** Signal used to abort the request. */

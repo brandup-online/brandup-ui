@@ -151,7 +151,7 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 
 		const page = context.data.page = this._page;
 
-		const response = context.data.response = await this._ajax.enque({
+		const response = context.data.response = await this._ajax.enqueue({
 			url: context.url,
 			method: context.method,
 			data: new FormData(context.form)

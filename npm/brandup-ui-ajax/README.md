@@ -118,13 +118,13 @@ Queue state can be inspected via `queue.length` (waiting requests), `queue.isEmp
 
 ### Awaiting a queued request
 
-`enque` queues a request like `push`, but returns a promise that resolves with the response (or rejects with the failure reason). The request's own `success`/`error` callbacks are still invoked.
+`enqueue` queues a request like `push`, but returns a promise that resolves with the response (or rejects with the failure reason). The request's own `success`/`error` callbacks are still invoked.
 
 ```
 import { AjaxQueue } from "@brandup/ui-ajax";
 
 const queue = new AjaxQueue();
 
-const response = await queue.enque({ url: "/api/data" });
+const response = await queue.enqueue({ url: "/api/data" });
 // response.status, response.data, ...
 ```
