@@ -106,17 +106,17 @@ export const ajaxRequest = (options: AjaxRequest) => {
 
 	xhr.onabort = (_e: ProgressEvent) => {
 		if (options.error)
-			options.error(options, "Request aborted");
+			options.error(options, new Error("Request aborted"));
 	}
 
 	xhr.onerror = (_e: ProgressEvent) => {
 		if (options.error)
-			options.error(options, "Request network error");
+			options.error(options, new Error("Request network error"));
 	}
 
 	xhr.ontimeout = (_e: ProgressEvent) => {
 		if (options.error)
-			options.error(options, "Request timeout");
+			options.error(options, new Error("Request timeout"));
 	}
 
 	xhr.open(method, url, true);

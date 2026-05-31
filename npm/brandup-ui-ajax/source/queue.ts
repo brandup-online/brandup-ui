@@ -117,8 +117,11 @@ export class AjaxQueue {
 				return;
 			}
 
-			if (task.request.abort?.aborted || task.cancel?.aborted)
-				task.result = Promise.reject(new Error("Request cancelled"));
+			if (task.request.abort?.aborted || task.cancel?.aborted) {
+				const err = new Error("Request cancelled");
+				task.request.error?.(task.request, err);
+				task.result = Promise.reject(err);
+			}
 			else {
 				task.abort = new AbortController();
 				task.result = request(task.request, task.cancel ? AbortSignal.any([task.abort.signal, task.cancel]) : task.abort.signal);
@@ -160,7 +163,7 @@ export class AjaxQueue {
 /** Queue-wide hooks invoked for every request processed by an {@link AjaxQueue}. */
 export interface AjaxQueueOptions {
 	/** Called before a request is sent; returning `false` skips it (it is dropped without being sent). */
-	canRequest?: (request: AjaxRequest) => void | boolean;
+	canRequest?: (request: AjaxRequest) => boolean | void;
 	/** Called after a request completes successfully. */
 	successRequest?: (request: AjaxRequest, response: AjaxResponse) => void;
 	/** Called when a request fails or is aborted. */

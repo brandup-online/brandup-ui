@@ -98,7 +98,7 @@ Sequential execution of AJAX requests.
 import { AjaxQueue } from "@brandup/ui-ajax";
 
 const queue = new AjaxQueue({
-	canRequest?: (request: AjaxRequest) => void | boolean;
+	canRequest?: (request: AjaxRequest) => boolean | void;
 	successRequest?: (request: AjaxRequest, response: AjaxResponse) => void;
 	errorRequest?: (response: AjaxRequest, reason?: any) => void;
 });
