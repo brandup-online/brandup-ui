@@ -96,9 +96,20 @@ const appendChild = (container: HTMLElement, children?: TagChildrenLike) => {
 		children.forEach(child => appendChild(container, child));
 	else if (children instanceof Element)
 		container.append(children);
-	else if (children instanceof UIElement)
-		// append now if bound, otherwise once setElement binds the element
-		children.whenElement(elem => container.append(elem));
+	else if (children instanceof UIElement) {
+		if (children.element)
+			container.append(children.element);
+		else {
+			// reserve the position now; replace the placeholder once setElement
+			// binds the element (after _onRenderElement), keeping child order
+			const placeholder = document.createComment("");
+			container.append(placeholder);
+			children.once("rendered", () => {
+				if (children.element)
+					placeholder.replaceWith(children.element);
+			});
+		}
+	}
 	else if (children instanceof Promise)
 		children.then((child: TagChildrenPrimitive) => appendChild(container, child));
 	else {
