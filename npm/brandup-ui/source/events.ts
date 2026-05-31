@@ -85,15 +85,15 @@ export class EventEmitter {
 		sources.forEach(source => {
 			const removeEventNames = eventName ? [eventName] : source.events;
 			removeEventNames.forEach(eventName => {
-				source.emmiter.off(eventName, callback, this);
+				source.emitter.off(eventName, callback, this);
 
 				const index = source.events.indexOf(eventName);
 				if (index >= 0)
 					source.events.splice(index, 1);
 			});
 
-			if (!source.events.length && source.emmiter._listenId && this._listeningTo)
-				delete this._listeningTo[source.emmiter._listenId];
+			if (!source.events.length && source.emitter._listenId && this._listeningTo)
+				delete this._listeningTo[source.emitter._listenId];
 		});
 
 		if (!this._listeningTo || Object.keys(this._listeningTo).length === 0)
@@ -106,13 +106,13 @@ export class EventEmitter {
 		const listeningTo = this._listeningTo || (this._listeningTo = {});
 		const listenId = source._listenId || (source._listenId = `l${ListenCounter++}`);
 
-		const listenTo = listeningTo[listenId] || (listeningTo[listenId] = { emmiter: source, events: [] });
+		const listenTo = listeningTo[listenId] || (listeningTo[listenId] = { emitter: source, events: [] });
 
 		eventName = eventName.toLowerCase();
-		if (listenTo.events.indexOf(eventName) !== -1)
-			throw new Error(`Event ${eventName} already listening.`);
-
-		listenTo.events.push(eventName);
+		// allow multiple callbacks for the same source+event; keep the
+		// event-name list unique so stopListening still cleans them up.
+		if (listenTo.events.indexOf(eventName) === -1)
+			listenTo.events.push(eventName);
 	}
 
 	private stopAllListeners() {
@@ -149,8 +149,10 @@ export class EventEmitter {
 		if (!events || !events.length)
 			return;
 
-		for (let i = 0; i < events.length; i++) {
-			const event = events[i];
+		// snapshot so callbacks added/removed during dispatch don't affect this trigger
+		const snapshot = events.slice();
+		for (let i = 0; i < snapshot.length; i++) {
+			const event = snapshot[i];
 			event.callback.apply(event.ctx, args);
 		}
 	}
@@ -188,6 +190,6 @@ interface EventCallback {
 }
 
 interface EventListening {
-	emmiter: EventEmitter;
+	emitter: EventEmitter;
 	events: EventName[];
 }

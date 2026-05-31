@@ -12,7 +12,7 @@ it('EventEmitter.listenTo success', () => {
 	component1.test_listenTo();
 	expect(component1.listeningTo).not.toBeUndefined();
 	expect(component1.listeningTo[component1.textbox.listenId]).not.toBeUndefined();
-	expect(component1.listeningTo[component1.textbox.listenId].emmiter).toEqual(component1.textbox);
+	expect(component1.listeningTo[component1.textbox.listenId].emitter).toEqual(component1.textbox);
 	expect(component1.listeningTo[component1.textbox.listenId].events).toContain("change");
 
 	component1.textbox.change("value");
@@ -93,9 +93,24 @@ it('EventEmitter.listenTo destroy listener', () => {
 	expect(externalValue).toBeUndefined();
 });
 
+it('EventEmitter.listenTo same event twice fires both callbacks', () => {
+	const c = new MultiComponent();
+	c.listenBoth();
+
+	c.textbox.change("v1");
+	expect(c.a).toEqual(1);
+	expect(c.b).toEqual(1);
+
+	// stopListening by event removes both
+	c.stopListenChange();
+	c.textbox.change("v2");
+	expect(c.a).toEqual(1);
+	expect(c.b).toEqual(1);
+});
+
 class Fake extends EventEmitter {
 	get listenId(): string { return (<any>this)._listenId; }
-	get listeningTo(): { [id: string]: { emmiter: EventEmitter, events: string[] } } { return (<any>this)._listeningTo; }
+	get listeningTo(): { [id: string]: { emitter: EventEmitter, events: string[] } } { return (<any>this)._listeningTo; }
 	get events(): { [key: string]: { callback: EventCallbackFunc, context?: EventContextInit, ctx: EventContextInit }[] } { return (<any>this)._events; }
 
 	destroy(): void {
@@ -129,5 +144,20 @@ class Component extends Fake {
 class TextBox extends Fake {
 	change(value: string) {
 		this.trigger("change", value);
+	}
+}
+
+class MultiComponent extends Fake {
+	readonly textbox: TextBox = new TextBox();
+	a = 0;
+	b = 0;
+
+	listenBoth() {
+		this.listenTo(this.textbox, "change", () => this.a++);
+		this.listenTo(this.textbox, "change", () => this.b++);
+	}
+
+	stopListenChange() {
+		this.stopListening(this.textbox, "change");
 	}
 }
