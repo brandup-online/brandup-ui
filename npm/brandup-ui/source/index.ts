@@ -1,4 +1,5 @@
 export * from "./events"
 export * from "./element"
 export * from "./ext"
+export * from "./dom"
 export * as UICONSTANTS from "./constants"
