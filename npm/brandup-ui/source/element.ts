@@ -1,10 +1,7 @@
 import { EventEmitter } from "./events";
 import { effectScope as createEffectScope, EffectScope } from "./reactive";
-import { disposeBindingsWithin, trackAutoDestroy, untrackAutoDestroy } from "./dom/binding-cleanup";
+import { disposeBindingsWithin, destroyUIElementsWithin, trackAutoDestroy, untrackAutoDestroy } from "./dom/binding-cleanup";
 import UICONSTANTS from "./constants";
-
-// CSS attribute selector for elements bound to a UIElement (e.g. "[data-ui-element]")
-const ELEM_CSS_SELECTOR = '[data-' + UICONSTANTS.ElemAttributeName.replace(/([A-Z])/g, c => '-' + c.toLowerCase()) + ']';
 
 /** Built-in events triggered by every {@link UIElement}. */
 export interface UIElementEvents {
@@ -232,15 +229,7 @@ export abstract class UIElement<TEvents = {}> extends EventEmitter<WithUIEvents<
 
 		const elem = this.__element;
 		if (elem) {
-			// Cascade destroy to nested UIElements, deepest first
-			const nested = elem.querySelectorAll(ELEM_CSS_SELECTOR);
-			for (let i = nested.length - 1; i >= 0; i--) {
-				const child = nested[i] as HTMLElement;
-				const ui: UIElement | undefined = (<any>child)[UICONSTANTS.ElemPropertyName];
-				if (ui)
-					ui.destroy();
-			}
-
+			destroyUIElementsWithin(elem); // cascade to nested UIElements, deepest first
 			untrackAutoDestroy(elem);
 			disposeBindingsWithin(elem);
 			delete elem.dataset[UICONSTANTS.ElemAttributeName];

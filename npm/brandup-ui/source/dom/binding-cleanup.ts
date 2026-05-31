@@ -91,6 +91,25 @@ export function untrackAutoDestroy(node: HTMLElement): void {
 	disconnectIfEmpty();
 }
 
+/**
+ * Destroy every tracked `UIElement` whose node lies within `root`, in reverse
+ * document order (deepest nodes first). Works on detached subtrees because
+ * `Node.contains` checks tree membership regardless of document connection.
+ * @internal — called by `UIElement.destroy`.
+ */
+export function destroyUIElementsWithin(root: HTMLElement): void {
+	const victims: TrackedElement[] = [];
+	trackedElements.forEach(entry => {
+		if (root !== entry.node && root.contains(entry.node))
+			victims.push(entry);
+	});
+	// Reverse document order = deepest / latest nodes first
+	victims.sort((a, b) =>
+		a.node.compareDocumentPosition(b.node) & Node.DOCUMENT_POSITION_FOLLOWING ? 1 : -1
+	);
+	victims.forEach(entry => entry.destroy());
+}
+
 /** Stop and forget every tracked binding whose node lies within `root` (used when a UIElement is destroyed). */
 export function disposeBindingsWithin(root: Node): void {
 	tracked.forEach(binding => {
