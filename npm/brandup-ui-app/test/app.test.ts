@@ -244,6 +244,120 @@ it("Application.nav redirect", async () => {
 	//await expect(app.nav("/about")).rejects.toEqual(NAV_OVERIDE_ERROR);
 });
 
+it("Submit overriding an in-flight navigation resolves it to the submit", async () => {
+	setLocation("http://localhost/");
+
+	let release!: () => void;
+	const gate = new Promise<void>(r => release = r);
+
+	const builder = new ApplicationBuilder({});
+	builder.useMiddleware(() => <Middleware>{
+		name: "test",
+		navigate: async (context: NavigateContext, next) => {
+			if (context.path === "/hang") {
+				await gate; // keep this navigation in flight
+				context.abort.throwIfAborted(); // observe override after async work
+			}
+			await next();
+		},
+		submit: async (_context, next) => {
+			await next();
+		}
+	});
+	const app = builder.build({ basePath: "/" });
+
+	const appElem = DOM.tag("div");
+	document.body.appendChild(appElem);
+	await app.run({}, appElem);
+
+	// navigation that hangs inside the middleware (still executing)
+	const navPromise = app.nav("/hang");
+
+	// a POST submit overrides the in-flight navigation (private entry point)
+	const form = DOM.tag("form", { class: "appform", method: "post", action: "/save" }) as HTMLFormElement;
+	appElem.appendChild(form);
+	await (app as any).__onSubmit({ form });
+
+	// let the overridden navigation resume and hit NAV_OVERIDE_ERROR
+	release();
+
+	const navContext = await navPromise;
+	expect(navContext.source).toEqual("submit");
+	expect(navContext.action).toEqual("submit");
+
+	await app.destroy();
+	appElem.remove();
+});
+
+it("popstate listener is removed on destroy", async () => {
+	setLocation("http://localhost/");
+
+	const builder = new ApplicationBuilder({});
+	const app = builder.build({ basePath: "/" });
+
+	const appElem = DOM.tag("div");
+	document.body.appendChild(appElem);
+	await app.run({}, appElem);
+
+	const navSpy = jest.spyOn(app, "nav").mockResolvedValue({} as any);
+
+	// listener is active while running
+	window.dispatchEvent(new PopStateEvent("popstate", { state: { x: 1 } }));
+	expect(navSpy).toHaveBeenCalledTimes(1);
+
+	await app.destroy();
+	navSpy.mockClear();
+
+	// listener must be detached after destroy
+	window.dispatchEvent(new PopStateEvent("popstate", { state: { x: 2 } }));
+	expect(navSpy).not.toHaveBeenCalled();
+
+	appElem.remove();
+});
+
+// node's global FormData (undici) constructor does not accept a <form>; the
+// browser one does. Shim it so the GET-submit path can read form fields.
+class FormElementData extends FormData {
+	constructor(form?: HTMLFormElement) {
+		super();
+		form?.querySelectorAll("input").forEach((input) => {
+			if (input.name)
+				this.append(input.name, input.value);
+		});
+	}
+}
+
+it("GET submit merges form fields with options query", async () => {
+	setLocation("http://localhost/");
+
+	const builder = new ApplicationBuilder({});
+	const app = builder.build({ basePath: "/" });
+
+	const appElem = DOM.tag("div");
+	document.body.appendChild(appElem);
+	await app.run({}, appElem);
+
+	const form = DOM.tag("form", { class: "appform", method: "get", action: "/search" }) as HTMLFormElement;
+	form.appendChild(DOM.tag("input", { name: "a", value: "1" }));
+	appElem.appendChild(form);
+
+	const OriginalFormData = global.FormData;
+	(global as any).FormData = FormElementData;
+	try {
+		await (app as any).__onSubmit({ form, query: { b: "2" } });
+	}
+	finally {
+		(global as any).FormData = OriginalFormData;
+	}
+
+	expect(app.current?.path).toEqual("/search");
+	expect(app.current?.query.get("a")).toEqual("1");
+	expect(app.current?.query.get("b")).toEqual("2");
+
+	await app.destroy();
+	appElem.remove();
+});
+
 interface TestAppModel extends ApplicationModel {
 	userId: string;
 }
