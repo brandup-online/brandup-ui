@@ -149,6 +149,31 @@ it("command runs via DOM click resolving through ancestors", () => {
 	document.body.removeChild(root);
 });
 
+it("a click on a command anchor is prevented even when the command throws", () => {
+	const root = document.createElement("div");
+	document.body.appendChild(root);
+
+	const e = new TestElem(root);
+	e.registerCommand("cmd", () => { throw new Error("command boom"); });
+
+	const link = document.createElement("a");
+	link.setAttribute("href", "");
+	link.dataset.command = "cmd";
+	root.appendChild(link);
+
+	const errSpy = jest.spyOn(console, "error").mockImplementation(() => { });
+	const event = new MouseEvent("click", { bubbles: true, cancelable: true });
+	link.dispatchEvent(event);
+
+	// the link's default navigation must be prevented despite the command throwing,
+	// and the failure must be reported (not silently swallowed)
+	expect(event.defaultPrevented).toBe(true);
+	expect(errSpy).toHaveBeenCalled();
+	errSpy.mockRestore();
+
+	document.body.removeChild(root);
+});
+
 it("throwing canExecute does not leave the command stuck", () => {
 	const e = new TestElem();
 	let shouldThrow = true;

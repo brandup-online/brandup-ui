@@ -278,17 +278,30 @@ const commandClickHandler = (e: MouseEvent) => {
 		throw new Error("Command data attribute does not have a value.");
 
 	const uiElem = findUiElementByCommand(commandElem, commandName);
-	if (uiElem) {
-		const result = uiElem.__execCommand(commandName, commandElem);
-		if (result.status == "success" && result.context.transparent)
-			return;
-	}
-	else
-		console.warn(`Not find handler for command "${commandName}".`);
 
-	e.preventDefault();
-	e.stopPropagation();
-	e.stopImmediatePropagation();
+	// A click on a data-command element is owned by the library: prevent the element's
+	// default action (e.g. <a> navigation) and stop the click chain — UNLESS the command
+	// completed successfully and asked to stay transparent. This runs in `finally`, so a
+	// throwing command can never skip preventDefault and let the page navigate/reload.
+	let transparent = false;
+	try {
+		if (uiElem) {
+			const result = uiElem.__execCommand(commandName, commandElem);
+			transparent = result.status === "success" && !!result.context.transparent;
+		}
+		else
+			console.warn(`Not find handler for command "${commandName}".`);
+	}
+	catch (reason) {
+		console.error(`Command "${commandName}" failed.`, reason);
+	}
+	finally {
+		if (!transparent) {
+			e.preventDefault();
+			e.stopPropagation();
+			e.stopImmediatePropagation();
+		}
+	}
 }
 
 // Guarded so importing the module does not throw in a non-DOM environment (SSR/Node).
