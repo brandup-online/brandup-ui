@@ -296,3 +296,42 @@ it("bindEach does not auto-dispose when container was never in the document", as
 	await nextTick();
 	expect(reconciles).toBe(2);
 });
+
+// ─── disposal when the container is cleared (regression: must not resurrect) ─────
+
+it("bindEach is disposed when its container is cleared, so it never resurrects", async () => {
+	const state = reactive({ items: [{ id: 1, text: "a" }, { id: 2, text: "b" }] });
+	const ul = DOM.tag("ul", null, bindEach(() => state.items, i => i.id, i => DOM.tag("li", null, i.text)));
+	document.body.appendChild(ul);
+	await flush();
+	expect(ul.querySelectorAll("li").length).toBe(2);
+
+	ul.innerHTML = ""; // clear the rendered list and its anchor (container survives)
+	await flush();      // the observer must dispose the now-detached effect
+
+	state.items.push({ id: 3, text: "c" }); // mutate after clearing
+	await nextTick();
+	await flush();
+
+	// the disposed effect must NOT re-render into the cleared container
+	expect(ul.querySelectorAll("li").length).toBe(0);
+	document.body.innerHTML = "";
+});
+
+it("bind() is disposed when its container is cleared, so it never resurrects", async () => {
+	const state = reactive({ x: "a" });
+	const div = DOM.tag("div", null, bind(() => state.x));
+	document.body.appendChild(div);
+	await flush();
+	expect(div.textContent).toBe("a");
+
+	div.innerHTML = ""; // clear the bound node (container survives)
+	await flush();
+
+	state.x = "b";
+	await nextTick();
+	await flush();
+
+	expect(div.textContent).toBe(""); // disposed bind must not re-render
+	document.body.innerHTML = "";
+});

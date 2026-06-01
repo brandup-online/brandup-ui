@@ -210,8 +210,8 @@ const appendBinding = (container: HTMLElement, binding: Binding) => {
 		}
 	});
 
-	// stop the effect when the container is removed from the document
-	autoDisposeBinding(container, eff);
+	// stop the effect when the rendered node leaves the document
+	autoDisposeBinding(container, () => current, eff);
 };
 
 export {

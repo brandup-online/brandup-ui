@@ -1,6 +1,9 @@
 import { ReactiveEffect } from "../reactive";
 
 interface TrackedBinding {
+	/** The binding's managed node (the bindEach anchor, or the bind() current node). */
+	getNode: () => Node;
+	/** Element the binding renders into — marked and indexed for subtree queries. */
 	container: HTMLElement;
 	effect: ReactiveEffect;
 }
@@ -14,7 +17,7 @@ interface TrackedElement {
 // (`elem.dataset.uiElement` → `data-ui-element`), so no extra marker is needed for them.
 const UIELEM_SELECTOR = "[data-ui-element]";
 // Marker placed on every element a reactive binding renders into, so a removed
-// subtree can be queried for affected bindings instead of scanning all of them.
+// subtree (or a cleared container) can be queried for affected bindings.
 const BINDING_ATTR = "data-bui-binding";
 const BINDING_SELECTOR = "[data-bui-binding]";
 
@@ -43,18 +46,25 @@ function disconnectIfEmpty(): void {
 }
 
 /**
- * React only to *removed* nodes (insertions never disconnect anything), and within each
- * removed subtree dispose only the tracked UIElements/bindings that ended up disconnected.
- * Work is proportional to the removed subtree, not to the total number tracked.
+ * React only to *removed* nodes (insertions never disconnect anything). Two cases:
+ *  - a removed element subtree → dispose the tracked UIElements/bindings inside it;
+ *  - children removed from a surviving container (e.g. `container.innerHTML = ""`) →
+ *    re-check the bindings rendered directly into that container.
+ * Work stays proportional to what changed, not to the total number tracked.
  */
 function onMutations(mutations: MutationRecord[]): void {
 	for (const mutation of mutations) {
 		mutation.removedNodes.forEach(node => {
-			// Bindings/UIElements are tracked by their (element) container, so a removed
-			// text/comment node can neither be one nor contain one — only elements matter.
 			if (node instanceof HTMLElement)
 				disposeDisconnectedWithin(node);
 		});
+
+		// A binding's managed node (a text/comment) can be removed while its container
+		// stays connected (a cleared/replaced container). The container itself is then
+		// the mutation target, not a removed node, so check its bindings here.
+		const target = mutation.target;
+		if (mutation.removedNodes.length && target instanceof HTMLElement && target.hasAttribute(BINDING_ATTR))
+			disposeDisconnectedBindings(target);
 	}
 
 	disconnectIfEmpty();
@@ -80,15 +90,31 @@ function disposeDisconnectedWithin(removed: HTMLElement): void {
 		}
 	});
 
-	// Bindings not already cleaned by a UIElement destroy above (e.g. standalone containers).
-	forEachSelfAndMatches(removed, BINDING_SELECTOR, container => {
-		__bindingCleanupStats.examined++;
-		if (!container.isConnected)
-			stopContainerBindings(container);
-	});
+	forEachSelfAndMatches(removed, BINDING_SELECTOR, disposeDisconnectedBindings);
 }
 
-function stopContainerBindings(container: HTMLElement): void {
+/** Stop the bindings of `container` whose managed node has left the document. */
+function disposeDisconnectedBindings(container: HTMLElement): void {
+	const set = bindingsByContainer.get(container);
+	if (!set)
+		return;
+
+	for (const binding of [...set]) {
+		__bindingCleanupStats.examined++;
+		if (!binding.getNode().isConnected) {
+			set.delete(binding);
+			binding.effect.stop();
+		}
+	}
+
+	if (!set.size) {
+		bindingsByContainer.delete(container);
+		container.removeAttribute(BINDING_ATTR);
+	}
+}
+
+/** Stop and forget every binding of `container`, unconditionally (owner is being destroyed). */
+function stopAllBindings(container: HTMLElement): void {
 	const set = bindingsByContainer.get(container);
 	if (!set)
 		return;
@@ -99,23 +125,21 @@ function stopContainerBindings(container: HTMLElement): void {
 }
 
 /**
- * Track a binding so its reactive effect is stopped automatically once the element it renders
- * into has been mounted and then removed from the document (via a shared `MutationObserver`),
- * and so {@link disposeBindingsWithin} can stop it when its owning UIElement is destroyed.
+ * Track a binding so its reactive effect is stopped automatically once its managed node has
+ * been mounted and then removed from the document (via a shared `MutationObserver`), and so
+ * {@link disposeBindingsWithin} can stop it when its owning UIElement is destroyed.
  *
- * Containers that are never mounted are not auto-disposed; the `MutationObserver` part is a
- * no-op where it is unavailable, but `disposeBindingsWithin` still works.
- *
- * @param container Element the binding renders its node(s) into (its connectivity drives disposal).
+ * @param container Element the binding renders into (indexed/marked for subtree queries).
+ * @param getNode Returns the binding's current managed node — its connectivity drives disposal.
  * @param effect The reactive effect to stop on disposal.
  */
-export function autoDisposeBinding(container: HTMLElement, effect: ReactiveEffect): void {
+export function autoDisposeBinding(container: HTMLElement, getNode: () => Node, effect: ReactiveEffect): void {
 	let set = bindingsByContainer.get(container);
 	if (!set) {
 		bindingsByContainer.set(container, set = new Set());
 		container.setAttribute(BINDING_ATTR, "");
 	}
-	set.add({ container, effect });
+	set.add({ getNode, container, effect });
 
 	ensureObserver();
 }
@@ -166,7 +190,7 @@ export function destroyUIElementsWithin(root: HTMLElement): void {
  */
 export function disposeBindingsWithin(root: Node): void {
 	if (root instanceof HTMLElement)
-		forEachSelfAndMatches(root, BINDING_SELECTOR, stopContainerBindings);
+		forEachSelfAndMatches(root, BINDING_SELECTOR, stopAllBindings);
 
 	disconnectIfEmpty();
 }

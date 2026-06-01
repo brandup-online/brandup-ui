@@ -90,5 +90,5 @@ export function appendBindingEach<T>(container: HTMLElement, binding: BindingEac
 		}
 	});
 
-	autoDisposeBinding(container, eff);
+	autoDisposeBinding(container, () => anchor, eff);
 }

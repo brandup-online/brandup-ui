@@ -467,7 +467,7 @@ user => DOM.tag("li", null, bind(() => user.name))
 user => DOM.tag("li", null, user.name)
 ```
 
-The binding stops automatically when its container is removed from the document (same lifecycle as `bind`).
+The binding stops automatically once its rendered nodes leave the document — whether the container is removed or just cleared/replaced (same lifecycle as `bind`).
 
 ### Disposal
 
