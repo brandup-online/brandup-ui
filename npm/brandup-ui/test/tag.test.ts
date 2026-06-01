@@ -189,6 +189,20 @@ it("tag: bind() second arg → reactive text updates", async () => {
 	expect(el.textContent).toBe("b");
 });
 
+it("tag: bind() returning a deferred UIElement appends its element once bound", () => {
+	const w = new DeferredWidget();
+	const state = reactive({ view: w });
+	const el = DOM.tag("div", bind(() => state.view));
+
+	// element not bound yet → placeholder, nothing rendered
+	expect(el.firstElementChild).toBeNull();
+
+	w.bind(DOM.tag("span"));
+
+	// once setElement raises "rendered", the binding swaps in the real element
+	expect(el.firstElementChild).toBe(w.element);
+});
+
 it("tag: bindEach() second arg → keyed list", async () => {
 	const state = reactive({ items: [{ id: 1, t: "x" }] });
 	const el = DOM.tag("ul", bindEach(() => state.items, i => i.id, i => DOM.tag("li", i.t)));

@@ -78,6 +78,39 @@ it("arrays are reactive (push tracked via length)", async () => {
 	expect(sum).toEqual(6);
 });
 
+it("truncating an array via length notifies effects reading dropped indices", async () => {
+	const state = reactive({ items: [1, 2, 3, 4] });
+	let last = -1;
+	effect(() => { last = state.items[3]; });
+	expect(last).toEqual(4);
+
+	state.items.length = 2;
+	await nextTick();
+	expect(last).toBeUndefined();
+});
+
+it("truncating an array via length notifies iteration-based effects", async () => {
+	const state = reactive({ items: [1, 2, 3, 4] });
+	let keys = 0;
+	effect(() => { keys = Object.keys(state.items).length; });
+	expect(keys).toEqual(4);
+
+	state.items.length = 1;
+	await nextTick();
+	expect(keys).toEqual(1);
+});
+
+it("assigning an existing array index the same value does not re-run length effects", async () => {
+	const state = reactive({ items: [1, 2, 3] });
+	let runs = 0;
+	effect(() => { void state.items.length; runs++; });
+	expect(runs).toEqual(1);
+
+	state.items[0] = 1; // unchanged value, length unaffected
+	await nextTick();
+	expect(runs).toEqual(1);
+});
+
 it("computed caches and recomputes only when dependencies change", () => {
 	const state = reactive({ first: "Ada", last: "Lovelace" });
 	let runs = 0;

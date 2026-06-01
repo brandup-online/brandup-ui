@@ -8,10 +8,9 @@ const addCssClass = (elem: Element, cssClass: CssClass) => {
 	if (!cssClass)
 		return;
 
-	if (!Array.isArray(cssClass))
-		cssClass = cssClass.split(' ');
-
-	elem.classList.add(...cssClass);
+	const tokens = (Array.isArray(cssClass) ? cssClass : cssClass.split(' ')).filter(Boolean);
+	if (tokens.length)
+		elem.classList.add(...tokens);
 };
 
 /**
@@ -22,10 +21,9 @@ const removeCssClass = (elem: Element, cssClass: CssClass) => {
 	if (!cssClass)
 		return;
 
-	if (!Array.isArray(cssClass))
-		cssClass = cssClass.split(' ');
-
-	elem.classList.remove(...cssClass);
+	const tokens = (Array.isArray(cssClass) ? cssClass : cssClass.split(' ')).filter(Boolean);
+	if (tokens.length)
+		elem.classList.remove(...tokens);
 };
 
 export default {

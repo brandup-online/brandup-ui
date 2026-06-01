@@ -47,3 +47,28 @@ it("DOM.removeClass none", () => {
 
 	expect(2).toEqual(child.classList.length);
 });
+
+// Regression: class strings with extra/leading/trailing spaces must not throw
+// (empty tokens previously reached classList.add → "The token must not be empty").
+it("tag class with collapsed/leading/trailing spaces does not throw", () => {
+	let elem!: HTMLElement;
+	expect(() => { elem = DOM.tag("div", { class: "  a   b  " }); }).not.toThrow();
+	expect(elem.classList.contains("a")).toBe(true);
+	expect(elem.classList.contains("b")).toBe(true);
+	expect(elem.classList.length).toBe(2);
+});
+
+it("DOM.addClass with collapsed spaces ignores empty tokens", () => {
+	const child = DOM.tag("div", { class: "zero" });
+	DOM.addClass(DOM.tag("div", null, child), ".zero", "class1  class2 ");
+
+	expect(child.classList.length).toBe(3);
+});
+
+it("DOM.removeClass with collapsed spaces ignores empty tokens", () => {
+	const child = DOM.tag("div", { class: ["class1", "class2", "class3"] });
+	DOM.removeClass(DOM.tag("div", null, child), ".class1", " class1  class2 ");
+
+	expect(child.classList.length).toBe(1);
+	expect(child.classList.contains("class3")).toBe(true);
+});

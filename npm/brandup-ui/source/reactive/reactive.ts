@@ -39,8 +39,11 @@ const handlers: ProxyHandler<object> = {
 		return isObject(result) ? reactive(result) : result;
 	},
 	set(target, key, value, receiver) {
-		const hadKey = Array.isArray(target) && isIntegerKey(key)
-			? Number(key) < target.length
+		const isArray = Array.isArray(target);
+		const isIndex = isArray && isIntegerKey(key);
+		const oldLength = isArray ? (target as unknown[]).length : 0;
+		const hadKey = isIndex
+			? Number(key) < oldLength
 			: Object.prototype.hasOwnProperty.call(target, key);
 		const oldValue = (target as any)[key];
 
@@ -56,9 +59,19 @@ const handlers: ProxyHandler<object> = {
 			trigger(target, key);
 		}
 
-		// array mutation changes its length (push/splice/index assignment)
-		if (Array.isArray(target) && key !== "length")
+		if (isArray && key === "length") {
+			// shrinking the array drops indices [newLength, oldLength) — notify
+			// effects that read them, plus iteration; growing only changes iteration
+			const newLength = Number(value);
+			for (let i = newLength; i < oldLength; i++)
+				trigger(target, String(i));
+			if (newLength !== oldLength)
+				trigger(target, ITERATE_KEY);
+		}
+		else if (isIndex && Number(key) >= oldLength) {
+			// a new index extended the array, so its length changed
 			trigger(target, "length");
+		}
 
 		return result;
 	},

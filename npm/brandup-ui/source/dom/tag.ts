@@ -181,6 +181,19 @@ const appendBinding = (container: HTMLElement, binding: Binding) => {
 			current.replaceWith(next);
 			current = next;
 			textNode = null;
+
+			// deferred UIElement: its element is bound later — swap the placeholder
+			// for the real element once setElement raises "rendered"
+			if (value instanceof UIElement && !value.element) {
+				const placeholder = next;
+				value.once("rendered", () => {
+					// skip if the binding has since re-rendered to a different node
+					if (value.element && current === placeholder) {
+						placeholder.replaceWith(value.element);
+						current = value.element;
+					}
+				});
+			}
 		}
 		else {
 			// null/undefined/false render as empty text
