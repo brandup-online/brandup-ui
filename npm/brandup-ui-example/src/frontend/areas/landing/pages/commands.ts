@@ -10,7 +10,7 @@ export default class NavigationPage extends Page {
 		const html = await import("./templates/commands.html");
 		container.insertAdjacentHTML("beforeend", html.default);
 
-		this.onDestroy(() => console.warn("destroy page"));
+		this.on("destroy", () => console.warn("destroy page"));
 
 		this.registerCommand("command1", (context) => { context.target.innerHTML = "ok"; });
 		this.registerCommand("command1-cant", (context) => { context.target.innerHTML = "ok"; }, () => { return false; });
