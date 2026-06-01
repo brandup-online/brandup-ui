@@ -96,7 +96,7 @@ export class EventEmitter<TEvents = EventMap> {
 	 * @param callback Handler invoked when the event is triggered.
 	 */
 	protected listenTo(source: EventEmitter<any>, eventName: string, callback: EventCallbackFunc): this {
-		this._addListeningTo(source, eventName);
+		this._addListeningTo(source, eventName, callback, callback);
 		source.on(eventName, callback, this);
 		return this;
 	}
@@ -108,8 +108,16 @@ export class EventEmitter<TEvents = EventMap> {
 	 * @param callback Handler invoked once when the event is triggered.
 	 */
 	protected listenToOnce(source: EventEmitter<any>, eventName: string, callback: EventCallbackFunc): this {
-		this._addListeningTo(source, eventName);
-		source.once(eventName, callback, this);
+		// Use our own one-shot wrapper instead of source.once so that, when it fires,
+		// we can drop this exact subscription from BOTH sides — the source and our
+		// own _listeningTo registry — keeping the two in sync (no dangling tracking).
+		const wrapper: EventCallbackFunc = (...args: any[]) => {
+			source.off(eventName, wrapper, this);
+			this._removeListeningSubscription(source, eventName, wrapper);
+			callback.apply(this, args);
+		};
+		this._addListeningTo(source, eventName, wrapper, callback);
+		source.on(eventName, wrapper, this);
 		return this;
 	}
 
@@ -124,26 +132,33 @@ export class EventEmitter<TEvents = EventMap> {
 		if (!this._listeningTo)
 			return this;
 
-		let sourceListening: EventListening | undefined;
-		if (source) {
-			if (!source._listenId)
-				throw new Error("Emmiter is not set id.");
-			sourceListening = this._listeningTo[source._listenId];
-		}
+		// A source we never listened to has no tracked subscriptions — nothing to do.
+		const listenings = source
+			? (source._listenId && this._listeningTo[source._listenId] ? [this._listeningTo[source._listenId]] : [])
+			: Object.values(this._listeningTo);
 
-		const sources = sourceListening ? [sourceListening] : Object.values(this._listeningTo);
-		sources.forEach(source => {
-			const removeEventNames = eventName ? [eventName] : source.events;
-			removeEventNames.forEach(eventName => {
-				source.emitter.off(eventName, callback, this);
+		const targetEvent = eventName ? eventName.toLowerCase() : undefined;
 
-				const index = source.events.indexOf(eventName);
+		listenings.forEach(listening => {
+			// snapshot: the loop splices listening.subscriptions
+			listening.subscriptions.slice().forEach(sub => {
+				if (targetEvent && sub.eventName !== targetEvent)
+					return;
+				// match the user-supplied callback against both the registered
+				// callback and the original (so a listenToOnce can be stopped by
+				// the callback the caller passed, not the internal wrapper)
+				if (callback && sub.callback !== callback && sub.origin !== callback)
+					return;
+
+				listening.emitter.off(sub.eventName, sub.callback, this);
+
+				const index = listening.subscriptions.indexOf(sub);
 				if (index >= 0)
-					source.events.splice(index, 1);
+					listening.subscriptions.splice(index, 1);
 			});
 
-			if (!source.events.length && source.emitter._listenId && this._listeningTo)
-				delete this._listeningTo[source.emitter._listenId];
+			if (!listening.subscriptions.length && listening.emitter._listenId)
+				delete this._listeningTo![listening.emitter._listenId];
 		});
 
 		if (!this._listeningTo || Object.keys(this._listeningTo).length === 0)
@@ -152,17 +167,37 @@ export class EventEmitter<TEvents = EventMap> {
 		return this;
 	}
 
-	private _addListeningTo(source: EventEmitter<any>, eventName: EventName) {
+	private _addListeningTo(source: EventEmitter<any>, eventName: EventName, callback: EventCallbackFunc, origin: EventCallbackFunc) {
 		const listeningTo = this._listeningTo || (this._listeningTo = {});
 		const listenId = source._listenId || (source._listenId = `l${ListenCounter++}`);
 
-		const listenTo = listeningTo[listenId] || (listeningTo[listenId] = { emitter: source, events: [] });
+		const listenTo = listeningTo[listenId] || (listeningTo[listenId] = { emitter: source, subscriptions: [] });
+
+		// one entry per subscription (not per event name) so each can be removed
+		// independently — e.g. a listenToOnce dropping itself without disturbing
+		// a co-registered persistent listenTo on the same source+event.
+		listenTo.subscriptions.push({ eventName: eventName.toLowerCase(), callback, origin });
+	}
+
+	/** Remove a single tracked subscription (matched by event + registered callback). @internal */
+	private _removeListeningSubscription(source: EventEmitter<any>, eventName: EventName, callback: EventCallbackFunc) {
+		const listenId = source._listenId;
+		if (!this._listeningTo || !listenId)
+			return;
+
+		const listening = this._listeningTo[listenId];
+		if (!listening)
+			return;
 
 		eventName = eventName.toLowerCase();
-		// allow multiple callbacks for the same source+event; keep the
-		// event-name list unique so stopListening still cleans them up.
-		if (listenTo.events.indexOf(eventName) === -1)
-			listenTo.events.push(eventName);
+		const index = listening.subscriptions.findIndex(s => s.eventName === eventName && s.callback === callback);
+		if (index >= 0)
+			listening.subscriptions.splice(index, 1);
+
+		if (!listening.subscriptions.length)
+			delete this._listeningTo[listenId];
+		if (Object.keys(this._listeningTo).length === 0)
+			delete this._listeningTo;
 	}
 
 	private stopAllListeners() {
@@ -253,5 +288,14 @@ interface EventCallback {
 
 interface EventListening {
 	emitter: EventEmitter<any>;
-	events: EventName[];
+	subscriptions: EventSubscription[];
+}
+
+interface EventSubscription {
+	/** Event name (lower-cased) subscribed to on the source. */
+	eventName: EventName;
+	/** Callback actually registered on the source — a wrapper for `listenToOnce`. */
+	callback: EventCallbackFunc;
+	/** Original user-supplied callback; matched (besides `callback`) by `stopListening`. */
+	origin: EventCallbackFunc;
 }
