@@ -42,14 +42,14 @@ export default class AjaxPage extends Page {
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "empty-url" }, "empty url")));
 		this.registerCommand("empty-url", async () => {
-			await this.queue.enque({
+			await this.queue.enqueue({
 				success: () => console.log("success empty-url")
 			});
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "can-request" }, "can request")));
 		this.registerCommand("can-request", () => {
-			return this.queue.enque({
+			return this.queue.enqueue({
 				url: "?can-request",
 				success: () => console.log("success can-request")
 			});
@@ -57,7 +57,7 @@ export default class AjaxPage extends Page {
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "send-json" }, "send json")));
 		this.registerCommand("send-json", () => {
-			return this.queue.enque({
+			return this.queue.enqueue({
 				method: "POST",
 				url: "/_ajax/send-json",
 				data: { test: "test" },
@@ -68,7 +68,7 @@ export default class AjaxPage extends Page {
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "redirect-internal" }, "redirect")));
 		this.registerCommand("redirect-internal", () => {
-			return this.queue.enque({
+			return this.queue.enqueue({
 				url: "/_ajax/redirect",
 				disableCache: true,
 				success: () => console.log("success redirect-internal")
@@ -77,7 +77,7 @@ export default class AjaxPage extends Page {
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "redirect-external" }, "redirect external")));
 		this.registerCommand("redirect-external", () => {
-			return this.queue.enque({
+			return this.queue.enqueue({
 				url: "https://wsender.ru",
 				disableCache: true,
 				success: () => console.log("success redirect-external")
@@ -86,7 +86,7 @@ export default class AjaxPage extends Page {
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "ajax-json" }, "response json")));
 		this.registerCommand("ajax-json", () => {
-			return this.queue.enque({
+			return this.queue.enqueue({
 				url: "/_ajax/json",
 				disableCache: true,
 				success: () => console.log("success ajax-json")
@@ -95,14 +95,14 @@ export default class AjaxPage extends Page {
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "ajax-html" }, "response html")));
 		this.registerCommand("ajax-html", async () => {
-			await this.queue.enque({ url: "/_ajax/html", disableCache: true });
+			await this.queue.enqueue({ url: "/_ajax/html", disableCache: true });
 
 			console.log("success ajax-html");
 		});
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "ajax-text" }, "response text")));
 		this.registerCommand("ajax-text", () => {
-			return this.queue.enque({
+			return this.queue.enqueue({
 				url: "/_ajax/text",
 				disableCache: true,
 				success: () => console.log("success ajax-text")
@@ -111,7 +111,7 @@ export default class AjaxPage extends Page {
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "ajax-image" }, "response image")));
 		this.registerCommand("ajax-image", () => {
-			return this.queue.enque({
+			return this.queue.enqueue({
 				url: "/_ajax/image",
 				disableCache: true,
 				success: () => console.log("success ajax-image")
@@ -120,7 +120,7 @@ export default class AjaxPage extends Page {
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "ajax-delay" }, "response delay")));
 		this.registerCommand("ajax-delay", () => {
-			return this.queue.enque({
+			return this.queue.enqueue({
 				url: "/_ajax/delay",
 				disableCache: true,
 				success: () => console.log("success ajax-delay"),
@@ -130,7 +130,7 @@ export default class AjaxPage extends Page {
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "ajax-timeout" }, "response timeout")));
 		this.registerCommand("ajax-timeout", () => {
-			return this.queue.enque({
+			return this.queue.enqueue({
 				url: "/_ajax/delay",
 				disableCache: true,
 				timeout: 1000,
@@ -141,7 +141,7 @@ export default class AjaxPage extends Page {
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "send-headers" }, "send headers")));
 		this.registerCommand("send-headers", () => {
-			return this.queue.enque({
+			return this.queue.enqueue({
 				method: "POST",
 				url: "/_ajax/send-json",
 				headers: { aaa: "aaa" },
@@ -154,7 +154,7 @@ export default class AjaxPage extends Page {
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "", command: "response-headers" }, "get response headers")));
 		this.registerCommand("response-headers", () => {
-			return this.queue.enque({
+			return this.queue.enqueue({
 				url: "/_ajax/image",
 				disableCache: true,
 				success: (response) => {

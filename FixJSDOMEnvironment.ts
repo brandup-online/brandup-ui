@@ -11,7 +11,9 @@ export default class FixJSDOMEnvironment extends JSDOMEnvironment {
 		this.global.Request = Request;
 		this.global.Response = Response;
 		this.global.FormData = FormData;
-		this.global.AbortController = AbortController;
-		this.global.AbortSignal = AbortSignal;
+		// AbortController and AbortSignal are natively supported by jsdom 16+.
+		// Do NOT replace them with Node.js versions: jsdom validates AbortSignal
+		// via instanceof its own internal class, so replacing the global breaks
+		// DOM APIs that accept AbortSignal (e.g. addEventListener options).
 	}
 }

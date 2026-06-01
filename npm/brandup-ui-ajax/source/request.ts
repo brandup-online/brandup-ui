@@ -24,7 +24,7 @@ export async function request<TData = any, TState = any>(options: AjaxRequest<TS
 
 	let body: any = options.data;
 	if (body && (method === "GET" || method === "HEAD"))
-		throw new Error("GET method is not support request with data.");
+		throw new Error(`${method} method does not support a request body.`);
 
 	internals.detectRequestType(options);
 	const prepared = internals.prepareRequest(options, body);

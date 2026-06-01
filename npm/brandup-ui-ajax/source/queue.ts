@@ -5,7 +5,7 @@ import { request } from "./request";
 export class AjaxQueue {
 	private _options: AjaxQueueOptions;
 	private _requests: Array<RequestTask> = [];
-	private _curent: RequestTask | null = null;
+	private _current: RequestTask | null = null;
 	private _destroyed = false;
 
 	/** @param options Optional queue-wide hooks. */
@@ -16,7 +16,7 @@ export class AjaxQueue {
 	/** Number of requests waiting in the queue (excluding the one currently executing). */
 	get length(): number { return this._requests.length; }
 	/** `true` when nothing is queued and no request is currently executing. */
-	get isFree(): boolean { return !this._requests.length && !this._curent; }
+	get isFree(): boolean { return !this._requests.length && !this._current; }
 	/** `true` when no requests are waiting in the queue (a request may still be executing). */
 	get isEmpty(): boolean { return !this._requests.length; }
 
@@ -31,9 +31,9 @@ export class AjaxQueue {
 		if (this._destroyed)
 			throw new Error("AjaxQueue is destroyed.");
 
-		this._requests.push({ request, cancel: abortSignal, abort: new AbortController() });
+		this._requests.push({ request, cancel: abortSignal });
 
-		if (!this._curent)
+		if (!this._current)
 			this.__execute();
 	}
 
@@ -47,7 +47,7 @@ export class AjaxQueue {
 	 * @param abortSignal Optional signal used to cancel this specific request.
 	 * @returns A promise resolving with the {@link AjaxResponse}.
 	 */
-	enque<TResponse = any>(request: AjaxRequest, abortSignal?: AbortSignal) {
+	enqueue<TResponse = any>(request: AjaxRequest, abortSignal?: AbortSignal) {
 		const { success, error } = request;
 
 		return new Promise<AjaxResponse<TResponse>>((resolve, reject) => {
@@ -68,6 +68,11 @@ export class AjaxQueue {
 		});
 	}
 
+	/** @deprecated Renamed to {@link enqueue}. */
+	enque<TResponse = any>(request: AjaxRequest, abortSignal?: AbortSignal) {
+		return this.enqueue<TResponse>(request, abortSignal);
+	}
+
 	/**
 	 * Clears all queued (not-yet-started) requests.
 	 *
@@ -76,8 +81,8 @@ export class AjaxQueue {
 	reset(cancelCurrentRequest = false) {
 		this._requests = [];
 
-		const current = this._curent;
-		this._curent = null;
+		const current = this._current;
+		this._current = null;
 
 		if (cancelCurrentRequest && current)
 			current.abort?.abort("ResetAjaxQueue");
@@ -91,9 +96,9 @@ export class AjaxQueue {
 
 		this._requests = [];
 
-		if (this._curent) {
-			this._curent.abort?.abort("DestroyAjaxQueue");
-			this._curent = null;
+		if (this._current) {
+			this._current.abort?.abort("DestroyAjaxQueue");
+			this._current = null;
 		}
 	}
 
@@ -101,19 +106,22 @@ export class AjaxQueue {
 		if (this._destroyed)
 			return;
 
-		if (this._curent)
+		if (this._current)
 			throw new Error("AjaxQueue currently is executing.");
 
-		const task = this._curent = this._requests.shift() ?? null;
+		const task = this._current = this._requests.shift() ?? null;
 
 		if (task) {
 			if (this._options.canRequest && this._options.canRequest(task.request) === false) {
-				this.__next();
+				this.__next(task);
 				return;
 			}
 
-			if (task.request.abort?.aborted || task.cancel?.aborted)
-				task.result = Promise.reject("cancelled");
+			if (task.request.abort?.aborted || task.cancel?.aborted) {
+				const err = new Error("Request cancelled");
+				task.request.error?.(task.request, err);
+				task.result = Promise.reject(err);
+			}
 			else {
 				task.abort = new AbortController();
 				task.result = request(task.request, task.cancel ? AbortSignal.any([task.abort.signal, task.cancel]) : task.abort.signal);
@@ -134,15 +142,20 @@ export class AjaxQueue {
 					if (this._options.errorRequest)
 						this._options.errorRequest(task.request, reason);
 				})
-				.finally(() => this.__next());
+				.finally(() => this.__next(task));
 		}
 	}
 
-	private __next() {
+	// completedTask is the task that finished — if _current already changed
+	// (e.g. reset(true) was called and a new push() started a new task), bail out
+	// to avoid clearing the new task's reference or double-executing the queue.
+	private __next(completedTask: RequestTask) {
 		if (this._destroyed)
 			return;
+		if (this._current !== completedTask)
+			return;
 
-		this._curent = null;
+		this._current = null;
 		this.__execute();
 	}
 }
@@ -150,7 +163,7 @@ export class AjaxQueue {
 /** Queue-wide hooks invoked for every request processed by an {@link AjaxQueue}. */
 export interface AjaxQueueOptions {
 	/** Called before a request is sent; returning `false` skips it (it is dropped without being sent). */
-	canRequest?: (request: AjaxRequest) => void | boolean;
+	canRequest?: (request: AjaxRequest) => boolean | void;
 	/** Called after a request completes successfully. */
 	successRequest?: (request: AjaxRequest, response: AjaxResponse) => void;
 	/** Called when a request fails or is aborted. */

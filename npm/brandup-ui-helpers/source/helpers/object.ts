@@ -16,6 +16,9 @@ function getProperty(obj: any, path: string): any {
 
 	for (let i = 0; i < props.length; i++) {
 		const name = props[i];
+		if (obj == null || (typeof obj !== "object" && typeof obj !== "function"))
+			return undefined;
+
 		if (!(name in obj))
 			return undefined;
 
@@ -42,6 +45,9 @@ function hasProperty(obj: any, path: string): boolean {
 
 	for (let i = 0; i < props.length; i++) {
 		const name = props[i];
+		if (obj == null || (typeof obj !== "object" && typeof obj !== "function"))
+			return false;
+
 		if (!(name in obj))
 			return false;
 

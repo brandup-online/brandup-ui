@@ -11,7 +11,7 @@ const detectRequestType = (options: AjaxRequest) => {
 		if (body instanceof Blob)
 			options.type = "BLOB";
 		else if (body instanceof FormData)
-			options.type = null;
+			options.type = "FORMDATA";
 		else if (body instanceof HTMLFormElement)
 			options.type = "FORM";
 		else if (body instanceof Object)
@@ -51,17 +51,13 @@ const prepareRequest = (options: AjaxRequest, body: any): { headers: Record<stri
 
 				break;
 			case "FORM":
-				if (body instanceof HTMLFormElement) {
+				// Convert HTMLFormElement to FormData first, then URL-encode both paths
+				if (body instanceof HTMLFormElement)
 					body = new FormData(body);
-				}
-				else if (body instanceof FormData)
-					contentType = FORM_URL;
-
-				if (contentType == FORM_URL)
+				if (body instanceof FormData) {
 					body = helpers.encodeForm(body);
-				else if (contentType == FORM_DATA)
-					contentType = null;
-
+					contentType = FORM_URL;
+				}
 				break;
 			case "FORMDATA":
 				break;

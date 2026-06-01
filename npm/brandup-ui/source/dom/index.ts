@@ -1,5 +1,6 @@
 export * from "./types"
 export * from "./bind"
+export * from "./bind-each"
 import * as DomHelpers from "./dom"
 import * as TagHelpers from "./tag"
 

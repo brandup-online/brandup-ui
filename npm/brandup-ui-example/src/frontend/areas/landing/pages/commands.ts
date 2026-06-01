@@ -58,7 +58,7 @@ export default class NavigationPage extends Page {
 
 			const test = await import('../../../components/test');
 			const component = new test.default(context.target);
-			this.onDestroy(component);
+			this.on("destroy", () => component.destroy());
 		});
 
 		this.registerCommand("upload-file", (context) => {

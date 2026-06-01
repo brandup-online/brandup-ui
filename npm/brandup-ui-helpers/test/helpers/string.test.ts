@@ -24,4 +24,12 @@ describe("formatText", () => {
 	it("Returns empty string for missing keys", () => {
 		expect(formatText("Hello {missing}", { name: "John" })).toBe("Hello ");
 	});
+
+	it("Returns empty string for non-numeric positional key", () => {
+		expect(formatText("Hello {abc}", "World")).toBe("Hello ");
+	});
+
+	it("Returns empty string for out-of-range positional index", () => {
+		expect(formatText("Hello {5}", "World")).toBe("Hello ");
+	});
 });

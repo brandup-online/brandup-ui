@@ -1,26 +1,11 @@
 /**
- * Generates a new random GUID string in upper-case `XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX` form.
+ * Generates a RFC 4122 UUID v4 string using `crypto.randomUUID()`.
  *
- * Uses `Math.random` and is intended for client-side identifiers, not cryptographic use.
- *
- * @returns A newly generated GUID string.
+ * @returns A newly generated UUID string in `xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx` form.
  * @example
- * createGuid(); // e.g. "3F2A1B4C-9D8E-..."
+ * createGuid(); // e.g. "3f2a1b4c-9d8e-4a23-b123-456789abcdef"
  */
-const createGuid = () => {
-	var result: string;
-	var i: string;
-	var j: number;
-
-	result = "";
-	for (j = 0; j < 32; j++) {
-		if (j == 8 || j == 12 || j == 16 || j == 20)
-			result = result + '-';
-		i = Math.floor(Math.random() * 16).toString(16).toUpperCase();
-		result = result + i;
-	}
-	return result;
-}
+const createGuid = (): string => crypto.randomUUID();
 
 /** The empty (all-zero) GUID value `"00000000-0000-0000-0000-000000000000"`. */
 const empty = "00000000-0000-0000-0000-000000000000";

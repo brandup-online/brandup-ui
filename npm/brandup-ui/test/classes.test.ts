@@ -1,7 +1,7 @@
 import { DOM } from "../source/index";
 
 it("DOM.addClass many", () => {
-	const child = DOM.tag("div", ["zero"]);
+	const child = DOM.tag("div", { class: "zero" });
 
 	DOM.addClass(DOM.tag("div", null, child), ".zero", ["class1", "class2"]);
 
@@ -9,7 +9,7 @@ it("DOM.addClass many", () => {
 });
 
 it("DOM.addClass single", () => {
-	const child = DOM.tag("div", ["zero"]);
+	const child = DOM.tag("div", { class: "zero" });
 
 	DOM.addClass(DOM.tag("div", null, child), ".zero", "class2 test");
 
@@ -17,7 +17,7 @@ it("DOM.addClass single", () => {
 });
 
 it("DOM.addClass none", () => {
-	const child = DOM.tag("div", ["zero"]);
+	const child = DOM.tag("div", { class: "zero" });
 
 	DOM.addClass(DOM.tag("div", null, child), ".zero", "");
 	DOM.addClass(DOM.tag("div", null, child), ".zero", []);
@@ -26,7 +26,7 @@ it("DOM.addClass none", () => {
 });
 
 it("DOM.removeClass many", () => {
-	const child = DOM.tag("div", ["class1", "class2"]);
+	const child = DOM.tag("div", { class: ["class1", "class2"] });
 
 	DOM.removeClass(DOM.tag("div", null, child), ".class1", ["class1", "class2"]);
 
@@ -34,14 +34,14 @@ it("DOM.removeClass many", () => {
 });
 
 it("DOM.removeClass single", () => {
-	const child = DOM.tag("div", ["class1", "class2"]);
+	const child = DOM.tag("div", { class: ["class1", "class2"] });
 	DOM.removeClass(DOM.tag("div", null, child), ".class1", "class2");
 
 	expect(1).toEqual(child.classList.length);
 });
 
 it("DOM.removeClass none", () => {
-	const child = DOM.tag("div", ["class1", "class2"]);
+	const child = DOM.tag("div", { class: ["class1", "class2"] });
 	DOM.removeClass(DOM.tag("div", null, child), ".class1", "");
 	DOM.removeClass(DOM.tag("div", null, child), ".class1", []);
 

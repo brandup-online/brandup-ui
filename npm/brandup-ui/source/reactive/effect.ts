@@ -141,6 +141,21 @@ export function nextTick(fn?: () => void): Promise<void> {
 	return fn ? p.then(fn).then(() => { }) : p.then(() => { });
 }
 
+/**
+ * Execute `fn` without tracking any reactive reads.
+ * Use inside a reactive context when you want to read state without creating a dependency.
+ */
+export function untrack<T>(fn: () => T): T {
+	const prev = activeEffect;
+	activeEffect = undefined;
+	try {
+		return fn();
+	}
+	finally {
+		activeEffect = prev;
+	}
+}
+
 function cleanupEffect(effect: ReactiveEffect): void {
 	const { deps } = effect;
 	deps.forEach(dep => dep.delete(effect));

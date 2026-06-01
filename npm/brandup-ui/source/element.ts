@@ -1,6 +1,6 @@
 import { EventEmitter } from "./events";
 import { effectScope as createEffectScope, EffectScope } from "./reactive";
-import { disposeBindingsWithin } from "./dom/binding-cleanup";
+import { disposeBindingsWithin, destroyUIElementsWithin, trackAutoDestroy, untrackAutoDestroy } from "./dom/binding-cleanup";
 import UICONSTANTS from "./constants";
 
 /** Built-in events triggered by every {@link UIElement}. */
@@ -57,6 +57,8 @@ export abstract class UIElement<TEvents = {}> extends EventEmitter<WithUIEvents<
 		(<any>elem)[UICONSTANTS.ElemPropertyName] = this;
 		elem.dataset[UICONSTANTS.ElemAttributeName] = this.typeName;
 
+		trackAutoDestroy(elem, () => this.destroy());
+
 		this._onRenderElement(elem);
 
 		this.__raise("rendered", this);
@@ -87,11 +89,11 @@ export abstract class UIElement<TEvents = {}> extends EventEmitter<WithUIEvents<
 
 		const commands = this.__commands || (this.__commands = {});
 
-		const nornalizedName = name.toLowerCase();
-		if (nornalizedName in commands)
+		const normalizedName = name.toLowerCase();
+		if (normalizedName in commands)
 			throw new Error(`Command "${name}" already registered.`);
 
-		commands[nornalizedName] = {
+		commands[normalizedName] = {
 			name: name,
 			execute,
 			canExecute
@@ -227,7 +229,9 @@ export abstract class UIElement<TEvents = {}> extends EventEmitter<WithUIEvents<
 
 		const elem = this.__element;
 		if (elem) {
-			disposeBindingsWithin(elem); // stop reactive bindings rendered inside this element
+			destroyUIElementsWithin(elem); // cascade to nested UIElements, deepest first
+			untrackAutoDestroy(elem);
+			disposeBindingsWithin(elem);
 			delete elem.dataset[UICONSTANTS.ElemAttributeName];
 			delete (<any>elem)[UICONSTANTS.ElemPropertyName];
 		}
@@ -294,7 +298,7 @@ const commandClickHandler = (e: MouseEvent) => {
 
 	const commandName = commandElem.dataset[UICONSTANTS.CommandAttributeName];
 	if (!commandName)
-		throw new Error("Command data attribute is not have value.");
+		throw new Error("Command data attribute does not have a value.");
 
 	const uiElem = findUiElementByCommand(commandElem, commandName);
 	if (uiElem) {
@@ -310,7 +314,12 @@ const commandClickHandler = (e: MouseEvent) => {
 	e.stopImmediatePropagation();
 }
 
-window.addEventListener("click", commandClickHandler, false);
+window.addEventListener("click", commandClickHandler);
+
+/** Remove the global click handler registered by brandup-ui. Call on app teardown or HMR disposal. */
+export function destroyUI(): void {
+	window.removeEventListener("click", commandClickHandler);
+}
 
 interface CommandInit {
 	name: string;
