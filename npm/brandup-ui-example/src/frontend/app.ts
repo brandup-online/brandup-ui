@@ -32,9 +32,9 @@ export class ExampleApplication extends Application<ExampleApplicationModel> {
 	protected override async onStared() {
 		await super.onStared();
 
-		const layoutElem = DOM.tag("div", "app",
+		const layoutElem = DOM.tag("div", { class: "app" },
 			DOM.tag("nav", { class: "app-nav", role: "navigation" },
-				DOM.tag("div", "content-width",
+				DOM.tag("div", { class: "content-width" },
 					DOM.tag("a", { class: "logo", title: "brandup-ui" }, logoIcon, DOM.tag("span", null, "UI")).navUrl("/"),
 					// reactive: the menu is rendered from state.menu and re-renders when it changes
 					bind(() => DOM.tag("menu", null,

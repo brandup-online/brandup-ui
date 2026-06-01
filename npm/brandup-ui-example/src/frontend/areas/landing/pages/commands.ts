@@ -30,7 +30,7 @@ export default class NavigationPage extends Page {
 		});
 
 		this.registerCommand("command-dom1", (context) => {
-			context.target.insertAdjacentElement("afterend", DOM.tag("div", "test", "test"));
+			context.target.insertAdjacentElement("afterend", DOM.tag("div", { class: "test" }, "test"));
 			return Promise.resolve();
 		});
 

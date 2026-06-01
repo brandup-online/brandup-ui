@@ -20,7 +20,7 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 	}
 
 	async start(context: StartContext, next: MiddlewareNext) {
-		context.app.element?.insertAdjacentElement("beforeend", DOM.tag("div", "app-loader"));
+		context.app.element?.insertAdjacentElement("beforeend", DOM.tag("div", { class: "app-loader" }));
 
 		const bodyElem = document.body;
 

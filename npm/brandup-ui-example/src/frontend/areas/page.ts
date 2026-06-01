@@ -27,7 +27,7 @@ export abstract class Page extends UIElement {
 
 	async render(): Promise<DocumentFragment> {
 		const content = document.createDocumentFragment();
-		const pageElem = DOM.tag("div", "page");
+		const pageElem = DOM.tag("div", { class: "page" });
 		content.appendChild(pageElem);
 
 		this.setElement(pageElem);
@@ -38,7 +38,7 @@ export abstract class Page extends UIElement {
 	}
 
 	protected override _onRenderElement(element: HTMLElement) {
-		element.appendChild(DOM.tag("header", "page-header", [
+		element.appendChild(DOM.tag("header", { class: "page-header" }, [
 			DOM.tag("h1", null, this.header)
 		]));
 	}
