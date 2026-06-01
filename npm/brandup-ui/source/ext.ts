@@ -15,9 +15,12 @@ declare global {
 	}
 }
 
-HTMLElement.prototype.ui = function (factory: (elem: HTMLElement) => UIElement): HTMLElement {
-	factory(this);
-	return this;
-};
+// Guarded so importing the module does not throw in a non-DOM environment (SSR/Node).
+if (typeof HTMLElement !== "undefined") {
+	HTMLElement.prototype.ui = function (factory: (elem: HTMLElement) => UIElement): HTMLElement {
+		factory(this);
+		return this;
+	};
+}
 
 export { };

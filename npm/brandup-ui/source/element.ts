@@ -151,7 +151,8 @@ export abstract class UIElement<TEvents = {}> extends EventEmitter<WithUIEvents<
 
 				target.classList.add(UICONSTANTS.CommandExecutingCssClassName);
 				commandResult
-					.catch(() => { }) // command owns its errors; just avoid unhandled rejection
+					// command owns its errors; log so failures aren't silent, and avoid unhandled rejection
+					.catch((reason) => console.error(`Command "${command.name}" failed.`, reason))
 					.finally(() => {
 						target.classList.remove(UICONSTANTS.CommandExecutingCssClassName);
 						delete command.isExecuting;
@@ -296,11 +297,14 @@ const commandClickHandler = (e: MouseEvent) => {
 	e.stopImmediatePropagation();
 }
 
-window.addEventListener("click", commandClickHandler);
+// Guarded so importing the module does not throw in a non-DOM environment (SSR/Node).
+if (typeof window !== "undefined")
+	window.addEventListener("click", commandClickHandler);
 
 /** Remove the global click handler registered by brandup-ui. Call on app teardown or HMR disposal. */
 export function destroyUI(): void {
-	window.removeEventListener("click", commandClickHandler);
+	if (typeof window !== "undefined")
+		window.removeEventListener("click", commandClickHandler);
 }
 
 interface CommandInit {

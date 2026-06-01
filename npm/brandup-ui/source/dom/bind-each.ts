@@ -20,6 +20,12 @@ export class BindingEach<T = any> {
  * `render` is called **once per key** and runs **untracked**. Use `bind()` inside
  * the render function for item properties that should update independently:
  *
+ * ⚠️ The item object passed to `render` is captured at first render for that key.
+ * Mutate items in place (`item.name = "..."`) so `bind()` reactions fire. Replacing
+ * the array with **new objects that reuse the same keys** keeps the cached node bound
+ * to the *old* object, so per-item `bind()`s won't update — change the key, or mutate
+ * the existing item, when its identity should change.
+ *
  * @example
  * DOM.tag("ul", null,
  *     bindEach(() => state.users, u => u.id, u =>
