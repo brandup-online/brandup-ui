@@ -265,16 +265,10 @@ const findUiElementByCommand = (elem: HTMLElement, commandName: string): UIEleme
 };
 
 const commandClickHandler = (e: MouseEvent) => {
-	let commandElem: HTMLElement | null = e.target as HTMLElement;
-	while (commandElem) {
-		if (commandElem.dataset[UICONSTANTS.CommandAttributeName])
-			break;
-
-		if (commandElem === e.currentTarget)
-			return;
-
+	// walk up from the clicked element to the nearest ancestor declaring a command
+	let commandElem: HTMLElement | null = e.target as HTMLElement | null;
+	while (commandElem && !commandElem.dataset[UICONSTANTS.CommandAttributeName])
 		commandElem = commandElem.parentElement;
-	}
 
 	if (!commandElem)
 		return;
