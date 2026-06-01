@@ -163,27 +163,28 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 				this.__onSubmit({ form, button: e.submitter instanceof HTMLButtonElement ? <HTMLButtonElement>e.submitter : null })
 					.catch(() => { });
 			}, false);
-
-			await this.onStared();
-
-			console.info("app runned");
 		}
 		catch (reason: any) {
 			console.error(`app run error: ${reason}`);
 			throw reason;
 		}
 
+		// Run the first navigation before onStared(): its navigate middleware always
+		// closes the startup loading state (in a finally, even on error), so the app
+		// can never get stuck "loading" if onStared throws.
 		try {
 			await this.nav({ data: context.data, abort: this.__abort.signal });
 		}
 		catch (reason: any) {
-			if (reason === NAV_OVERIDE_ERROR) {
-				console.info(`app run nav overided`);
-				return context;
-			}
+			if (reason !== NAV_OVERIDE_ERROR)
+				throw reason;
 
-			throw reason;
+			console.info(`app run nav overided`);
 		}
+
+		await this.onStared();
+
+		console.info("app runned");
 
 		return context;
 	}
@@ -311,6 +312,11 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		if ((!button || !button.formNoValidate) && !form.checkValidity())
 			throw new Error('Form is invalid.');
 
+		// guard before applying any loading class, otherwise a rejected re-entrant
+		// submit would leave the button stuck in the loading state
+		if (form.classList.contains(CONSTANTS.LoadingElementClass))
+			throw new Error('Form already submitting.');
+
 		let replace = form.hasAttribute(CONSTANTS.NavUrlReplaceAttributeName);
 		let method = form.method;
 		let enctype = form.enctype;
@@ -330,8 +336,6 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 				replace = true;
 		}
 
-		if (form.classList.contains(CONSTANTS.LoadingElementClass))
-			throw new Error('Form already submitting.');
 		form.classList.add(CONSTANTS.LoadingElementClass);
 
 		method = method.toUpperCase();

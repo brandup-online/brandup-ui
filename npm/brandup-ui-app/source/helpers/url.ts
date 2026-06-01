@@ -42,7 +42,7 @@ const parseUrl = (basePath: string, url: string | null): ParsedUrl => {
 			path = loc.pathname;
 			query = new URLSearchParams(url);
 		}
-		else if (url.startsWith("http")) {
+		else if (/^https?:\/\//i.test(url)) {
 			const u = new URL(url);
 			if (u.origin != origin) {
 				origin = u.origin;
@@ -136,6 +136,9 @@ const extendQuery = (url: ParsedUrl, query: QueryParams | URLSearchParams | Form
 	else {
 		for (const key in query) {
 			const value = query[key];
+			if (value === null || typeof value === "undefined")
+				continue;
+
 			if (!Array.isArray(value)) {
 				url.query.set(key, value);
 			}

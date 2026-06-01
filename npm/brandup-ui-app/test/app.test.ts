@@ -358,6 +358,55 @@ it("GET submit merges form fields with options query", async () => {
 	appElem.remove();
 });
 
+it("submit on an already-submitting form does not leave the button in loading state", async () => {
+	setLocation("http://localhost/");
+
+	const builder = new ApplicationBuilder({});
+	const app = builder.build({ basePath: "/" });
+
+	const appElem = DOM.tag("div");
+	document.body.appendChild(appElem);
+	await app.run({}, appElem);
+
+	const form = DOM.tag("form", { class: "appform", method: "post", action: "/save" }) as HTMLFormElement;
+	form.classList.add("loading"); // simulate an in-flight submit
+	const button = DOM.tag("button", { type: "submit" }) as HTMLButtonElement;
+	form.appendChild(button);
+	appElem.appendChild(form);
+
+	await expect((app as any).__onSubmit({ form, button })).rejects.toThrow("Form already submitting");
+	// the guard must run before any loading class is applied to the button
+	expect(button.classList.contains("loading")).toBe(false);
+
+	await app.destroy();
+	appElem.remove();
+});
+
+it("startup loading is cleared even if onStared throws (first navigation runs first)", async () => {
+	setLocation("http://localhost/");
+
+	class BoomApp extends Application {
+		protected override onStared(): Promise<void> { return Promise.reject(new Error("stared boom")); }
+	}
+
+	const builder = new ApplicationBuilder({});
+	builder.useApp(BoomApp);
+	const app = builder.build({ basePath: "/" });
+
+	const appElem = DOM.tag("div");
+	document.body.appendChild(appElem);
+
+	await expect(app.run({}, appElem)).rejects.toThrow("stared boom");
+
+	// the first navigation (and its state middleware) must have closed the startup
+	// loading before onStared threw — otherwise the app stays stuck "loading"
+	expect(appElem.classList.contains("bp-state-loading")).toBe(false);
+	expect(appElem.classList.contains("bp-state-loaded")).toBe(true);
+
+	await app.destroy().catch(() => { });
+	appElem.remove();
+});
+
 interface TestAppModel extends ApplicationModel {
 	userId: string;
 }

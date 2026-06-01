@@ -15,30 +15,33 @@ declare global {
 	}
 }
 
-HTMLElement.prototype.navUrl = function (url: string) {
-	if (this instanceof HTMLAnchorElement)
-		this.href = url;
-	else
-		this.dataset.navUrl = url;
+// Guarded so importing the module does not throw in a non-DOM environment (SSR/Node).
+if (typeof HTMLElement !== "undefined") {
+	HTMLElement.prototype.navUrl = function (url: string) {
+		if (this instanceof HTMLAnchorElement)
+			this.href = url;
+		else
+			this.dataset.navUrl = url;
 
-	this.classList.add(CONSTANTS.NavUrlClassName);
+		this.classList.add(CONSTANTS.NavUrlClassName);
 
-	return this;
-};
+		return this;
+	};
 
-HTMLElement.prototype.nav = function (app: Application, path?: string, query?: QueryParams | URLSearchParams | FormData, hash?: string) {
-	const url = app.buildUrl(path, query, hash);
-	return this.navUrl(url);
-};
+	HTMLElement.prototype.nav = function (app: Application, path?: string, query?: QueryParams | URLSearchParams | FormData, hash?: string) {
+		const url = app.buildUrl(path, query, hash);
+		return this.navUrl(url);
+	};
 
-HTMLElement.prototype.navReplace = function () {
-	this.setAttribute(CONSTANTS.NavUrlReplaceAttributeName, "");
-	return this;
-};
+	HTMLElement.prototype.navReplace = function () {
+		this.setAttribute(CONSTANTS.NavUrlReplaceAttributeName, "");
+		return this;
+	};
 
-HTMLElement.prototype.navScope = function (scope: string) {
-	this.setAttribute(CONSTANTS.NavUrlScopeAttributeName, scope);
-	return this;
-};
+	HTMLElement.prototype.navScope = function (scope: string) {
+		this.setAttribute(CONSTANTS.NavUrlScopeAttributeName, scope);
+		return this;
+	};
+}
 
 export { };

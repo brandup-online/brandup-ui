@@ -35,7 +35,14 @@ export class MiddlewareInvoker {
 	}
 
 	private async __exec(method: string, context: InvokeContext): Promise<void> {
-		const nextFunc: MiddlewareNext = () => this.__next ? this.__next.__exec(method, context) : Promise.resolve();
+		let nextCalled = false;
+		const nextFunc: MiddlewareNext = () => {
+			if (nextCalled)
+				throw new Error(`Middleware "${this.middleware.name}" called next() more than once for method "${method}".`);
+			nextCalled = true;
+
+			return this.__next ? this.__next.__exec(method, context) : Promise.resolve();
+		};
 
 		context.abort.throwIfAborted();
 

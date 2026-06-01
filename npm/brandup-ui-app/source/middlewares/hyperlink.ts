@@ -32,9 +32,6 @@ const HyperLinkMiddlewareFactory = (): Middleware => {
 							break;
 					}
 
-					if (elem === e.currentTarget)
-						return;
-
 					elem = elem.parentElement;
 				}
 
@@ -52,8 +49,12 @@ const HyperLinkMiddlewareFactory = (): Middleware => {
 					url = elem.getAttribute("href");
 				else if (elem.hasAttribute(CONSTANTS.NavUrlAttributeName))
 					url = elem.getAttribute(CONSTANTS.NavUrlAttributeName);
-				else
-					throw "Not found url for navigation.";
+				else {
+					// matched an applink element with no resolvable url (malformed markup);
+					// swallow the click rather than throwing inside a global event listener
+					console.warn("Application hyperlink: clicked element has no navigation url.");
+					return;
+				}
 
 				if (elem.classList.contains(CONSTANTS.LoadingElementClass))
 					return;

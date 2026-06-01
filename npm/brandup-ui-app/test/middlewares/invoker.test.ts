@@ -150,6 +150,28 @@ it("Method return is not Promise", async () => {
 	expect(context.data.secondPost).toEqual(false);
 });
 
+it("Reject when a middleware calls next() more than once", async () => {
+	const middleware: Middleware = {
+		name: "double-next",
+		start: async (_context: StartContext, next: MiddlewareNext) => {
+			await next();
+			await next(); // second call must be rejected
+		}
+	};
+	const invoker = new MiddlewareInvoker(middleware);
+
+	const abort = new AbortController();
+	const context: StartContext<Application, TestContextData> = {
+		abort: abort.signal,
+		app,
+		data: { mode: "default", pre: false, post: false, secondPre: false, secondPost: false }
+	};
+
+	await expect(invoker.invoke("start", context))
+		.rejects
+		.toThrow("called next() more than once");
+});
+
 const createTestMiddleware = (): Middleware => {
 	return {
 		name: "test",

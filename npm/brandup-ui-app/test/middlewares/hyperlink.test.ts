@@ -35,3 +35,27 @@ it("HyperLink middleware ignores ctrl/meta clicks", async () => {
 	await app.destroy();
 	appElem.remove();
 });
+
+it("HyperLink middleware warns (does not throw) for an applink element without a url", async () => {
+	setLocation("http://localhost/");
+
+	const builder = new ApplicationBuilder({});
+	const app = builder.build({ basePath: "/" });
+
+	const appElem = DOM.tag("div");
+	document.body.appendChild(appElem);
+	await app.run({}, appElem);
+
+	// has the applink class but no href / data-nav-url → malformed link
+	const badLink = DOM.tag("span", { class: "applink" }, "broken");
+	appElem.appendChild(badLink);
+
+	const warn = jest.spyOn(console, "warn").mockImplementation(() => { });
+	expect(() => dispatchClick(badLink)).not.toThrow();
+	expect(warn).toHaveBeenCalled();
+	expect(badLink.classList.contains("loading")).toBe(false); // navigation not attempted
+	warn.mockRestore();
+
+	await app.destroy();
+	appElem.remove();
+});

@@ -31,6 +31,14 @@ describe("parseUrl", () => {
 		expect(r.hash).toEqual("h");
 	});
 
+	it("relative path starting with 'http' is treated as relative, not absolute", () => {
+		setLocation("http://localhost/page");
+		const r = urlHelper.parseUrl("", "httpx");
+		expect(r.external).toBeFalsy();
+		expect(r.origin).toEqual("http://localhost");
+		expect(r.path).toEqual("/page/httpx");
+	});
+
 	it("absolute same-origin url is not external", () => {
 		setLocation("http://localhost/");
 		const r = urlHelper.parseUrl("", "http://localhost/about?x=1#h");
@@ -127,5 +135,14 @@ describe("extendQuery", () => {
 		urlHelper.extendQuery(u, new URLSearchParams("a=2"));
 		expect(u.query.get("a")).toEqual("2");
 		expect(u.query.get("keep")).toEqual("9");
+	});
+
+	it("object skips null and undefined values", () => {
+		setLocation("http://localhost/");
+		const u = urlHelper.parseUrl("", "/p?a=1");
+		urlHelper.extendQuery(u, { a: undefined as any, b: null as any, c: "3" });
+		expect(u.query.get("a")).toEqual("1"); // undefined must not overwrite with "undefined"
+		expect(u.query.has("b")).toBe(false);  // null must not be added as "null"
+		expect(u.query.get("c")).toEqual("3");
 	});
 });
