@@ -12,7 +12,7 @@ npm i @brandup/ui-helpers@latest
 
 ## Helper groups
 
-The package exposes the following named helper groups, plus a set of global prototype/static extensions:
+The package exposes the following named helper groups:
 
 | Import | Module |
 | --- | --- |
@@ -21,8 +21,7 @@ The package exposes the following named helper groups, plus a set of global prot
 | `FuncHelper` | timing / async helpers |
 | `WordHelper` | word pluralization |
 | `Guid` | GUID generation |
-| (extensions) | `String.prototype.format`, `Object.prop`, `Object.hasProp` |
-| (string) | `formatText` |
+| `formatText` | string template formatting |
 
 ```TypeScript
 import { ObjectHelper, TypeHelper, FuncHelper, WordHelper, Guid, formatText } from "@brandup/ui-helpers";
@@ -46,36 +45,15 @@ Format with positional arguments (placeholders are zero-based indexes):
 const result = formatText("Hello, {0}", "Dmitry"); // Hello, Dmitry
 ```
 
-## Extensions
+## Format text
 
-Importing the package augments built-in prototypes with convenience methods.
-
-### Format text
+`formatText` substitutes `{...}` placeholders in a template — by name from a model object, or by zero-based index from positional arguments.
 
 ```TypeScript
-const text = "Hello, {name}";
-const result = text.format({ name: "Dmitry" }); // Hello, Dmitry
-```
+import { formatText } from "@brandup/ui-helpers";
 
-Format with arguments:
-
-```TypeScript
-const text = "Hello, {0}";
-const result = text.format("Dmitry"); // Hello, Dmitry
-```
-
-### Get value by property path
-
-```TypeScript
-const model = {
-	header: {
-		value: "Item"
-	}
-}
-
-const value = Object.prop(model, "header.value"); // return "Item"
-
-const hasValue = Object.hasProp(model, "header.value"); // return true
+formatText("Hello, {name}", { name: "Dmitry" }); // "Hello, Dmitry"
+formatText("Hello, {0}", "Dmitry");              // "Hello, Dmitry"
 ```
 
 ## Object helpers

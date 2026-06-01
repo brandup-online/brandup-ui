@@ -304,14 +304,30 @@ const commandClickHandler = (e: MouseEvent) => {
 	}
 }
 
-// Guarded so importing the module does not throw in a non-DOM environment (SSR/Node).
-if (typeof window !== "undefined")
-	window.addEventListener("click", commandClickHandler);
+let __commandsInited = false;
 
-/** Remove the global click handler registered by brandup-ui. Call on app teardown or HMR disposal. */
+/**
+ * Register the global click handler that dispatches {@link UIElement} commands declared in
+ * markup via `data-command`. Call once during application startup. Idempotent and a no-op in
+ * a non-DOM environment. {@link Application.run} (in `@brandup/ui-app`) calls this automatically;
+ * call it yourself only when using `UIElement` commands without an `Application`.
+ *
+ * Making this explicit (instead of a side effect on import) lets bundlers tree-shake the
+ * command system away for consumers that don't use it.
+ */
+export function initUICommands(): void {
+	if (__commandsInited || typeof window === "undefined")
+		return;
+	__commandsInited = true;
+	window.addEventListener("click", commandClickHandler);
+}
+
+/** Remove the global command click handler registered by {@link initUICommands} (e.g. on HMR disposal or teardown). */
 export function destroyUI(): void {
-	if (typeof window !== "undefined")
-		window.removeEventListener("click", commandClickHandler);
+	if (!__commandsInited || typeof window === "undefined")
+		return;
+	__commandsInited = false;
+	window.removeEventListener("click", commandClickHandler);
 }
 
 interface CommandInit {

@@ -1,7 +1,8 @@
-import { UIElement } from "@brandup/ui";
+import { UIElement, initUICommands } from "@brandup/ui";
 import { EnvironmentModel, ApplicationModel, QueryParams } from "./types";
 import { Middleware, StartContext, StopContext, NavigateContext, SubmitContext, ContextData, SubmitOptions, NavigateOptions, NavigateAction, NavigateSource } from "./middlewares/base";
 import { MiddlewareInvoker } from "./middlewares/invoker";
+import { enableNavExtensions } from "./ext";
 import StateMiddleware from "./middlewares/state";
 import HyperLinkMiddleware from "./middlewares/hyperlink";
 import urlHelper, { ParsedUrl } from "./helpers/url";
@@ -128,6 +129,11 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 		if (!contextData)
 			contextData = <TData>{};
+
+		// register the global command click handler and the nav HTMLElement helpers
+		// (both opt-in now; no-op if already enabled or no DOM)
+		initUICommands();
+		enableNavExtensions();
 
 		element = element || document.body;
 		this.setElement(element);

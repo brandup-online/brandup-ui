@@ -25,7 +25,7 @@ await request({
 		credentials?: RequestCredentials;
 		timeout?: number | null;
 		headers?: { [key: string]: string } | null;
-		type?: AJAXReqestType | null;
+		type?: AJAXRequestType | null;
 		data?: string | object | Blob | FormData | HTMLFormElement | null;
 		abort?: AbortSignal;
 		success?: ResponseDelegate | null;

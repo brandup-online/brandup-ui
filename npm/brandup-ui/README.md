@@ -59,9 +59,12 @@ class MyWidget extends UIElement {
 }
 ```
 
-The `HTMLElement.prototype.ui` extension lets you bind a `UIElement` through a factory and returns the element itself:
+The `HTMLElement.prototype.ui` extension lets you bind a `UIElement` through a factory and returns the element itself. It is opt-in (not installed on import) — call `enableElementExtensions()` once before using it:
 
 ```ts
+import { enableElementExtensions } from "@brandup/ui";
+
+enableElementExtensions();
 document.getElementById("widget")!.ui(elem => new MyWidget(elem));
 ```
 
@@ -122,7 +125,7 @@ this.registerCommand(
 );
 ```
 
-Commands are triggered by the `click` event. The handler is looked up by walking up the DOM from the element with the `data-command` attribute to the nearest `UIElement` in which that command is registered.
+Commands are triggered by the `click` event. The handler is looked up by walking up the DOM from the element with the `data-command` attribute to the nearest `UIElement` in which that command is registered. The global click listener must be enabled once via `initUICommands()` — `Application` does this automatically (see [Command click handler](#command-click-handler)).
 
 While an asynchronous command is running, the **executing** CSS class is added to the target element (and removed once the `Promise` settles).
 
@@ -246,14 +249,16 @@ elem.remove(); // destroy() fires automatically on next microtask
 
 If the element was never connected to the document (e.g. built in memory and then discarded), auto-destroy does **not** fire — only mounted-then-removed elements are watched.
 
-### Global click handler cleanup
+### Command click handler
 
-The library registers one global `click` listener on `window` to handle commands. Call `destroyUI()` to remove it on app teardown or during HMR disposal:
+Commands are dispatched by a single global `click` listener on `window`. It is **not** registered automatically on import (so the command system can be tree-shaken away when unused) — call `initUICommands()` once during startup. It is idempotent and a no-op without a DOM. `Application.run()` (from `@brandup/ui-app`) calls it for you, so you only need it when using `UIElement` commands **without** an `Application`:
 
 ```ts
-import { destroyUI } from "@brandup/ui";
+import { initUICommands, destroyUI } from "@brandup/ui";
 
-destroyUI();
+initUICommands(); // enable command handling
+// ...
+destroyUI();      // remove the listener on app teardown or HMR disposal
 ```
 
 ## DOM helpers

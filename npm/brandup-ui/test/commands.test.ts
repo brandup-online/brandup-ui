@@ -1,4 +1,8 @@
-import { UIElement, UIElementBound, CommandResult } from "../source/index";
+import { UIElement, UIElementBound, CommandResult, initUICommands, destroyUI } from "../source/index";
+
+// the global command click handler is now opt-in (no longer a side effect on import)
+beforeAll(() => initUICommands());
+afterAll(() => destroyUI());
 
 class BoundWidget extends UIElementBound {
 	constructor(elem: HTMLElement) {

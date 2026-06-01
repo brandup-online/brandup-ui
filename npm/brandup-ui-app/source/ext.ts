@@ -15,8 +15,19 @@ declare global {
 	}
 }
 
-// Guarded so importing the module does not throw in a non-DOM environment (SSR/Node).
-if (typeof HTMLElement !== "undefined") {
+let __inited = false;
+
+/**
+ * Install the `HTMLElement.prototype` navigation helpers (`nav`, `navUrl`, `navReplace`,
+ * `navScope`). Opt-in (no longer a side effect on import) so bundlers can tree-shake them
+ * away when unused. {@link Application} calls this automatically on `run`; call it yourself
+ * only if you use the helpers before the application starts. Idempotent; no-op without a DOM.
+ */
+export function enableNavExtensions(): void {
+	if (__inited || typeof HTMLElement === "undefined")
+		return;
+	__inited = true;
+
 	HTMLElement.prototype.navUrl = function (url: string) {
 		if (this instanceof HTMLAnchorElement)
 			this.href = url;
@@ -43,5 +54,3 @@ if (typeof HTMLElement !== "undefined") {
 		return this;
 	};
 }
-
-export { };

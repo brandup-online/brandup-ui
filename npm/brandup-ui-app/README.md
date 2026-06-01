@@ -73,6 +73,8 @@ The element's click event will start a chain of `navigate` method calls for all 
 
 During navigation and until it is completed, the `loading` class is added to the element that started the navigation.
 
+> The `HTMLElement` helpers `el.navUrl(url)`, `el.nav(app, path?, query?, hash?)`, `el.navReplace()` and `el.navScope(scope)` build these links programmatically. They are opt-in and enabled automatically by `Application.run()` — call `enableNavExtensions()` yourself only to use them before the application starts.
+
 ## Submit form
 
 ```html
