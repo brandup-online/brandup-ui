@@ -54,10 +54,77 @@ it("FuncHelper timeout: throws synchronously for invalid timeout", () => {
 	expect(() => FuncHelper.timeout(promise, -1)).toThrow("Invalid timeout value.");
 });
 
+// ── abortable ───────────────────────────────────────────────────────────────────
+
+it("FuncHelper abortable: resolves with the inner value when not aborted", async () => {
+	const result = await FuncHelper.abortable(Promise.resolve("test"));
+	expect(result).toEqual("test");
+});
+
+it("FuncHelper abortable: resolves with the inner value when signal never fires", async () => {
+	const abort = new AbortController();
+	const result = await FuncHelper.abortable(Promise.resolve("test"), abort.signal);
+	expect(result).toEqual("test");
+});
+
+it("FuncHelper abortable: rejects when inner promise rejects", async () => {
+	await expect(
+		FuncHelper.abortable(Promise.reject(new Error("error")))
+	).rejects.toThrow("error");
+});
+
+it("FuncHelper abortable: rejects with abort reason when already aborted", async () => {
+	const abort = new AbortController();
+	abort.abort("CANCEL");
+
+	await expect(
+		FuncHelper.abortable(
+			new Promise<string>(resolve => setTimeout(() => resolve("test"), 2000)),
+			abort.signal
+		)
+	).rejects.toEqual("CANCEL");
+});
+
+it("FuncHelper abortable: rejects when abort fires during the wait", async () => {
+	const abort = new AbortController();
+
+	const promise = FuncHelper.abortable(
+		new Promise<string>(resolve => setTimeout(() => resolve("test"), 5000)),
+		abort.signal
+	);
+
+	abort.abort("CANCEL");
+	await expect(promise).rejects.toEqual("CANCEL");
+});
+
+it("FuncHelper abortable: does not stop the underlying work on abort", async () => {
+	const abort = new AbortController();
+	const onSettle = jest.fn();
+
+	const inner = new Promise<string>(resolve => setTimeout(() => resolve("test"), 30))
+		.then(v => { onSettle(); return v; });
+
+	const promise = FuncHelper.abortable(inner, abort.signal);
+	abort.abort("CANCEL");
+	await expect(promise).rejects.toEqual("CANCEL");
+
+	// Сама работа промиса не останавливается — она доходит до конца.
+	await inner;
+	expect(onSettle).toHaveBeenCalled();
+});
+
 // ── delay ─────────────────────────────────────────────────────────────────────
 
 it("FuncHelper delay: resolves after the given time", async () => {
 	await expect(FuncHelper.delay(20)).resolves.toBeUndefined();
+});
+
+it("FuncHelper delay: throws synchronously for negative ms", () => {
+	expect(() => FuncHelper.delay(-1)).toThrow("Invalid delay value.");
+});
+
+it("FuncHelper delay: accepts zero ms", async () => {
+	await expect(FuncHelper.delay(0)).resolves.toBeUndefined();
 });
 
 it("FuncHelper delay: rejects immediately when signal is already aborted", async () => {
@@ -151,6 +218,15 @@ it("FuncHelper minWaitAsync: rejects when func rejects", async () => {
 		FuncHelper.minWaitAsync(() => Promise.reject(new Error("fail")), 10)
 	).rejects.toThrow("fail");
 }, 500);
+
+it("FuncHelper minWaitAsync: rejects immediately without running func when already aborted", async () => {
+	const abort = new AbortController();
+	abort.abort("CANCEL");
+	const fn = jest.fn().mockResolvedValue("result");
+
+	await expect(FuncHelper.minWaitAsync(fn, 10, abort.signal)).rejects.toEqual("CANCEL");
+	expect(fn).not.toHaveBeenCalled();
+});
 
 it("FuncHelper minWaitAsync: rejects when abort fires during padding delay", async () => {
 	const abort = new AbortController();

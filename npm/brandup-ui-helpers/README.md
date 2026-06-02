@@ -129,6 +129,9 @@ const data = await FuncHelper.minWaitAsync(() => loadData(), 1000);
 
 // Reject with TimeoutError if the request takes longer than 5000ms
 const result = await FuncHelper.timeout(fetch("/api"), 5000);
+
+// Make the wait abortable without stopping the underlying work
+const value = await FuncHelper.abortable(longRunning(), abortController.signal);
 ```
 
 Detect a timeout by checking the error type:
@@ -146,7 +149,8 @@ try {
 ```
 
 - `minWait(func, minTime?)` — wraps a callback so it runs no sooner than `minTime` ms after wrapping.
-- `minWaitAsync(func, minTime?, abort?)` — awaits an async operation, padding so it settles no sooner than `minTime` ms.
-- `delay(time, abort?)` — a promise resolved after `time` ms; rejects on abort.
-- `timeout(promise, timeout, abort?)` — races `promise` against `timeout` ms; rejects with a `TimeoutError` on timeout. Throws synchronously if `timeout ≤ 0`.
+- `minWaitAsync(func, minTime?, abort?)` — awaits an async operation, padding so it settles no sooner than `minTime` ms. An already-aborted signal rejects immediately, before `func` runs.
+- `delay(ms, abort?)` — a promise resolved after `ms` ms; rejects on abort. Throws synchronously if `ms` is negative (`0` is allowed).
+- `timeout(promise, ms, abort?)` — races `promise` against `ms` ms; rejects with a `TimeoutError` on timeout, or with the signal's reason on abort. Throws synchronously if `ms ≤ 0`. The underlying `promise` is not cancelled — only the wait ends.
+- `abortable(promise, abort?)` — makes *waiting* for `promise` abortable: rejects with the signal's reason on abort. Does not stop the underlying work; without a signal the promise is awaited as-is.
 - `TimeoutError` — error class thrown by `timeout` when the time limit is exceeded.
