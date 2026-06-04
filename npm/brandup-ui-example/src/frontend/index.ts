@@ -1,4 +1,4 @@
-﻿import "./fix";
+﻿import "@brandup/ui-helpers/polyfill";
 import AREAS from "./areas";
 import "./styles/styles.less";
 

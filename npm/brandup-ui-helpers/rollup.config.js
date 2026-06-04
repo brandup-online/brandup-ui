@@ -4,6 +4,10 @@ import dts from "rollup-plugin-dts";
 
 const pkg = require("./package.json");
 const mainFile = "source/index.ts";
+const polyfillFile = "source/polyfill.ts";
+// The barrel plus any standalone entry points. `polyfill` is a side-effect-only module
+// (see package.json "sideEffects") consumers opt into via "@brandup/ui-helpers/polyfill".
+const entries = [mainFile, polyfillFile];
 
 const externals = [
 	...Object.keys( pkg.dependencies || {} ),
@@ -15,7 +19,7 @@ const external = id => externals.some(name => id.startsWith(name));
 // webpack consumer can tree-shake unused modules (combined with package.json
 // "sideEffects"). outDir matches the rollup dir as @rollup/plugin-typescript requires.
 const jsBuild = (dir, format) => ({
-	input: mainFile,
+	input: entries,
 	output: {
 		dir,
 		format,
@@ -42,6 +46,11 @@ export default [
 	{
 		input: mainFile,
 		output: [{ file: pkg.types, format: "es" }],
+		plugins: [dts.default()]
+	},
+	{
+		input: polyfillFile,
+		output: [{ file: "dist/polyfill.d.ts", format: "es" }],
 		plugins: [dts.default()]
 	}
 ];

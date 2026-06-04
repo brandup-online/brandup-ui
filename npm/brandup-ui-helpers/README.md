@@ -154,3 +154,13 @@ try {
 - `timeout(promise, ms, abort?)` — races `promise` against `ms` ms; rejects with a `TimeoutError` on timeout, or with the signal's reason on abort. Throws synchronously if `ms ≤ 0`. The underlying `promise` is not cancelled — only the wait ends.
 - `abortable(promise, abort?)` — makes *waiting* for `promise` abortable: rejects with the signal's reason on abort. Does not stop the underlying work; without a signal the promise is awaited as-is.
 - `TimeoutError` — error class thrown by `timeout` when the time limit is exceeded.
+
+## Polyfills
+
+An opt-in, side-effect-only entry point fills in `AbortSignal` APIs that older runtimes may lack — `AbortSignal.prototype.throwIfAborted`, `AbortSignal.timeout` and `AbortSignal.any`. Import it once, as early as possible (e.g. in your entry module):
+
+```TypeScript
+import "@brandup/ui-helpers/polyfill";
+```
+
+Each implementation installs only when missing, so native behaviour is preserved where available. Types ship with the TypeScript `ESNext` lib; this module provides just the runtime. It is excluded from tree-shaking (`sideEffects`), so a bare import is never dropped by the bundler.

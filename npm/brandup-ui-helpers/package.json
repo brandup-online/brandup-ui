@@ -26,12 +26,20 @@
 	"main": "dist/cjs/index.js",
 	"module": "dist/mjs/index.js",
 	"types": "dist/types.d.ts",
-	"sideEffects": false,
+	"sideEffects": [
+		"./dist/cjs/polyfill.js",
+		"./dist/mjs/polyfill.js"
+	],
 	"exports": {
 		".": {
 			"types": "./dist/types.d.ts",
 			"import": "./dist/mjs/index.js",
 			"require": "./dist/cjs/index.js"
+		},
+		"./polyfill": {
+			"types": "./dist/polyfill.d.ts",
+			"import": "./dist/mjs/polyfill.js",
+			"require": "./dist/cjs/polyfill.js"
 		}
 	},
 	"devDependencies": {
