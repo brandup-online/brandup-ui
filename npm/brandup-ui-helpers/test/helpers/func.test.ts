@@ -52,6 +52,7 @@ it("FuncHelper timeout: throws synchronously for invalid timeout", () => {
 	const promise = Promise.resolve("test");
 	expect(() => FuncHelper.timeout(promise, 0)).toThrow("Invalid timeout value.");
 	expect(() => FuncHelper.timeout(promise, -1)).toThrow("Invalid timeout value.");
+	expect(() => FuncHelper.timeout(promise, NaN)).toThrow("Invalid timeout value.");
 });
 
 // ── abortable ───────────────────────────────────────────────────────────────────
@@ -121,6 +122,10 @@ it("FuncHelper delay: resolves after the given time", async () => {
 
 it("FuncHelper delay: throws synchronously for negative ms", () => {
 	expect(() => FuncHelper.delay(-1)).toThrow("Invalid delay value.");
+});
+
+it("FuncHelper delay: throws synchronously for NaN ms", () => {
+	expect(() => FuncHelper.delay(NaN)).toThrow("Invalid delay value.");
 });
 
 it("FuncHelper delay: accepts zero ms", async () => {

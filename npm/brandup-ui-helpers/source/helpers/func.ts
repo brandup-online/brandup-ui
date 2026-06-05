@@ -74,14 +74,15 @@ const getRightTime = (start: number, minTime: number) => {
  * If an already-aborted signal is supplied the promise rejects immediately; otherwise
  * aborting before the delay elapses clears the timer and rejects with the abort reason.
  *
- * @param ms Delay in milliseconds; must not be negative. Values above 2147483647 (~24.8 days)
- *           overflow the timer and fire on the next tick — a `setTimeout` limitation.
+ * @param ms Delay in milliseconds; must be a non-negative number (`NaN` is rejected). Values
+ *           above 2147483647 (~24.8 days) overflow the timer and fire on the next tick — a
+ *           `setTimeout` limitation.
  * @param abort Optional signal used to cancel the delay.
  * @returns A promise that resolves when the delay elapses.
- * @throws {Error} When `ms` is negative.
+ * @throws {Error} When `ms` is negative or `NaN`.
  */
 function delay(ms: number, abort?: AbortSignal): Promise<void> {
-	if (ms < 0)
+	if (!(ms >= 0))
 		throw new Error("Invalid delay value.");
 
 	return new Promise<void>((resolve, reject) => {
@@ -115,10 +116,10 @@ function delay(ms: number, abort?: AbortSignal): Promise<void> {
  *           (~24.8 days) overflow the timer and fire on the next tick — a `setTimeout` limitation.
  * @param abort Optional signal used to cancel the wait.
  * @returns A promise mirroring `promise` unless the timeout or abort fires first.
- * @throws {Error} When `ms` is not greater than `0`.
+ * @throws {Error} When `ms` is not greater than `0` (including `NaN`).
  */
 function timeout<T = unknown>(promise: Promise<T>, ms: number, abort?: AbortSignal): Promise<T> {
-	if (ms <= 0)
+	if (!(ms > 0))
 		throw new Error("Invalid timeout value.");
 
 	// Own controller so the `delay` timer can be torn down once the race is decided,

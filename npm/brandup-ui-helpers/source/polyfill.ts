@@ -30,16 +30,27 @@ if (typeof AbortSignal.timeout !== "function") {
 if (typeof AbortSignal.any !== "function") {
 	AbortSignal.any = (signals: AbortSignal[]): AbortSignal => {
 		const controller = new AbortController();
+		const cleanups: Array<() => void> = [];
+
+		// Detach every source listener, then abort. Manual cleanup (rather than the
+		// addEventListener `{ signal }` option) keeps this working on the same old runtimes
+		// that lack AbortSignal.any in the first place — no listener leak.
+		const abort = (reason: unknown) => {
+			cleanups.forEach(off => off());
+			cleanups.length = 0;
+			controller.abort(reason);
+		};
 
 		for (const signal of signals) {
 			// If one is already aborted, the combined signal aborts immediately with its reason.
 			if (signal.aborted) {
-				controller.abort(signal.reason);
+				abort(signal.reason);
 				break;
 			}
 
-			// Tying each listener to the combined signal removes them all once it aborts — no leak.
-			signal.addEventListener("abort", () => controller.abort(signal.reason), { signal: controller.signal });
+			const onAbort = () => abort(signal.reason);
+			signal.addEventListener("abort", onAbort);
+			cleanups.push(() => signal.removeEventListener("abort", onAbort));
 		}
 
 		return controller.signal;
