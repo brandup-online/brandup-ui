@@ -1,6 +1,6 @@
 import { UIElement, initUICommands } from "@brandup/ui";
 import { EnvironmentModel, ApplicationModel, QueryParams } from "./types";
-import { Middleware, StartContext, StopContext, NavigateContext, SubmitContext, ContextData, SubmitOptions, NavigateOptions, NavigateAction, NavigateSource } from "./middlewares/base";
+import { Middleware, StartContext, StopContext, NavigateContext, SubmitContext, VisibilityContext, ContextData, SubmitOptions, NavigateOptions, NavigateAction, NavigateSource } from "./middlewares/base";
 import { MiddlewareInvoker } from "./middlewares/invoker";
 import { enableNavExtensions } from "./ext";
 import StateMiddleware from "./middlewares/state";
@@ -30,6 +30,8 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	private __middlewares: { [key: string]: Middleware } = {};
 	private __globalSubmit?: (e: SubmitEvent) => void;
 	private __onPopStateHandler?: (e: PopStateEvent) => void;
+	private __visibilityListeners?: Array<() => void>; // detachers for visibility events
+	private __lastVisible?: boolean; // last dispatched visibility state (for deduplication)
 	private __execNav?: ExecuteNav<this, ContextData>; // current navigation invoking
 	private __lastNav?: ExecuteNav<this, ContextData>; // last success navigation
 
@@ -169,6 +171,22 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 				this.__onSubmit({ form, button: e.submitter instanceof HTMLButtonElement ? <HTMLButtonElement>e.submitter : null })
 					.catch(() => { });
 			}, false);
+
+			// Browser page visibility: visibilitychange covers tab switch / minimize, while
+			// pagehide/pageshow add bfcache enter/restore (where visibilitychange is unreliable).
+			// All three feed __changeVisibility, which deduplicates to one call per real transition.
+			this.__lastVisible = !document.hidden;
+			const onVisibilityChange = () => this.__changeVisibility(!document.hidden);
+			const onPageHide = () => this.__changeVisibility(false);
+			const onPageShow = () => this.__changeVisibility(true);
+			document.addEventListener("visibilitychange", onVisibilityChange);
+			window.addEventListener("pagehide", onPageHide);
+			window.addEventListener("pageshow", onPageShow);
+			this.__visibilityListeners = [
+				() => document.removeEventListener("visibilitychange", onVisibilityChange),
+				() => window.removeEventListener("pagehide", onPageHide),
+				() => window.removeEventListener("pageshow", onPageShow),
+			];
 		}
 		catch (reason: any) {
 			console.error(`app run error: ${reason}`);
@@ -273,6 +291,8 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 		if (this.__onPopStateHandler)
 			window.removeEventListener("popstate", this.__onPopStateHandler);
+
+		this.__visibilityListeners?.forEach(off => off());
 
 		const destroyAbort = new AbortController();
 
@@ -390,6 +410,26 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 		this.nav({ url: popUrl, data: { popstate: event.state } })
 			.catch(() => { });
+	}
+
+	/** Run the `visibility` middleware chain on a real visibility transition (deduplicated). */
+	private __changeVisibility(visible: boolean) {
+		if (visible === this.__lastVisible)
+			return;
+		this.__lastVisible = visible;
+
+		const context: VisibilityContext<this> = {
+			app: this,
+			data: {},
+			abort: this.__abort.signal,
+			visible
+		};
+
+		console.log(`visibility: ${visible ? "visible" : "hidden"}`);
+
+		this.invoker.invoke("visibility", context)
+			.then(() => console.info(`visibility ${visible ? "visible" : "hidden"} success`))
+			.catch(reason => console.error(`visibility error: ${reason}`));
 	}
 
 	/** Detect parent (overriding) navigation and compose the abort signal shared by a new navigation. */

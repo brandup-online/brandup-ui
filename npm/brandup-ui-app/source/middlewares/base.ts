@@ -15,6 +15,8 @@ export interface Middleware {
 	submit?: MiddlewareMethod;
 	/** Called when the application is destroyed. */
 	stop?: MiddlewareMethod;
+	/** Called when the browser page visibility changes — tab switch, minimize or bfcache enter/restore. */
+	visibility?: MiddlewareMethod<VisibilityContext>;
 	/** Custom middleware methods. */
 	[key: string]: MiddlewareMethod | any;
 }
@@ -62,6 +64,22 @@ export interface StopContext<TApplication extends Application = Application, TDa
 	readonly app: TApplication;
 	/** Stop context data. */
 	readonly data: TData;
+}
+
+// visibility method
+
+/**
+ * Context for the `visibility` middleware method.
+ * Fired on a real visibility transition (deduplicated), regardless of which browser
+ * event — `visibilitychange`, `pagehide` or `pageshow` — produced it.
+ */
+export interface VisibilityContext<TApplication extends Application = Application, TData extends ContextData = ContextData> extends InvokeContext {
+	/** Application instance. */
+	readonly app: TApplication;
+	/** Visibility context data. */
+	readonly data: TData;
+	/** True when the page became visible, false when it became hidden. */
+	readonly visible: boolean;
 }
 
 // navigate method
