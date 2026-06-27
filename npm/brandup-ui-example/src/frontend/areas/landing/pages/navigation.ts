@@ -1,5 +1,6 @@
 ﻿import { DOM } from "@brandup/ui-dom";
 import { Page } from "../../page";
+import { PageHashAction } from "@brandup/ui-app";
 import { PageNavigationData } from "frontend/typings/app";
 import { FuncHelper } from "@brandup/ui-helpers";
 
@@ -72,9 +73,9 @@ export default class NavigationPage extends Page {
 		console.log("render page");
 	}
 
-	protected async onChangedHash(newHash: string | null, oldHash: string | null) {
-		await super.onChangedHash(newHash, oldHash);
+	protected override async onChangedHash(newHash: string | null, oldHash: string | null, action: PageHashAction) {
+		await super.onChangedHash(newHash, oldHash, action);
 
-		console.log(`change hash ${oldHash} -> ${newHash}`);
+		console.log(`change hash ${oldHash} -> ${newHash} (${action})`);
 	}
 }

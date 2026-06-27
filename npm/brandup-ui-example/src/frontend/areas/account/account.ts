@@ -1,4 +1,4 @@
-import { ApplicationBuilder } from "@brandup/ui-app";
+import { ApplicationBuilder, HistoryMiddleware } from "@brandup/ui-app";
 import { ExampleApplication } from "../../app";
 import { ExampleApplicationModel } from "../../typings/app";
 
@@ -8,6 +8,7 @@ const createApp = (): ApplicationBuilder<ExampleApplicationModel> => {
 	const builder = new ApplicationBuilder<ExampleApplicationModel>({});
 	builder
 		.useApp(ExampleApplication)
+		.useMiddleware(HistoryMiddleware) // syncs the address bar; must run before the pages middleware
 		.useMiddleware(pagesMiddleware, {
 			routes: {
 				'/': { page: () => import("./pages/index"), preload: true }

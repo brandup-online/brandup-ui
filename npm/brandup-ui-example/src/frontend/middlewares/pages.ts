@@ -11,7 +11,6 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 	readonly name: string = "pages";
 	private _options: PagesOptions;
 	private _ajax: AjaxQueue;
-	private _page: Page | null = null;
 
 	constructor(options: PagesOptions) {
 		this._options = options;
@@ -77,9 +76,10 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 
 		switch (context.action) {
 			case "hash": {
-				if (this._page) {
-					this._nav(context, this._page);
-					this._page.__changedHash(context, context.hash, context.current?.hash ?? null);
+				const page = context.app.page;
+				if (page) {
+					this._setPage(context.app, page);
+					await page.__changedHash(context);
 
 					await next();
 					return;
@@ -134,9 +134,9 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 			throw reason;
 		}
 
-		const prevPage = this._page;
+		const prevPage = context.app.page;
 
-		this._nav(context, result.page);
+		this._setPage(context.app, result.page);
 
 		// destroy current page
 		prevPage?.destroy();
@@ -146,10 +146,11 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 	}
 
 	async submit(context: SubmitContext<ExampleApplication, PageSubmitData>, next: MiddlewareNext) {
-		if (!this._page)
+		const page = context.app.page;
+		if (!page)
 			throw new Error();
 
-		const page = context.data.page = this._page;
+		context.data.page = page;
 
 		const response = context.data.response = await this._ajax.enqueue({
 			url: context.url,
@@ -172,51 +173,11 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 		this._ajax.destroy();
 	}
 
-	private _nav(context: NavigateContext, page: Page) {
-		this._page = page;
-
-		let url = context.url;
-		if (context.hash)
-			url += "#" + context.hash;
-
-		const title = page.header;
-
-		let state = window.history.state;
-		if (!state)
-			state = {};
-		state._b_navid = context.id;
-
-		if (context.source != "first") {
-			let replace = context.replace;
-
-			if (context.data.popstate) {
-				/* If the navigation comes from a popstate event, force replacing the state. */
-				console.warn(`nav from popstate`, context.data.popstate);
-				replace = true;
-			}
-
-			if (context.current?.scope != context.scope || context.current?.source === "first") {
-				// If the navigation scope changed or the previous navigation was the first,
-				// there is no need to replace the current page
-				replace = false;
-			}
-
-			let scroll = false;
-			if (replace)
-				window.history.replaceState(state, title, url);
-			else {
-				window.history.pushState(state, title, url);
-
-				scroll = true;
-			}
-
-			if (scroll && context.action !== "hash")
-				window.scrollTo({ left: 0, top: 0, behavior: "auto" });
-		}
-		else
-			window.history.replaceState(state, title, url);
-
-		document.title = title;
+	private _setPage(app: ExampleApplication, page: Page) {
+		// The current page now lives on the application (app.page); the address bar is handled
+		// by the built-in HistoryMiddleware. The document title stays a page concern.
+		app.setPage(page);
+		document.title = page.header;
 	}
 }
 
