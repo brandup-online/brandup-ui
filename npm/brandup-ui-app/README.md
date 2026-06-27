@@ -75,6 +75,44 @@ During navigation and until it is completed, the `loading` class is added to the
 
 > The `HTMLElement` helpers `el.navUrl(url)`, `el.nav(app, path?, query?, hash?)`, `el.navReplace()` and `el.navScope(scope)` build these links programmatically. They are opt-in and enabled automatically by `Application.run()` — call `enableNavExtensions()` yourself only to use them before the application starts.
 
+The element that started a navigation is available to middlewares as `context.clickElem` (set by the built-in hyperlink middleware).
+
+## Browser history
+
+The built-in **history middleware** keeps the address bar in sync with navigations — pushing or replacing a `history` entry (and scrolling to top) once a navigation succeeds. It is **opt-in**; register it before any page-rendering middleware so the URL changes only after the new page is in place:
+
+```typescript
+import { HistoryMiddleware } from "@brandup/ui-app";
+
+builder.useMiddleware(HistoryMiddleware);
+```
+
+Enable per-entry scroll-position memory (saved while scrolling, restored on back/forward) with the `scrollRestoration` option:
+
+```typescript
+builder.useMiddleware(HistoryMiddleware, { scrollRestoration: true });
+```
+
+It is dependency-free (History API only) and does not manage `document.title`, which stays a page concern.
+
+## Current page
+
+The application exposes the current page via `app.page`. A page-rendering middleware assigns it with `app.setPage(page)`; the application only holds the reference — it never renders or destroys the page itself — and clears it on `destroy()`.
+
+```typescript
+import { Application, Page } from "@brandup/ui-app";
+
+// Recover the concrete page type in a subclass:
+class ExampleApplication extends Application {
+    override get page(): MyPage | null { return super.page as MyPage | null; }
+}
+
+// From anywhere with access to the app:
+const current = app.page;
+```
+
+`Page` is a minimal contract (`{ destroy?(): void | Promise<void> }`); the concrete page — rendering and lifecycle — lives in the page layer and implements it.
+
 ## Submit form
 
 ```html
@@ -140,6 +178,25 @@ export default () => new PagesMiddlewareImpl();
 ```
 
 Example SPA navigation middleware: [npm/brandup-ui-example/src/frontend/middlewares/pages.ts](/npm/brandup-ui-example/src/frontend/middlewares/pages.ts)
+
+Besides `start`, `loaded`, `navigate`, `submit` and `stop`, a middleware may implement `visibility` (see below).
+
+### Page visibility
+
+The optional `visibility` method runs when the browser page visibility changes — tab switch, minimize, or bfcache enter/restore. It is deduplicated to a single call per real transition.
+
+```typescript
+class ExampleMiddleware implements Middleware {
+    name = "visibility-demo";
+
+    async visibility(context: VisibilityContext, next: MiddlewareNext) {
+        if (context.visible) { /* resumed — restart timers/polling */ }
+        else { /* hidden — pause work, persist state */ }
+
+        await next();
+    }
+}
+```
 
 ### Access to middleware
 

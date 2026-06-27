@@ -2,6 +2,7 @@ import { UIElement, initUICommands } from "@brandup/ui";
 import { EnvironmentModel, ApplicationModel, QueryParams } from "./types";
 import { Middleware, StartContext, StopContext, NavigateContext, SubmitContext, VisibilityContext, ContextData, SubmitOptions, NavigateOptions, NavigateAction, NavigateSource } from "./middlewares/base";
 import { MiddlewareInvoker } from "./middlewares/invoker";
+import { Page } from "./page";
 import { enableNavExtensions } from "./ext";
 import StateMiddleware from "./middlewares/state";
 import HyperLinkMiddleware from "./middlewares/hyperlink";
@@ -34,6 +35,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	private __lastVisible?: boolean; // last dispatched visibility state (for deduplication)
 	private __execNav?: ExecuteNav<this, ContextData>; // current navigation invoking
 	private __lastNav?: ExecuteNav<this, ContextData>; // last success navigation
+	private __page: Page | null = null; // current page, owned by the page-rendering middleware
 
 	/**
 	 * @param env Application environment.
@@ -56,6 +58,15 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	get current(): NavigateContext<this> | undefined { return this.__lastNav?.context; }
 	/** Application destroy signal. */
 	get abort(): AbortSignal { return this.__abort.signal; }
+	/** Current page, set by the page-rendering middleware. `null` before the first page or after destroy. */
+	get page(): Page | null { return this.__page; }
+
+	/**
+	 * Set the current page. Intended for the page-rendering middleware; the application only
+	 * holds the reference and never renders or destroys the page itself.
+	 * @param page The new current page, or `null` to clear it.
+	 */
+	setPage(page: Page | null) { this.__page = page; }
 
 	/** @internal */
 	initialize(middlewares: Middleware[]) {
@@ -220,7 +231,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	 */
 	async nav<TData extends ContextData>(options?: NavigateOptions<TData> | string | null): Promise<NavigateContext<this, TData>> {
 		const opt: NavigateOptions<TData> = (!options || typeof options === "string") ? { url: <string>options } : <NavigateOptions<TData>>options;
-		let { url = null, query, replace = false, scope = null, data = <TData>{}, abort } = opt;
+		let { url = null, query, replace = false, scope = null, data = <TData>{}, abort, clickElem = null } = opt;
 
 		const navUrl = urlHelper.parseUrl(this.env.basePath, url);
 		if (query)
@@ -244,7 +255,8 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 		const context: NavigateContext<this, TData> = {
 			...this.__createContext<TData>(base, navUrl, isFirst ? "first" : "nav", action, data, replace),
-			scope
+			scope,
+			clickElem
 		};
 
 		const currentNav: ExecuteNav<this, TData> = { method: "navigate", context, abort: base.navAbort, status: "work" };
@@ -314,6 +326,8 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			throw reason;
 		}
 		finally {
+			// Release the current-page reference after the "stop" chain (which may read app.page).
+			this.__page = null;
 			super.destroy();
 		}
 	}

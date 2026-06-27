@@ -95,6 +95,8 @@ export interface NavigateOptions<TData extends ContextData = ContextData> {
 	replace?: boolean;
 	/** Navigation scope. */
 	scope?: string | null;
+	/** Element that originated the navigation (e.g. a clicked link), if any. */
+	clickElem?: Element | null;
 	/** Navigation context data. */
 	data?: TData;
 	/** External abort signal to cancel the navigation. */
@@ -137,6 +139,8 @@ export interface NavigateContext<TApplication extends Application = Application,
 	readonly hash: string | null;
 	/** Navigation origin is different of current page origin. */
 	readonly external: boolean;
+	/** Element that originated the navigation (e.g. a clicked link), set by the hyperlink middleware. */
+	readonly clickElem?: Element | null;
 	/** Replace current navigation entry. */
 	replace: boolean;
 	/** Navigation scope. */

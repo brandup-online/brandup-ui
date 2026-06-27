@@ -1,6 +1,8 @@
 export * from "./types"
 export * from "./builder"
 export * from "./middlewares/base"
+export * from "./page"
+export { default as HistoryMiddleware, HISTORY_MIDDLEWARE_NAME, type HistoryOptions } from "./middlewares/history"
 export * from "./app"
 export * from "./ext"
 export * as UrlHelper from "./helpers/url"
