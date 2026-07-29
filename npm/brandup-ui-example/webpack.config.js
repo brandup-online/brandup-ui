@@ -44,9 +44,11 @@ module.exports = (env) => {
         entry: {
             app: path.resolve(__dirname, 'src', 'frontend', 'index.ts')
         },
-        resolve: { 
+        resolve: {
 			extensions: ['.js', '.jsx', '.ts', '.tsx', '.less'],
-            //modules: [path.resolve(__dirname, 'node_modules')]
+			// `file:`-linked @brandup packages live outside this folder, so core-js imports
+			// injected into their code must still resolve against the example's own deps
+			modules: [path.resolve(__dirname, 'node_modules'), 'node_modules']
 		},
         output: {
             path: path.join(__dirname, bundleOutputDir),

@@ -2,7 +2,7 @@
 import { Page } from "../../page";
 import { AjaxQueue } from "@brandup/ui-ajax";
 import { NavigateContext } from "@brandup/ui-app";
-import { ExampleApplication } from "frontend/app";
+import type { ExampleApplication } from "frontend/app";
 
 export default class AjaxPage extends Page {
 	get typeName(): string { return "AjaxPage" }

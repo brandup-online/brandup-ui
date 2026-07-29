@@ -1,5 +1,5 @@
 import { ApplicationBuilder } from "@brandup/ui-app";
-import { ExampleApplicationModel } from "../typings/app";
+import type { ExampleApplicationModel } from "../typings/app";
 
 const AREAS: { [key: string]: AreaDefinition } = {};
 

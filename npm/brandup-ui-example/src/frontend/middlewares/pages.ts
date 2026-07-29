@@ -3,7 +3,7 @@ import { AjaxQueue, } from "@brandup/ui-ajax";
 import { Middleware, MiddlewareNext, NAV_OVERIDE_ERROR, NavigateContext, StartContext, StopContext, SubmitContext } from "@brandup/ui-app";
 import { Page } from "../areas/page";
 import { ExampleApplication } from "../app";
-import { PageNavigationData, PageSubmitData } from "../typings/app";
+import type { PageNavigationData, PageSubmitData } from "../typings/app";
 import { FuncHelper } from "@brandup/ui-helpers";
 import AREAS from "../areas";
 

@@ -55,7 +55,7 @@ function setupDeferred(status = 200) {
 }
 
 /** Drains all pending microtasks by yielding to the macrotask queue. */
-const flush = () => new Promise<void>(r => setImmediate(r));
+const flush = () => new Promise<void>(r => setTimeout(r, 0));
 
 beforeEach(() => { mockRequest.mockReset(); });
 

@@ -1,5 +1,5 @@
 import { Application, EnvironmentModel } from "@brandup/ui-app";
-import { ExampleApplicationModel } from "./typings/app";
+import type { ExampleApplicationModel } from "./typings/app";
 import { DOM, reactive, bind } from "@brandup/ui";
 
 import logoIcon from "./svg/logo.svg";

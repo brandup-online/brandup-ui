@@ -1,6 +1,6 @@
 import { ApplicationBuilder } from "@brandup/ui-app";
 import { ExampleApplication } from "../../app";
-import { ExampleApplicationModel } from "../../typings/app";
+import type { ExampleApplicationModel } from "../../typings/app";
 
 import pagesMiddleware from "../../middlewares/pages";
 

@@ -1,6 +1,6 @@
 ﻿import { DOM } from "@brandup/ui-dom";
 import { Page } from "../../page";
-import { PageNavigationData } from "frontend/typings/app";
+import type { PageNavigationData } from "frontend/typings/app";
 import { FuncHelper } from "@brandup/ui-helpers";
 
 export default class NavigationPage extends Page {
