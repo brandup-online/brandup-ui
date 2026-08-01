@@ -1,12 +1,12 @@
 # brandup-ui
 
-[![Build Status](https://dev.azure.com/brandup/BrandUp%20Core/_apis/build/status%2FBrandUp%2Fbrandup-ui?branchName=master)]()
+[![Build Status](https://dev.azure.com/brandup/BrandUp%20Core/_apis/build/status%2FBrandUp%2Fbrandup-ui?branchName=master)](https://dev.azure.com/brandup/BrandUp%20Core/_build)
 
 ## Installation
 
 Install NPM package [@brandup/ui](https://www.npmjs.com/package/@brandup/ui).
 
-```
+```bash
 npm i @brandup/ui@latest
 ```
 
@@ -15,6 +15,7 @@ npm i @brandup/ui@latest
 `UIElement` is a wrapper for `HTMLElement` that lets you attach your own business logic to it.
 
 Features:
+
 - Handling of commands declared in the markup of the `HTMLElement` that is bound to the `UIElement`.
 - Subscribing to events through `EventEmitter`, which `UIElement` extends.
 

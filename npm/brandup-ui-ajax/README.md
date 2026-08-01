@@ -1,12 +1,12 @@
 # brandup-ui-ajax
 
-[![Build Status](https://dev.azure.com/brandup/BrandUp%20Core/_apis/build/status%2FBrandUp%2Fbrandup-ui?branchName=master)]()
+[![Build Status](https://dev.azure.com/brandup/BrandUp%20Core/_apis/build/status%2FBrandUp%2Fbrandup-ui?branchName=master)](https://dev.azure.com/brandup/BrandUp%20Core/_build)
 
 ## Installation
 
 Install NPM package [@brandup/ui-ajax](https://www.npmjs.com/package/@brandup/ui-ajax).
 
-```
+```bash
 npm i @brandup/ui-ajax@latest
 ```
 
@@ -14,7 +14,7 @@ npm i @brandup/ui-ajax@latest
 
 Simplify async ajax request method. `request` is the `fetch`-based, promise-returning API.
 
-```
+```typescript
 import { request } from "@brandup/ui-ajax";
 
 await request({
@@ -51,7 +51,7 @@ The response body is parsed by `Content-Type`: JSON, `text/html`, `text/plain`, 
 
 A request is aborted when its `timeout` elapses, when the `abort` option signals, or when the second `abortSignal` argument signals.
 
-```
+```typescript
 import { request } from "@brandup/ui-ajax";
 
 const cancellation = new AbortController();
@@ -66,7 +66,7 @@ cancellation.abort();
 
 Set `disableCache: true` to bypass HTTP caching. In `request` (fetch) this sends `cache: "no-store"`; in `ajaxRequest` (XHR) it appends a `_=<timestamp>` cache-busting query parameter.
 
-```
+```typescript
 await request({ url: "/api/data", disableCache: true });
 ```
 
@@ -74,7 +74,7 @@ await request({ url: "/api/data", disableCache: true });
 
 `ajaxRequest` is the `XMLHttpRequest`-based API. It always sends credentials, delivers results via the `success`/`error` callbacks (it does not return a promise), and returns the underlying `XMLHttpRequest` so the call can be aborted. Unlike `request`, there is no `blob` response type.
 
-```
+```typescript
 import { ajaxRequest } from "@brandup/ui-ajax";
 
 const xhr = ajaxRequest({
@@ -94,7 +94,7 @@ xhr.abort(); // cancel the request
 
 Sequential execution of AJAX requests.
 
-```
+```typescript
 import { AjaxQueue } from "@brandup/ui-ajax";
 
 const queue = new AjaxQueue({
@@ -120,7 +120,7 @@ Queue state can be inspected via `queue.length` (waiting requests), `queue.isEmp
 
 `enqueue` queues a request like `push`, but returns a promise that resolves with the response (or rejects with the failure reason). The request's own `success`/`error` callbacks are still invoked.
 
-```
+```typescript
 import { AjaxQueue } from "@brandup/ui-ajax";
 
 const queue = new AjaxQueue();

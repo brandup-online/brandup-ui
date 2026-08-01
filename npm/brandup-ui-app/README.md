@@ -2,13 +2,13 @@
 
 Lightweight, fast and extensible application framework. Full async support. Weight after minification is less than 10KB!
 
-[![Build Status](https://dev.azure.com/brandup/BrandUp%20Core/_apis/build/status%2FBrandUp%2Fbrandup-ui?branchName=master)]()
+[![Build Status](https://dev.azure.com/brandup/BrandUp%20Core/_apis/build/status%2FBrandUp%2Fbrandup-ui?branchName=master)](https://dev.azure.com/brandup/BrandUp%20Core/_build)
 
 ## Installation
 
 Install NPM package [@brandup/ui-app](https://www.npmjs.com/package/@brandup/ui-app).
 
-```
+```bash
 npm i @brandup/ui-app
 ```
 

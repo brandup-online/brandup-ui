@@ -12,7 +12,7 @@ Install `@brandup/ui` and update your imports:
 + import { DOM } from "@brandup/ui";
 ```
 
-```
+```bash
 npm i @brandup/ui@latest
 ```
 
