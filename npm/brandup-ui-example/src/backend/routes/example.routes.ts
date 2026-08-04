@@ -22,7 +22,9 @@ class ExampleRoutes {
 		this.router.get("/_ajax/image", this.controller.image);
 		this.router.get("/_ajax/delay", this.controller.delay);
 
-		this.router.get("/*splat", this.controller.spa);
+		// Express 5 wildcards must be named, and the braces make the whole segment optional
+		// so the root path matches too — bare `/*splat` skips `/`.
+		this.router.get("/{*splat}", this.controller.spa);
 	}
 }
 
