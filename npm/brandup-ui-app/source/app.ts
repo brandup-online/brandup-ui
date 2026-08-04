@@ -178,7 +178,9 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			this.__lastVisible = !document.hidden;
 			const onVisibilityChange = () => this.__changeVisibility(!document.hidden);
 			const onPageHide = () => this.__changeVisibility(false);
-			const onPageShow = () => this.__changeVisibility(true);
+			// `pageshow` also fires on a plain page load, and a bfcache restore can land in a
+			// background tab — so trust `document.hidden` instead of assuming visible.
+			const onPageShow = () => this.__changeVisibility(!document.hidden);
 			document.addEventListener("visibilitychange", onVisibilityChange);
 			window.addEventListener("pagehide", onPageHide);
 			window.addEventListener("pageshow", onPageShow);
@@ -293,6 +295,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			window.removeEventListener("popstate", this.__onPopStateHandler);
 
 		this.__visibilityListeners?.forEach(off => off());
+		this.__visibilityListeners = undefined;
 
 		const destroyAbort = new AbortController();
 
@@ -412,7 +415,13 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			.catch(() => { });
 	}
 
-	/** Run the `visibility` middleware chain on a real visibility transition (deduplicated). */
+	/**
+	 * Run the `visibility` middleware chain on a real visibility transition (deduplicated).
+	 *
+	 * The chain is asynchronous, so a `hidden` transition caused by the user actually leaving
+	 * the page is not guaranteed to complete — middlewares that must persist state on unload
+	 * should do so synchronously.
+	 */
 	private __changeVisibility(visible: boolean) {
 		if (visible === this.__lastVisible)
 			return;
@@ -425,7 +434,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			visible
 		};
 
-		console.log(`visibility: ${visible ? "visible" : "hidden"}`);
+		console.info(`visibility: ${visible ? "visible" : "hidden"}`);
 
 		this.invoker.invoke("visibility", context)
 			.then(() => console.info(`visibility ${visible ? "visible" : "hidden"} success`))

@@ -99,6 +99,25 @@ it("visibility: a redundant pageshow while already visible does not fire", async
 	appElem.remove();
 });
 
+it("visibility: pageshow on a page loaded hidden does not report visible", async () => {
+	// `pageshow` also fires on a plain load — in a background tab (or a bfcache restore
+	// landing in one) it must not claim the page became visible, or the real transition
+	// that follows is swallowed by the deduplication.
+	hiddenValue = true;
+	const calls: boolean[] = [];
+	const { app, appElem } = await runApp(ctx => calls.push(ctx.visible));
+
+	pageshow(); await tick();
+	expect(calls).toEqual([]);
+
+	// switching to the tab is the first real transition and must be reported
+	hiddenValue = false; visibilitychange(); await tick();
+	expect(calls).toEqual([true]);
+
+	await app.destroy();
+	appElem.remove();
+});
+
 it("visibility: context carries app, abort signal and the visible flag", async () => {
 	const seen: VisibilityContext[] = [];
 	const { app, appElem } = await runApp(ctx => seen.push(ctx));
