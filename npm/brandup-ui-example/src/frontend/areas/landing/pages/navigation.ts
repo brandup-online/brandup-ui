@@ -26,7 +26,7 @@ export default class NavigationPage extends Page {
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "#test3", class: "applink", dataset: { navReplace: "true" } }, "hash3 replace")));
 
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "/forms" }, "link: direct navigate")));
-		container.appendChild(DOM.tag("div", null, DOM.tag("button", { "data-nav-url": "/forms" }, "link: navigate to /forms")));
+		container.appendChild(DOM.tag("div", null, DOM.tag("button", { dataset: { navUrl: "/forms" } }, "link: navigate to /forms")));
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "/forms", class: "applink" }, "link: navigate to /forms")));
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "/forms/", class: "applink" }, "link: navigate to /forms/")));
 		container.appendChild(DOM.tag("div", null, DOM.tag("a", { href: "forms", class: "applink" }, "link: navigate to forms")));
@@ -60,12 +60,12 @@ export default class NavigationPage extends Page {
 
 		container.appendChild(DOM.tag("div", null, [
 			DOM.tag("div", null, [
-				DOM.tag("a", { href: "?test1=test1", "data-nav-replace": null, class: "applink" }, "noscope1"),
-				DOM.tag("a", { href: "?test1=test2", "data-nav-replace": null, class: "applink" }, "noscope2")
+				DOM.tag("a", { href: "?test1=test1", dataset: { navReplace: "" }, class: "applink" }, "noscope1"),
+				DOM.tag("a", { href: "?test1=test2", dataset: { navReplace: "" }, class: "applink" }, "noscope2")
 			]),
 			DOM.tag("div", null, [
-				DOM.tag("a", { href: "?test2=test1", "data-nav-replace": null, "data-nav-scope": "test", class: "applink" }, "scope1"),
-				DOM.tag("a", { href: "?test2=test2", "data-nav-replace": null, "data-nav-scope": "test", class: "applink" }, "scope2")
+				DOM.tag("a", { href: "?test2=test1", dataset: { navReplace: "", navScope: "test" }, class: "applink" }, "scope1"),
+				DOM.tag("a", { href: "?test2=test2", dataset: { navReplace: "", navScope: "test" }, class: "applink" }, "scope2")
 			])
 		]));
 
