@@ -40,7 +40,7 @@ export interface ElementOptions {
 /** One or more CSS class names: a space-separated string or an array of class names. */
 export type CssClass = string | string[];
 
-/** Map of custom `data-*` attribute names to their string values. */
+/** Map of custom `data-*` attribute names to their string values. `undefined` is ignored. */
 export interface ElementData {
 	[name: string]: string | undefined;
 }

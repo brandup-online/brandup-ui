@@ -81,8 +81,14 @@ const applyOptions = (elem: HTMLElement, options?: ElementOptions | CssClass | n
 				}
 				case "dataset": {
 					if (value) {
-						for (const dataName in value as object)
-							elem.dataset[dataName] = (<any>value)[dataName];
+						for (const dataName in value as object) {
+							const dataValue = (<any>value)[dataName];
+							// dataset stringifies whatever is assigned, so undefined would yield
+							// an attribute reading "undefined". Skip it, as plain attributes do.
+							if (dataValue === undefined) continue;
+
+							elem.dataset[dataName] = dataValue;
+						}
 					}
 					break;
 				}
