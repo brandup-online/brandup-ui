@@ -40,9 +40,9 @@ export interface ElementOptions {
 /** One or more CSS class names: a space-separated string or an array of class names. */
 export type CssClass = string | string[];
 
-/** Map of custom `data-*` attribute names to their string values. `undefined` is ignored. */
+/** Map of custom `data-*` attribute names to their string values. `null` sets an empty attribute, `undefined` is ignored. */
 export interface ElementData {
-	[name: string]: string | undefined;
+	[name: string]: string | null | undefined;
 }
 
 /** Map of DOM event handlers keyed by lower-case event name (e.g. `click`, `mouseover`), strongly typed to the matching `HTMLElementEventMap` event. */

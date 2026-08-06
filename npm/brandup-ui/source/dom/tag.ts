@@ -83,11 +83,12 @@ const applyOptions = (elem: HTMLElement, options?: ElementOptions | CssClass | n
 					if (value) {
 						for (const dataName in value as object) {
 							const dataValue = (<any>value)[dataName];
-							// dataset stringifies whatever is assigned, so undefined would yield
-							// an attribute reading "undefined". Skip it, as plain attributes do.
+							// dataset stringifies whatever is assigned, so undefined and null would
+							// yield attributes reading "undefined" and "null". Treat them as plain
+							// attributes do: undefined is skipped, null sets an empty attribute.
 							if (dataValue === undefined) continue;
 
-							elem.dataset[dataName] = dataValue;
+							elem.dataset[dataName] = dataValue === null ? "" : dataValue;
 						}
 					}
 					break;

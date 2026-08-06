@@ -67,6 +67,19 @@ it("tag: options.dataset sets data-* attributes", () => {
 	expect(el.dataset.count).toBe("3");
 });
 
+// dataset stringifies whatever is assigned — without skipping, the attribute would read "undefined"
+it("tag: undefined dataset value is skipped", () => {
+	const el = DOM.tag("div", { dataset: { foo: "bar", missing: undefined } });
+	expect(el.dataset.foo).toBe("bar");
+	expect(el.dataset.missing).toBeUndefined();
+	expect(el.hasAttribute("data-missing")).toBe(false);
+});
+
+it("tag: null dataset value sets empty attribute", () => {
+	const el = DOM.tag("div", { dataset: { flag: null } });
+	expect(el.getAttribute("data-flag")).toBe("");
+});
+
 it("tag: options.styles applies inline styles", () => {
 	const el = DOM.tag("div", { styles: { fontSize: "12px", color: "red" } });
 	expect(el.style.fontSize).toBe("12px");
