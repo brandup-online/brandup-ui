@@ -41,6 +41,12 @@ stages:
                   clean: "true"
                   persistCredentials: "true"
 
+                - task: UseNode@1
+                  displayName: use node 22.x
+                  inputs:
+                      version: 22.x
+                      checkLatest: true
+
                 - task: "Npm@1"
                   displayName: "npm install"
                   inputs:
