@@ -1,28 +1,20 @@
-﻿import { UIElement } from "@brandup/ui";
 import { AjaxQueue, AjaxResponse } from "@brandup/ui-ajax";
 import { DOM } from "@brandup/ui-dom";
 import { ExampleApplication } from "../app";
 import type { PageNavigationData, PageSubmitData } from "../typings/app";
-import { NavigateContext, SubmitContext } from "@brandup/ui-app";
+import { Page as AppPage, NavigateContext, SubmitContext } from "@brandup/ui-app";
 
-export abstract class Page extends UIElement {
+export abstract class Page extends AppPage<ExampleApplication, PageNavigationData> {
 	readonly app: ExampleApplication;
-	private __context: NavigateContext<ExampleApplication, PageNavigationData>;
 	readonly ajax: AjaxQueue;
-	private __hash: string | null;
-
-	get context() { return this.__context; }
-	get hash() { return this.__hash; }
 
 	constructor(context: NavigateContext<ExampleApplication, PageNavigationData>) {
-		super();
+		super(context);
 
 		this.app = context.app;
-		this.__context = context;
 		this.ajax = new AjaxQueue();
 
-		this.__context.data.page = this;
-		this.__hash = context.hash;
+		context.data.page = this;
 	}
 
 	async render(): Promise<DocumentFragment> {
@@ -34,6 +26,9 @@ export abstract class Page extends UIElement {
 
 		await this.onRenderContent(pageElem);
 
+		// Notify the page of an opening hash, like a hash navigation does.
+		await this.triggerChangeHash();
+
 		return content;
 	}
 
@@ -41,21 +36,6 @@ export abstract class Page extends UIElement {
 		element.appendChild(DOM.tag("header", { class: "page-header" }, [
 			DOM.tag("h1", null, this.header)
 		]));
-	}
-
-	/** @internal */
-	async __changedHash(context: NavigateContext<ExampleApplication, PageNavigationData>, newHash: string | null, oldHash: string | null) {
-		if (!this.element)
-			return;
-
-		this.__context = context;
-
-		if (newHash)
-			this.__hash = newHash;
-		else
-			this.__hash = null;
-
-		await this.onChangedHash(newHash, oldHash);
 	}
 
 	formSubmitted(response: AjaxResponse, context: SubmitContext<ExampleApplication, PageSubmitData>) {
@@ -66,7 +46,6 @@ export abstract class Page extends UIElement {
 
 	abstract get header(): string;
 	protected abstract onRenderContent(container: HTMLElement): Promise<void>;
-	protected onChangedHash(_newHash: string | null, _oldHash: string | null): Promise<void> { return Promise.resolve(); }
 	protected async onFormSubmitted(_response: AjaxResponse, _context: SubmitContext<ExampleApplication, PageSubmitData>) { }
 
 	override destroy() {

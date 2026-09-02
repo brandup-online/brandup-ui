@@ -1,6 +1,7 @@
 import { Application, EnvironmentModel } from "@brandup/ui-app";
 import type { ExampleApplicationModel } from "./typings/app";
 import { DOM, reactive, bind } from "@brandup/ui";
+import type { Page } from "./areas/page";
 
 import logoIcon from "./svg/logo.svg";
 
@@ -12,6 +13,9 @@ interface MenuItem {
 export class ExampleApplication extends Application<ExampleApplicationModel> {
 	readonly contentElem: HTMLElement;
 	private readonly state = reactive({ menu: [] as MenuItem[] });
+
+	/** Narrow the base `app.page` to the example's concrete page type. */
+	override get page(): Page | null { return super.page as Page | null; }
 
 	constructor(env: EnvironmentModel, model: ExampleApplicationModel, ...args: any[]) {
 		super(env, model, args);

@@ -65,7 +65,7 @@ const HyperLinkMiddlewareFactory = (): Middleware => {
 						url,
 						replace: elem.hasAttribute(CONSTANTS.NavUrlReplaceAttributeName),
 						scope: elem.getAttribute(CONSTANTS.NavUrlScopeAttributeName),
-						data: { clickElem: elem }
+						clickElem: elem
 					})
 					.catch(() => { })
 					.finally(() => elem.classList.remove(CONSTANTS.LoadingElementClass));
