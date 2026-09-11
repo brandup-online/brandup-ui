@@ -43,3 +43,11 @@ Small utility helpers: strings, objects, types, words (pluralization), GUID and 
 [![NPM](https://img.shields.io/npm/v/brandup-ui-helpers.svg)](https://www.npmjs.com/package/@brandup/ui-helpers)
 
 Read [documentation](npm/brandup-ui-helpers/README.md)
+
+## @brandup/ui-i18n
+
+Lightweight type-safe localization: `createI18n` with language resolution, RTL flag and lazily loaded namespaced dictionaries.
+
+[![NPM](https://img.shields.io/npm/v/brandup-ui-i18n.svg)](https://www.npmjs.com/package/@brandup/ui-i18n)
+
+Read [documentation](npm/brandup-ui-i18n/README.md)

@@ -1,0 +1,42 @@
+{
+	"compilerOptions": {
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"target": "ESNext",
+		"sourceMap": true,
+		"strict": true,
+		"lib": [
+			"DOM",
+			"ESNext"
+		],
+		"outDir": "./out",
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
+		"noImplicitAny": true,
+		"noEmitOnError": true,
+		"noImplicitOverride": true,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"declarationMap": false,
+		"resolveJsonModule": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
+		"allowSyntheticDefaultImports": true,
+		"typeRoots": ["../../node_modules/@types", "./node_modules/@types"],
+		"types": ["jest"]
+	},
+	"include": [
+		"source",
+		"test"
+	],
+	"exclude": [
+		"node_modules",
+		"dist",
+		".vs",
+		".vscode"
+	],
+	"compileOnSave": false
+}
