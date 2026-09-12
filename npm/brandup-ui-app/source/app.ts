@@ -30,6 +30,9 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	private __isRuned?: boolean;
 	private __middlewares: { [key: string]: Middleware } = {};
 	private __globalSubmit?: (e: SubmitEvent) => void;
+	private __globalInvalid?: (e: Event) => void;
+	private __globalChange?: (e: Event) => void;
+	private __validationTarget?: Document; // kept for detaching: `document` may be gone by destroy time
 	private __onPopStateHandler?: (e: PopStateEvent) => void;
 	private __visibilityListeners?: Array<() => void>; // detachers for visibility events
 	private __lastVisible?: boolean; // last dispatched visibility state (for deduplication)
@@ -183,6 +186,28 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 					.catch(() => { });
 			}, false);
 
+			// Constraint validation is shown by class, not by the browser bubble: the native one is
+			// tied to the field position and survives navigation badly. `invalid` does not bubble,
+			// hence the capture phase. The mark is dropped as soon as the field changes, and on every
+			// submit (see __clearValidity) -- otherwise a rejected attempt keeps painting fields red
+			// while the next one is already on its way.
+			const validationTarget = this.__validationTarget = document;
+
+			validationTarget.addEventListener("invalid", this.__globalInvalid = (e: Event) => {
+				e.preventDefault();
+
+				const elem = e.target as HTMLElement;
+				elem.classList.add(CONSTANTS.InvalidElementClass);
+
+				if (elem.hasAttribute("required"))
+					elem.classList.add(CONSTANTS.InvalidRequiredElementClass);
+			}, true);
+
+			validationTarget.addEventListener("change", this.__globalChange = (e: Event) => {
+				const elem = e.target as HTMLElement;
+				elem.classList.remove(CONSTANTS.InvalidElementClass, CONSTANTS.InvalidRequiredElementClass);
+			}, false);
+
 			// Browser page visibility: visibilitychange covers tab switch / minimize, while
 			// pagehide/pageshow add bfcache enter/restore (where visibilitychange is unreliable).
 			// All three feed __changeVisibility, which deduplicates to one call per real transition.
@@ -303,6 +328,16 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		if (this.__globalSubmit)
 			this.element?.removeEventListener("submit", this.__globalSubmit);
 
+		if (this.__validationTarget) {
+			if (this.__globalInvalid)
+				this.__validationTarget.removeEventListener("invalid", this.__globalInvalid, true);
+
+			if (this.__globalChange)
+				this.__validationTarget.removeEventListener("change", this.__globalChange);
+
+			this.__validationTarget = undefined;
+		}
+
 		if (this.__onPopStateHandler)
 			window.removeEventListener("popstate", this.__onPopStateHandler);
 
@@ -348,9 +383,24 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		return urlHelper.buildUrl(this.env.basePath, path, query, hash);
 	}
 
+	/**
+	 * Drops the constraint validation marks left on the fields of a form. Walks `form.elements` rather
+	 * than the subtree: a field bound by the `form` attribute lives elsewhere in the markup, yet takes
+	 * part in the same validation.
+	 */
+	private __clearValidity(form: HTMLFormElement) {
+		Array.from(form.elements).forEach(elem =>
+			elem.classList.remove(CONSTANTS.InvalidElementClass, CONSTANTS.InvalidRequiredElementClass));
+	}
+
 	private async __onSubmit<TData extends ContextData>(options: SubmitOptions<TData> | HTMLFormElement) {
 		const opt: SubmitOptions<TData> = options instanceof HTMLFormElement ? { form: <HTMLFormElement>options } : <SubmitOptions<TData>>options;
 		const { form, button = null, query, data = <TData>{} } = opt;
+
+		// Marks left by the previous attempt say nothing about this one: checkValidity puts them back
+		// for the fields that are still invalid, and a submit that skips validation (formnovalidate,
+		// e.g. an external sign-in button next to a required email) leaves the form clean.
+		this.__clearValidity(form);
 
 		if ((!button || !button.formNoValidate) && !form.checkValidity())
 			throw new Error('Form is invalid.');

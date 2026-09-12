@@ -2,6 +2,8 @@ interface Constants {
 	readonly LoadingElementClass: string;
 	readonly NavUrlClassName: string;
 	readonly FormClassName: string;
+	readonly InvalidElementClass: string;
+	readonly InvalidRequiredElementClass: string;
 	readonly NavUrlAttributeName: string;
 	readonly NavUrlReplaceAttributeName: string;
 	readonly NavUrlScopeAttributeName: string;
@@ -17,6 +19,8 @@ const result: Constants = {
 	LoadingElementClass: "loading",
 	NavUrlClassName: "applink",
 	FormClassName: "appform",
+	InvalidElementClass: "invalid",
+	InvalidRequiredElementClass: "invalid-required",
 	NavUrlAttributeName: "data-nav-url",
 	NavUrlReplaceAttributeName: "data-nav-replace",
 	NavUrlScopeAttributeName: "data-nav-scope",

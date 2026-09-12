@@ -21,24 +21,6 @@ class PagesMiddlewareImpl implements Middleware, PagesMiddleware {
 	async start(context: StartContext, next: MiddlewareNext) {
 		context.app.element?.insertAdjacentElement("beforeend", DOM.tag("div", { class: "app-loader" }));
 
-		const bodyElem = document.body;
-
-		bodyElem.addEventListener("invalid", (event: Event) => {
-			event.preventDefault();
-
-			const elem = event.target as HTMLElement;
-			elem.classList.add("invalid");
-
-			if (elem.hasAttribute("required"))
-				elem.classList.add("invalid-required");
-		}, true);
-
-		bodyElem.addEventListener("change", (event: Event) => {
-			const elem = event.target as HTMLElement;
-			elem.classList.remove("invalid");
-			elem.classList.remove("invalid-required");
-		});
-
 		for (var key in this._options.routes) {
 			const route = this._options.routes[key];
 			if (route.preload)
