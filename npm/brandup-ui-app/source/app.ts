@@ -32,8 +32,11 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 	private __globalSubmit?: (e: SubmitEvent) => void;
 	private __globalInvalid?: (e: Event) => void;
 	private __globalChange?: (e: Event) => void;
-	private __validationTarget?: Document; // kept for detaching: `document` may be gone by destroy time
 	private __onPopStateHandler?: (e: PopStateEvent) => void;
+	// Kept for detaching: by destroy time the globals may be gone (a test teardown drops them first),
+	// and reaching for `document` or `window` there would throw out of the cleanup itself.
+	private __documentTarget?: Document;
+	private __windowTarget?: Window;
 	private __visibilityListeners?: Array<() => void>; // detachers for visibility events
 	private __lastVisible?: boolean; // last dispatched visibility state (for deduplication)
 	private __execNav?: ExecuteNav<this, ContextData>; // current navigation invoking
@@ -173,7 +176,8 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 
 			this.__abort.signal.throwIfAborted();
 
-			window.addEventListener("popstate", this.__onPopStateHandler = (e: PopStateEvent) => this.__onPopState(context, e));
+			const windowTarget = this.__windowTarget = window;
+			windowTarget.addEventListener("popstate", this.__onPopStateHandler = (e: PopStateEvent) => this.__onPopState(context, e));
 
 			element.addEventListener("submit", this.__globalSubmit = (e: SubmitEvent) => {
 				const form = e.target as HTMLFormElement;
@@ -191,9 +195,9 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			// hence the capture phase. The mark is dropped as soon as the field changes, and on every
 			// submit (see __clearValidity) -- otherwise a rejected attempt keeps painting fields red
 			// while the next one is already on its way.
-			const validationTarget = this.__validationTarget = document;
+			const documentTarget = this.__documentTarget = document;
 
-			validationTarget.addEventListener("invalid", this.__globalInvalid = (e: Event) => {
+			documentTarget.addEventListener("invalid", this.__globalInvalid = (e: Event) => {
 				e.preventDefault();
 
 				const elem = e.target as HTMLElement;
@@ -203,7 +207,7 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 					elem.classList.add(CONSTANTS.InvalidRequiredElementClass);
 			}, true);
 
-			validationTarget.addEventListener("change", this.__globalChange = (e: Event) => {
+			documentTarget.addEventListener("change", this.__globalChange = (e: Event) => {
 				const elem = e.target as HTMLElement;
 				elem.classList.remove(CONSTANTS.InvalidElementClass, CONSTANTS.InvalidRequiredElementClass);
 			}, false);
@@ -211,19 +215,19 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 			// Browser page visibility: visibilitychange covers tab switch / minimize, while
 			// pagehide/pageshow add bfcache enter/restore (where visibilitychange is unreliable).
 			// All three feed __changeVisibility, which deduplicates to one call per real transition.
-			this.__lastVisible = !document.hidden;
-			const onVisibilityChange = () => this.__changeVisibility(!document.hidden);
+			this.__lastVisible = !documentTarget.hidden;
+			const onVisibilityChange = () => this.__changeVisibility(!documentTarget.hidden);
 			const onPageHide = () => this.__changeVisibility(false);
 			// `pageshow` also fires on a plain page load, and a bfcache restore can land in a
 			// background tab — so trust `document.hidden` instead of assuming visible.
-			const onPageShow = () => this.__changeVisibility(!document.hidden);
-			document.addEventListener("visibilitychange", onVisibilityChange);
-			window.addEventListener("pagehide", onPageHide);
-			window.addEventListener("pageshow", onPageShow);
+			const onPageShow = () => this.__changeVisibility(!documentTarget.hidden);
+			documentTarget.addEventListener("visibilitychange", onVisibilityChange);
+			windowTarget.addEventListener("pagehide", onPageHide);
+			windowTarget.addEventListener("pageshow", onPageShow);
 			this.__visibilityListeners = [
-				() => document.removeEventListener("visibilitychange", onVisibilityChange),
-				() => window.removeEventListener("pagehide", onPageHide),
-				() => window.removeEventListener("pageshow", onPageShow),
+				() => documentTarget.removeEventListener("visibilitychange", onVisibilityChange),
+				() => windowTarget.removeEventListener("pagehide", onPageHide),
+				() => windowTarget.removeEventListener("pageshow", onPageShow),
 			];
 		}
 		catch (reason: any) {
@@ -328,21 +332,25 @@ export class Application<TModel extends ApplicationModel = ApplicationModel> ext
 		if (this.__globalSubmit)
 			this.element?.removeEventListener("submit", this.__globalSubmit);
 
-		if (this.__validationTarget) {
+		if (this.__documentTarget) {
 			if (this.__globalInvalid)
-				this.__validationTarget.removeEventListener("invalid", this.__globalInvalid, true);
+				this.__documentTarget.removeEventListener("invalid", this.__globalInvalid, true);
 
 			if (this.__globalChange)
-				this.__validationTarget.removeEventListener("change", this.__globalChange);
+				this.__documentTarget.removeEventListener("change", this.__globalChange);
 
-			this.__validationTarget = undefined;
+			delete this.__documentTarget;
 		}
 
-		if (this.__onPopStateHandler)
-			window.removeEventListener("popstate", this.__onPopStateHandler);
+		if (this.__windowTarget) {
+			if (this.__onPopStateHandler)
+				this.__windowTarget.removeEventListener("popstate", this.__onPopStateHandler);
+
+			delete this.__windowTarget;
+		}
 
 		this.__visibilityListeners?.forEach(off => off());
-		this.__visibilityListeners = undefined;
+		delete this.__visibilityListeners;
 
 		const destroyAbort = new AbortController();
 
