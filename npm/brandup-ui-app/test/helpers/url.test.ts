@@ -56,6 +56,30 @@ describe("parseUrl", () => {
 		expect(r.path).toEqual("/p");
 	});
 
+	it("cross-origin url keeps the case of its path", () => {
+		// A payment session id in the path is case-sensitive: lowercasing it leads the payer to "page not found".
+		setLocation("http://localhost/");
+		const r = urlHelper.parseUrl("", "https://pay.tbank-online.com/aXg7A34u?Lang=Ru");
+		expect(r.external).toBeTruthy();
+		expect(r.path).toEqual("/aXg7A34u");
+		expect(r.url).toEqual("https://pay.tbank-online.com/aXg7A34u?Lang=Ru");
+	});
+
+	it("cross-origin url ignores the application basePath", () => {
+		setLocation("http://localhost/account/");
+		const r = urlHelper.parseUrl("/account", "https://other.com/Account/Page");
+		expect(r.basePath).toEqual("");
+		expect(r.path).toEqual("/Account/Page");
+		expect(r.url).toEqual("https://other.com/Account/Page");
+	});
+
+	it("same-origin absolute url is still lowercased", () => {
+		setLocation("http://localhost/");
+		const r = urlHelper.parseUrl("", "http://localhost/About");
+		expect(r.external).toBeFalsy();
+		expect(r.path).toEqual("/about");
+	});
+
 	it("relative url resolves against current path", () => {
 		setLocation("http://localhost/dir/");
 		const r = urlHelper.parseUrl("", "sub/page");

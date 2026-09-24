@@ -82,16 +82,23 @@ const parseUrl = (basePath: string, url: string | null): ParsedUrl => {
 	else if (path.length > 1 && path.endsWith('/'))
 		path = path.substring(0, path.length - 1);
 
-	path = path.toLowerCase();
+	if (isExternal) {
+		// An external address is not a route of the application: its path is kept as is, because it may carry
+		// case-sensitive data, such as a payment session id, and the base path does not apply to it.
+		basePath = '';
+	}
+	else {
+		path = path.toLowerCase();
 
-	if (basePath) {
-		if (path.startsWith(basePath.toLowerCase())) {
-			path = path.substring(basePath.length);
-			if (!path)
-				path = '/';
+		if (basePath) {
+			if (path.startsWith(basePath.toLowerCase())) {
+				path = path.substring(basePath.length);
+				if (!path)
+					path = '/';
+			}
+			else
+				basePath = '';
 		}
-		else
-			basePath = '';
 	}
 
 	if (!query)
