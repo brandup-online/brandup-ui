@@ -8,8 +8,6 @@ resources:
 
 variables:
     - group: public-npm
-    - name: vmImageName
-      value: "ubuntu-latest"
     - name: envName
       value: "brandup-ui"
     - name: version-major
@@ -20,7 +18,7 @@ variables:
 name: $(version-major).$(version-minor).$(rev:r)
 
 pool:
-    vmImage: $(vmImageName)
+    name: Test
 
 stages:
     - stage: "Build"
@@ -29,7 +27,7 @@ stages:
           - job: "BuildNpm"
             displayName: "Build, test and pack"
             pool:
-                vmImage: $(vmImageName)
+                name: Test
                 workspace:
                     clean: all
             steps:
@@ -47,62 +45,28 @@ stages:
                       version: 22.x
                       checkLatest: true
 
-                - task: "Npm@1"
+                - script: npm run i
                   displayName: "npm install"
-                  inputs:
-                      command: "custom"
-                      customCommand: "run i"
 
-                - task: "Npm@1"
+                - script: npm run build
                   displayName: "packages npm build"
-                  inputs:
-                      command: "custom"
-                      customCommand: "run build"
 
-                - task: "Npm@1"
+                - script: npm run test
                   displayName: "packages npm test"
-                  inputs:
-                      command: "custom"
-                      customCommand: "run test"
 
-                - task: "Npm@1"
+                - script: npm run npm:version $(Build.BuildNumber)
                   displayName: "packages npm version"
-                  inputs:
-                      command: "custom"
-                      customCommand: "run npm:version $(Build.BuildNumber)"
 
-                - task: "Npm@1"
+                - script: npm run npm:cleanup
                   displayName: "packages npm cleanup"
-                  inputs:
-                      command: "custom"
-                      customCommand: "run npm:cleanup"
 
-                - task: "Npm@1"
+                - script: npm run npm:pack --pack-destination "$(Build.ArtifactStagingDirectory)"
                   displayName: "packages npm pack"
-                  inputs:
-                      command: custom
-                      customCommand: "run npm:pack --pack-destination $(Build.ArtifactStagingDirectory)"
 
                 - publish: $(Build.ArtifactStagingDirectory)
                   displayName: publish artifact
                   condition: succeededOrFailed()
                   artifact: npm
-
-          - job: GitTag
-            displayName: "Add git tag"
-            dependsOn: [BuildNpm]
-            condition: succeeded()
-            steps:
-                - checkout: self
-                  clean: "true"
-                  persistCredentials: "true"
-
-                - pwsh: |
-                      git config --global user.name "AzureDevOps Agent"
-                      git tag "$(Build.BuildNumber)" --force
-                      git push origin "$(Build.BuildNumber)" --force
-                      Write-Output "Tagging $(Build.Repository.Name) with $(Build.BuildNumber)"
-                  displayName: set git tag
 
     - stage: Production
       displayName: Deploy stage
@@ -112,7 +76,7 @@ stages:
             condition: succeeded()
             displayName: "NPM"
             pool:
-                vmImage: $(vmImageName)
+                name: Test
             environment: $(envName)
             strategy:
                 runOnce:
@@ -155,7 +119,7 @@ stages:
                                   overwriteExistingFiles: true
 
                             - task: ExtractFiles@1
-                              displayName: "unzip brandup-ui-helpers"
+                              displayName: "unzip brandup-ui-app"
                               inputs:
                                   archiveFilePatterns: "$(Pipeline.Workspace)/npm/brandup-ui-app-$(Build.BuildNumber).tgz"
                                   destinationFolder: "$(Pipeline.Workspace)/npmout/brandup-ui-app"
@@ -170,56 +134,70 @@ stages:
                                   cleanDestinationFolder: true
                                   overwriteExistingFiles: true
 
+                            - task: UseNode@1
+                              displayName: use node 22.x
+                              inputs:
+                                  version: 22.x
+                                  checkLatest: true
+
+                            # npmAuthenticate adds the token of the service connection to this file.
+                            - script: echo registry=https://registry.npmjs.org/> "$(Pipeline.Workspace)/.npmrc"
+                              displayName: "create .npmrc"
+
+                            - task: npmAuthenticate@0
+                              displayName: "npm authenticate"
+                              inputs:
+                                  workingFile: "$(Pipeline.Workspace)/.npmrc"
+                                  customEndpoint: "$(publish-npm-credentials)"
+
                             # brandup-ui
 
-                            - task: Npm@1
+                            - script: npm publish --userconfig "$(Pipeline.Workspace)/.npmrc"
                               displayName: "publish brandup-ui"
-                              inputs:
-                                  command: publish
-                                  workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui/package"
-                                  publishEndpoint: "$(publish-npm-credentials)"
+                              workingDirectory: "$(Pipeline.Workspace)/npmout/brandup-ui/package"
 
                             # brandup-ui-dom
 
-                            - task: Npm@1
+                            - script: npm publish --userconfig "$(Pipeline.Workspace)/.npmrc"
                               displayName: "publish brandup-ui-dom"
-                              inputs:
-                                  command: publish
-                                  workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui-dom/package"
-                                  publishEndpoint: "$(publish-npm-credentials)"
+                              workingDirectory: "$(Pipeline.Workspace)/npmout/brandup-ui-dom/package"
 
                             # brandup-ui-ajax
 
-                            - task: Npm@1
+                            - script: npm publish --userconfig "$(Pipeline.Workspace)/.npmrc"
                               displayName: "publish brandup-ui-ajax"
-                              inputs:
-                                  command: publish
-                                  workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui-ajax/package"
-                                  publishEndpoint: "$(publish-npm-credentials)"
+                              workingDirectory: "$(Pipeline.Workspace)/npmout/brandup-ui-ajax/package"
 
                             # brandup-ui-helpers
 
-                            - task: Npm@1
+                            - script: npm publish --userconfig "$(Pipeline.Workspace)/.npmrc"
                               displayName: "publish brandup-ui-helpers"
-                              inputs:
-                                  command: publish
-                                  workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui-helpers/package"
-                                  publishEndpoint: "$(publish-npm-credentials)"
+                              workingDirectory: "$(Pipeline.Workspace)/npmout/brandup-ui-helpers/package"
 
                             # brandup-ui-app
 
-                            - task: Npm@1
+                            - script: npm publish --userconfig "$(Pipeline.Workspace)/.npmrc"
                               displayName: "publish brandup-ui-app"
-                              inputs:
-                                  command: publish
-                                  workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui-app/package"
-                                  publishEndpoint: "$(publish-npm-credentials)"
+                              workingDirectory: "$(Pipeline.Workspace)/npmout/brandup-ui-app/package"
 
                             # brandup-ui-i18n
 
-                            - task: Npm@1
+                            - script: npm publish --userconfig "$(Pipeline.Workspace)/.npmrc"
                               displayName: "publish brandup-ui-i18n"
-                              inputs:
-                                  command: publish
-                                  workingDir: "$(Pipeline.Workspace)/npmout/brandup-ui-i18n/package"
-                                  publishEndpoint: "$(publish-npm-credentials)"
+                              workingDirectory: "$(Pipeline.Workspace)/npmout/brandup-ui-i18n/package"
+
+          - job: GitTag
+            displayName: "Add git tag"
+            dependsOn: [Production]
+            condition: succeeded()
+            steps:
+                - checkout: self
+                  clean: "true"
+                  persistCredentials: "true"
+
+                - script: |
+                      echo Tagging $(Build.Repository.Name) with $(Build.BuildNumber)
+                      git config user.name "AzureDevOps Agent"
+                      git tag "$(Build.BuildNumber)" --force
+                      git push origin "$(Build.BuildNumber)" --force
+                  displayName: set git tag
