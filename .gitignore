@@ -331,7 +331,6 @@ ASALocalRun/
 
 
 /npm/*/coverage
-**/package-lock.json
 /npm/*/dist
 /npm/*/source/*.js
 /npm/*/src/**/*.js
